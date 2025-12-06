@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Broadcast;
 | used to check if an authenticated user can listen to the channel.
 |
 */
+Broadcast::channel('admin.users', function ($user) {
+    return optional($user->role)->nama_role === 'admin';
+});
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;

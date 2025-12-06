@@ -17,6 +17,7 @@ class WaliKelas extends Model
         'jabatan',
     ];
 
+    
     public function pengguna()
     {
         return $this->belongsTo(Pengguna::class, 'id_pengguna');
