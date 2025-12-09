@@ -4,15 +4,17 @@ namespace App\Livewire\Admin\Kelas;
 
 use Livewire\Component;
 use App\Models\Kelas;
+use App\Models\WaliKelas;
 
 class Index extends Component
 {
-    public $nama_kelas, $tingkat, $jurusan, $tahun_ajaran, $editingId = null;
+    public $nama_kelas, $tingkat, $jurusan, $tahun_ajaran, $id_walikelas, $editingId = null;
 
     public function render()
     {
         return view('livewire.admin.kelas.index', [
-            'kelas' => Kelas::all()
+            'kelas' => Kelas::with('waliKelas.pengguna')->get(),
+            'waliKelasList' => WaliKelas::with('pengguna')->get()
         ]);
     }
 
@@ -22,6 +24,7 @@ class Index extends Component
         $this->tingkat = '';
         $this->jurusan = '';
         $this->tahun_ajaran = '';
+        $this->id_walikelas = '';
 
         $this->editingId = null;
     }
@@ -33,6 +36,7 @@ class Index extends Component
             'tingkat' => $this->tingkat,
             'jurusan' => $this->jurusan,
             'tahun_ajaran' => $this->tahun_ajaran,
+            'id_walikelas' => $this->id_walikelas ?: null,
         ];
 
         if ($this->editingId) {
@@ -55,6 +59,7 @@ class Index extends Component
         $this->tingkat = $k->tingkat;
         $this->jurusan = $k->jurusan;
         $this->tahun_ajaran = $k->tahun_ajaran;
+        $this->id_walikelas = $k->id_walikelas;
     }
 
     public function delete($id)

@@ -12,9 +12,30 @@ class Index extends Component
 
     public $id_walikelas;
     public $id_pengguna;
-    public $nuptk;
-    public $jabatan;
+    public $nuptk = '';
+    public $jabatan = '';
     public $isEdit = false;
+
+    // Listener untuk ketika id_pengguna berubah
+    protected $listeners = ['updatedIdPengguna'];
+
+    public function updatedIdPengguna($value)
+    {
+        // Jika ada pengguna yang dipilih, cek apakah sudah ada data wali kelas
+        if ($value) {
+            $waliKelas = WaliKelas::where('id_pengguna', $value)->first();
+            
+            if ($waliKelas) {
+                // Jika sudah ada data, isi form dengan data yang ada
+                $this->nuptk = $waliKelas->nuptk;
+                $this->jabatan = $waliKelas->jabatan;
+            } else {
+                // Jika belum ada data, kosongkan form
+                $this->nuptk = '';
+                $this->jabatan = '';
+            }
+        }
+    }
 
     public function resetForm()
     {
@@ -31,18 +52,29 @@ class Index extends Component
     {
         $this->validate([
             'id_pengguna' => 'required',
-            'nuptk' => 'required',
-            'jabatan' => 'required',
+            // NUPTK dan jabatan tidak required karena opsional
         ]);
 
-        WaliKelas::create([
-            'id_pengguna' => $this->id_pengguna,
-            'nuptk' => $this->nuptk,
-            'jabatan' => $this->jabatan,
-        ]);
+        // Cek apakah sudah ada data untuk pengguna ini
+        $existing = WaliKelas::where('id_pengguna', $this->id_pengguna)->first();
+        
+        if ($existing) {
+            // Update data yang sudah ada
+            $existing->update([
+                'nuptk' => $this->nuptk,
+                'jabatan' => $this->jabatan,
+            ]);
+        } else {
+            // Buat data baru
+            WaliKelas::create([
+                'id_pengguna' => $this->id_pengguna,
+                'nuptk' => $this->nuptk,
+                'jabatan' => $this->jabatan,
+            ]);
+        }
 
         $this->resetForm();
-        session()->flash('success', 'Wali Kelas berhasil ditambahkan.');
+        session()->flash('success', 'Wali Kelas berhasil disimpan.');
     }
 
     public function edit($id)
@@ -61,8 +93,6 @@ class Index extends Component
     {
         $this->validate([
             'id_pengguna' => 'required',
-            'nuptk' => 'required',
-            'jabatan' => 'required',
         ]);
 
         WaliKelas::findOrFail($this->id_walikelas)->update([
@@ -83,6 +113,17 @@ class Index extends Component
 
     public function render()
     {
+        // Ambil pengguna yang memiliki role wali_kelas
+        $waliKelasPengguna = Pengguna::whereHas('role', function($query) {
+            $query->where('nama_role', 'wali_kelas');
+        })->orderBy('name')->get();
+    
+        // Jika sedang edit mode, tambahkan pengguna yang sedang diedit (jika belum ada)
+        if ($this->isEdit && $this->id_pengguna) {
+            $currentPengguna = Pengguna::where('id_pengguna', $this->id_pengguna)->first();
+            $waliKelasPengguna = $waliKelasPengguna->push($currentPengguna)->unique('id_pengguna')->sortBy('name');
+        }
+
         return view('livewire.admin.walikelas.index', [
             'dataWK' => WaliKelas::with('pengguna')
                 ->whereHas('pengguna', fn($q) =>
@@ -91,7 +132,7 @@ class Index extends Component
                 ->orderBy('id_walikelas', 'DESC')
                 ->get(),
         
-            'pengguna' => Pengguna::orderBy('name')->get(),
+            'pengguna' => $waliKelasPengguna,
         ]);        
     }
 }

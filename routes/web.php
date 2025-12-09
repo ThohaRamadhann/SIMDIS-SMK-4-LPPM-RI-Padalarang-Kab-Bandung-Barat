@@ -19,25 +19,30 @@ Route::view('profile', 'profile')
     ->name('profile');
 
 
-
 Route::middleware(['auth'])->group(function () {
 
-    // Admin-only area
+    // Rute Pengelolaan Data Dasar (HANYA UNTUK ADMIN)
     Route::middleware(['role:admin'])->group(function () {
     
-    Route::view('/users', 'admin.users')->name('users');                 // pengelolaan akun pengguna
-    Route::view('/siswa', 'admin.siswa')->name('siswa');                 // pengelolaan siswa
-    Route::view('/wali-murid', 'admin.walimurid')->name('wali-murid');  // pengelolaan wali murid
-    Route::view('/wali-kelas', 'admin.walikelas')->name('wali-kelas');  // pengelolaan wali kelas
-    Route::view('/kelas', 'admin.kelas')->name('kelas');   
+        Route::view('/users', 'admin.users')->name('users');             // pengelolaan akun pengguna
+        Route::view('/siswa', 'admin.siswa')->name('siswa');             // pengelolaan siswa
+        Route::view('/wali-murid', 'admin.walimurid')->name('wali-murid'); // pengelolaan wali murid
+        Route::view('/wali-kelas', 'admin.walikelas')->name('wali-kelas'); // pengelolaan wali kelas
+        Route::view('/kelas', 'admin.kelas')->name('kelas'); 
 
+    });
+    
+    // Rute CRUD Pelanggaran (UNTUK ADMIN DAN GURU BK, atau role lain yang Anda izinkan)
+    // Perbaikan ada di sini: role:admin,guru_bk
+    Route::middleware(['role:guru_bk,wali_kelas'])->group(function () {
+        
         // CRUD Pelanggaran
-    Route::get('/pelanggaran', [PelanggaranController::class, 'index'])->name('pelanggaran.index');
-    Route::get('/pelanggaran/create', [PelanggaranController::class, 'create'])->name('pelanggaran.create');
-    Route::post('/pelanggaran', [PelanggaranController::class, 'store'])->name('pelanggaran.store');
-    Route::get('/pelanggaran/{pelanggaran}/edit', [PelanggaranController::class, 'edit'])->name('pelanggaran.edit');
-    Route::put('/pelanggaran/{pelanggaran}', [PelanggaranController::class, 'update'])->name('pelanggaran.update');
-    Route::delete('/pelanggaran/{pelanggaran}', [PelanggaranController::class, 'destroy'])->name('pelanggaran.destroy');
+        Route::get('/pelanggaran', [PelanggaranController::class, 'index'])->name('pelanggaran.index');
+        Route::get('/pelanggaran/create', [PelanggaranController::class, 'create'])->name('pelanggaran.create');
+        Route::post('/pelanggaran', [PelanggaranController::class, 'store'])->name('pelanggaran.store');
+        Route::get('/pelanggaran/{pelanggaran}/edit', [PelanggaranController::class, 'edit'])->name('pelanggaran.edit');
+        Route::put('/pelanggaran/{pelanggaran}', [PelanggaranController::class, 'update'])->name('pelanggaran.update');
+        Route::delete('/pelanggaran/{pelanggaran}', [PelanggaranController::class, 'destroy'])->name('pelanggaran.destroy');
 
     });
 });

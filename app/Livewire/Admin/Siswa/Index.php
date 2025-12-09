@@ -97,13 +97,13 @@ class Index extends Component
     public function render()
     {
         return view('livewire.admin.siswa.index', [
-            'dataSiswa' => Siswa::with(['kelas', 'waliMurid'])
+            'dataSiswa' => Siswa::with(['kelas', 'waliMurid.pengguna'])
                 ->where('nama', 'like', "%{$this->search}%")
                 ->orderBy('nama')
                 ->get(),
 
             'kelas' => Kelas::orderBy('nama_kelas')->get(),
-            'wali' => WaliMurid::orderBy('id_walimurid')->get(),
+            'wali' => WaliMurid::with('pengguna')->orderBy('id_walimurid')->get(),
         ]);
     }
 }
