@@ -34,46 +34,56 @@ class Users extends Component
 
     // --- Aturan Validasi ---
     protected function rules()
-    {
-        $rules = [
-            'name' => 'required|string|max:255',
-            'username' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('pengguna', 'username')->ignore($this->editingId, 'id_pengguna')
-            ],
-            'email' => 'nullable|email|max:255',
-            'no_telpon' => 'required|string|max:20',
-            'id_role' => 'required|exists:role,id_role',
+{
+    $rules = [
+        'name' => 'required|string|max:255',
+        'username' => [
+            'required',
+            'string',
+            'max:255',
+            Rule::unique('pengguna', 'username')
+                ->ignore($this->editingId, 'id_pengguna')
+        ],
+        'email' => 'nullable|email|max:255',
+        'no_telpon' => 'required|string|max:20',
+        'id_role' => 'required|exists:role,id_role',
+    ];
+
+    if (!$this->editingId || $this->password) {
+        $rules['password'] = 'required|string|min:6';
+    }
+
+    $roleName = $this->selectedRoleName;
+
+    // ✅ GURU BK / WALI KELAS
+    if (in_array($roleName, ['guru_bk', 'wali_kelas'])) {
+
+        $waliKelasId = null;
+
+        if ($this->editingId) {
+            $pengguna = Pengguna::with('waliKelas')->find($this->editingId);
+            $waliKelasId = optional($pengguna?->waliKelas)->id_walikelas;
+        }
+
+        $rules['nuptk'] = [
+            'required',
+            'string',
+            'max:50',
+            Rule::unique('wali_kelas', 'nuptk')
+                ->ignore($waliKelasId, 'id_walikelas'),
         ];
 
-        if (!$this->editingId || $this->password) {
-            $rules['password'] = 'required|string|min:6';
-        }
-
-        $roleName = $this->selectedRoleName;
-
-        // Validasi untuk Wali Kelas / Guru BK
-        if ($roleName == 'guru_bk' || $roleName == 'wali_kelas') {
-            $waliKelasId = optional(Pengguna::find($this->editingId)->waliKelas)->id_walikelas;
-
-            $rules['nuptk'] = [
-                'required',
-                'string',
-                'max:50',
-                Rule::unique('wali_kelas', 'nuptk')->ignore($waliKelasId, 'id_walikelas')
-            ];
-            $rules['jabatan'] = 'required|string|max:100';
-        } 
-        // Validasi untuk Wali Murid (Orang Tua)
-        elseif ($roleName == 'orang_tua') {
-            $rules['hubungan'] = 'required|string|max:50';
-        }
-
-        return $rules;
+        $rules['jabatan'] = 'required|string|max:100';
     }
-    
+
+    // ✅ ORANG TUA
+    if ($roleName === 'orang_tua') {
+        $rules['hubungan'] = 'required|string|max:50';
+    }
+
+    return $rules;
+}
+
     // --- Render Component ---
     public function render()
     {
@@ -87,8 +97,16 @@ class Users extends Component
     public function resetForm()
     {
         $this->reset([
-            'editingId', 'name', 'username', 'email', 'no_telpon', 'id_role', 'password',
-            'nuptk', 'jabatan', 'hubungan'
+            'editingId',
+            'name',
+            'username',
+            'email',
+            'no_telpon',
+            'id_role',
+            'password',
+            'nuptk',
+            'jabatan',
+            'hubungan'
         ]);
     }
 
@@ -128,16 +146,16 @@ class Users extends Component
                 ['id_pengguna' => $pengguna->id_pengguna],
                 ['nuptk' => $this->nuptk, 'jabatan' => $this->jabatan]
             );
-            $pengguna->waliMurid()->delete(); 
+            $pengguna->waliMurid()->delete();
         } elseif ($roleName == 'orang_tua') {
             WaliMurid::updateOrCreate(
                 ['id_pengguna' => $pengguna->id_pengguna],
                 ['hubungan' => $this->hubungan]
             );
-            $pengguna->waliKelas()->delete(); 
+            $pengguna->waliKelas()->delete();
         } else {
-             $pengguna->waliKelas()->delete();
-             $pengguna->waliMurid()->delete();
+            $pengguna->waliKelas()->delete();
+            $pengguna->waliMurid()->delete();
         }
 
         $this->resetForm();
@@ -155,8 +173,8 @@ class Users extends Component
         $this->email = $u->email;
         $this->no_telpon = $u->no_telpon;
         $this->id_role = $u->id_role;
-        $this->password = ''; 
-        
+        $this->password = '';
+
         $this->nuptk = null;
         $this->jabatan = null;
         $this->hubungan = null;
@@ -174,10 +192,10 @@ class Users extends Component
     public function deleteUser($id)
     {
         $user = Pengguna::where('id_pengguna', $id)->first();
-        
+
         $user->waliKelas()->delete();
         $user->waliMurid()->delete();
-        
+
         $user->delete();
         session()->flash('success', 'Pengguna berhasil dihapus');
     }

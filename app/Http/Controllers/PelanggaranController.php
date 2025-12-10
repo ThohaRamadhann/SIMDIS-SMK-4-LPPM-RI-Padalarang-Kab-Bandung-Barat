@@ -28,6 +28,10 @@ class PelanggaranController extends Controller
             $pelanggarans = collect();
         }
 
+        $pelanggarans = Pelanggaran::with(['siswa', 'waliKelas.pengguna', 'jenisPelanggaran'])
+        ->orderBy('created_at', 'desc')
+        ->paginate(10); // Ganti get() dengan paginate()
+    
         return view('pelanggaran.index', compact('pelanggarans'));
     }
 
