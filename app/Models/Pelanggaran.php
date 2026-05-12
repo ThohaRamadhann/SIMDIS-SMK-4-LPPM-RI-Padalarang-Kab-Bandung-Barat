@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Pelanggaran extends Model
 {
-    protected $table = 'pelanggaran';
+    protected $table      = 'pelanggaran';
     protected $primaryKey = 'id_pelanggaran';
 
     protected $fillable = [
@@ -18,12 +18,18 @@ class Pelanggaran extends Model
         'status_pembinaan',
     ];
 
+    protected $casts = [
+        'waktu_kejadian' => 'datetime',
+    ];
+
+    // ── Relasi ──────────────────────────────────────────
+
     public function siswa()
     {
         return $this->belongsTo(Siswa::class, 'id_siswa');
     }
 
-    public function walikelas()
+    public function waliKelas()
     {
         return $this->belongsTo(WaliKelas::class, 'id_walikelas');
     }
