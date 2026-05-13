@@ -5,9 +5,11 @@ namespace App\Models;
 use App\Models\Siswa;
 use App\Models\Pengguna;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WaliMurid extends Model
 {
+    use SoftDeletes;
     protected $table = 'wali_murid';
     protected $primaryKey = 'id_walimurid';
 

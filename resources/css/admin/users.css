@@ -1,0 +1,187 @@
+@layer components {
+
+    .simdis-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 4px 16px rgba(13,45,107,.06);
+        border: 1px solid rgba(13,45,107,.07);
+    }
+
+    .simdis-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #0D2D6B;
+        margin-bottom: 2px;
+    }
+
+    .simdis-subtitle {
+        font-size: 12px;
+        color: #6B7280;
+        margin-bottom: 14px;
+    }
+
+    .simdis-label {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #0D2D6B;
+    }
+
+    .simdis-input,
+    .simdis-select {
+        width: 100%;
+        height: 40px;
+        border: 1.5px solid #E5E7EB;
+        border-radius: 10px;
+        padding: 0 12px;
+        font-size: 13px;
+        background: #F9FAFB;
+        transition: .2s ease;
+        outline: none;
+        color: #0D2D6B;
+    }
+
+    .simdis-input:focus,
+    .simdis-select:focus {
+        border-color: #F5B800;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(245,184,0,.12);
+    }
+
+    .simdis-input::placeholder {
+        color: #9AAAC4;
+    }
+
+    .simdis-error {
+        font-size: 11px;
+        color: #DC2626;
+        margin-top: 4px;
+    }
+
+    .simdis-section-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #0D2D6B;
+        margin-bottom: 10px;
+    }
+
+    .simdis-btn-primary {
+        background: #0D2D6B;
+        color: white;
+        border-radius: 10px;
+        padding: 9px 18px;
+        font-size: 13px;
+        font-weight: 600;
+        transition: .2s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .simdis-btn-primary:hover {
+        background: #163580;
+        transform: translateY(-1px);
+    }
+
+    .simdis-btn-secondary {
+        border: 1px solid #D1D5DB;
+        background: white;
+        color: #374151;
+        border-radius: 10px;
+        padding: 9px 18px;
+        font-size: 13px;
+        font-weight: 600;
+        transition: .2s;
+        cursor: pointer;
+    }
+
+    .simdis-btn-secondary:hover {
+        background: #F9FAFB;
+    }
+
+    .simdis-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .simdis-table thead th {
+        background: #F8FAFC;
+        color: #0D2D6B;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 10px 14px;
+        border-bottom: 1px solid #E5E7EB;
+    }
+
+    .simdis-table tbody td {
+        padding: 10px 14px;
+        font-size: 13px;
+        border-bottom: 1px solid #F1F5F9;
+    }
+
+    .simdis-table tbody tr:hover {
+        background: #F8FAFC;
+    }
+
+    .badge-role {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: rgba(13,45,107,.08);
+        color: #0D2D6B;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .action-btn {
+        font-size: 12px;
+        font-weight: 600;
+        transition: .2s;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+    }
+
+    .action-edit        { color: #0D2D6B; }
+    .action-edit:hover  { color: #163580; }
+    .action-delete        { color: #DC2626; }
+    .action-delete:hover  { color: #B91C1C; }
+
+    /* ── Pagination ── */
+    .simdis-page-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 30px;
+        height: 30px;
+        padding: 0 8px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #4A5E8A;
+        background: #F0F4FB;
+        border: 1px solid #E2EAF4;
+        cursor: pointer;
+        transition: all .15s ease;
+    }
+
+    .simdis-page-btn:hover {
+        background: #e2eaf7;
+        color: #0D2D6B;
+    }
+
+    .simdis-page-active {
+        background: #0D2D6B;
+        color: #ffffff;
+        border-color: #0D2D6B;
+    }
+
+    .simdis-page-active:hover {
+        background: #163580;
+        color: #ffffff;
+    }
+}

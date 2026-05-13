@@ -9,9 +9,11 @@ use App\Models\Notifikasi;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Pengguna extends Authenticatable
 {
+    use SoftDeletes;
     protected $table = 'pengguna';
     protected $primaryKey = 'id_pengguna';
 
