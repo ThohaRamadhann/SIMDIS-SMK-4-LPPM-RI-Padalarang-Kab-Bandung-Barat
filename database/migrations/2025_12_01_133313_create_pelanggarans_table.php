@@ -8,6 +8,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('pelanggaran', function (Blueprint $table) {
+
             $table->id('id_pelanggaran');
 
             $table->unsignedBigInteger('id_siswa');
@@ -15,10 +16,25 @@ return new class extends Migration {
             $table->unsignedBigInteger('id_jenispelanggaran');
 
             $table->timestamp('waktu_kejadian')->nullable();
+
             $table->text('deskripsi')->nullable();
-            $table->string('status_pembinaan')->default('belum ditindak');
+
+            // STATUS PEMBINAAN
+            $table->enum('status_pembinaan', [
+                'Belum Ditindak',
+                'Dalam Proses',
+                'Selesai'
+            ])->default('Belum Ditindak');
+
+            // TANGGAL PEMBINAAN BK
+            $table->date('tanggal_pembinaan')->nullable();
+
+            // CATATAN BK
+            $table->text('catatan_bk')->nullable();
 
             $table->timestamps();
+
+            $table->softDeletes();
 
             $table->foreign('id_siswa')
                 ->references('id_siswa')

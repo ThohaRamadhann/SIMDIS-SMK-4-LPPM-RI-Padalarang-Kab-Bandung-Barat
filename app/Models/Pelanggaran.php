@@ -18,6 +18,8 @@ class Pelanggaran extends Model
         'waktu_kejadian',
         'deskripsi',
         'status_pembinaan',
+        'tanggal_pembinaan',
+        'catatan_bk',
     ];
 
     protected $casts = [

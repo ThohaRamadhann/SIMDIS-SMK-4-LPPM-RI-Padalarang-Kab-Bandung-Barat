@@ -34,7 +34,6 @@ class PelanggaranController extends Controller
                 $q->where('id_walimurid', optional($user->waliMurid)->id_walimurid);
             });
         }
-        // admin & guru_bk: tampil semua
 
         $pelanggarans = $query->paginate(10);
 
@@ -43,9 +42,9 @@ class PelanggaranController extends Controller
 
     public function create()
     {
-        $siswa            = Siswa::all();
-        $waliKelas        = WaliKelas::all();
-        $jenisPelanggaran = JenisPelanggaran::all();
+        $siswa            = Siswa::with('kelas.waliKelas.pengguna')->orderBy('nama')->get();
+        $waliKelas        = WaliKelas::with('pengguna')->get();
+        $jenisPelanggaran = JenisPelanggaran::orderBy('nama_pelanggaran')->get();
 
         return view('pelanggaran.create', compact('siswa', 'waliKelas', 'jenisPelanggaran'));
     }
@@ -60,13 +59,17 @@ class PelanggaranController extends Controller
             'deskripsi'           => 'required|string',
         ]);
 
-        // Simpan pelanggaran
-        $pelanggaran = Pelanggaran::create($request->all());
+        $pelanggaran = Pelanggaran::create([
+            'id_siswa'            => $request->id_siswa,
+            'id_walikelas'        => $request->id_walikelas,
+            'id_jenispelanggaran' => $request->id_jenispelanggaran,
+            'waktu_kejadian'      => $request->waktu_kejadian,
+            'deskripsi'           => $request->deskripsi,
+            'status_pembinaan'    => 'Belum Ditindak',
+        ]);
 
-        // Load semua relasi yang dibutuhkan EWS
         $pelanggaran->load(['siswa.waliMurid.pengguna', 'waliKelas.pengguna', 'jenisPelanggaran']);
 
-        // Jalankan Early Warning System
         $this->ews->check($pelanggaran);
 
         return redirect()->route('pelanggaran.index')
@@ -75,9 +78,9 @@ class PelanggaranController extends Controller
 
     public function edit(Pelanggaran $pelanggaran)
     {
-        $siswa            = Siswa::all();
-        $waliKelas        = WaliKelas::all();
-        $jenisPelanggaran = JenisPelanggaran::all();
+        $siswa            = Siswa::with('kelas.waliKelas.pengguna')->orderBy('nama')->get();
+        $waliKelas        = WaliKelas::with('pengguna')->get();
+        $jenisPelanggaran = JenisPelanggaran::orderBy('nama_pelanggaran')->get();
 
         return view('pelanggaran.edit', compact('pelanggaran', 'siswa', 'waliKelas', 'jenisPelanggaran'));
     }
@@ -90,9 +93,21 @@ class PelanggaranController extends Controller
             'id_jenispelanggaran' => 'required|exists:jenis_pelanggaran,id_jenispelanggaran',
             'waktu_kejadian'      => 'required|date',
             'deskripsi'           => 'required|string',
+            'status_pembinaan'    => 'required|in:Belum Ditindak,Dalam Proses,Selesai',
+            'tanggal_pembinaan'   => 'nullable|date',
+            'catatan_bk'          => 'nullable|string|max:2000',
         ]);
 
-        $pelanggaran->update($request->all());
+        $pelanggaran->update([
+            'id_siswa'            => $request->id_siswa,
+            'id_walikelas'        => $request->id_walikelas,
+            'id_jenispelanggaran' => $request->id_jenispelanggaran,
+            'waktu_kejadian'      => $request->waktu_kejadian,
+            'deskripsi'           => $request->deskripsi,
+            'status_pembinaan'    => $request->status_pembinaan,
+            'tanggal_pembinaan'   => $request->tanggal_pembinaan ?: null,
+            'catatan_bk'          => $request->catatan_bk ?: null,
+        ]);
 
         return redirect()->route('pelanggaran.index')
             ->with('success', 'Pelanggaran berhasil diupdate.');
@@ -100,7 +115,6 @@ class PelanggaranController extends Controller
 
     public function destroy(Pelanggaran $pelanggaran)
     {
-        // Notifikasi terkait terhapus otomatis via cascadeOnDelete di migration notifikasi
         $pelanggaran->delete();
 
         return redirect()->route('pelanggaran.index')

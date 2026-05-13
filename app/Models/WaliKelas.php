@@ -19,7 +19,7 @@ class WaliKelas extends Model
         'jabatan',
     ];
 
-    
+
     public function pengguna()
     {
         return $this->belongsTo(Pengguna::class, 'id_pengguna');
@@ -28,5 +28,10 @@ class WaliKelas extends Model
     public function pelanggaran()
     {
         return $this->hasMany(Pelanggaran::class, 'id_walikelas');
+    }
+
+    public function kelas()
+    {
+        return $this->hasOne(Kelas::class, 'id_walikelas');
     }
 }
