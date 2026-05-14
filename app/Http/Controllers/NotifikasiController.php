@@ -8,12 +8,13 @@ use Illuminate\Support\Facades\Auth;
 
 class NotifikasiController extends Controller
 {
-    /** Halaman daftar semua notifikasi user */
+    /** Halaman daftar semua notifikasi user — hanya yang terkirim */
     public function index()
     {
         $notifikasis = Notifikasi::forUser(Auth::id())
             ->with('pelanggaran.siswa')
-            ->orderBy('created_at', 'desc')
+            ->where('status', 'terkirim')        // ← hanya notif yang sudah terkirim
+            ->orderBy('waktu_dikirim', 'desc')   // ← urutkan by waktu dikirim
             ->paginate(20);
 
         return view('notifikasi.index', compact('notifikasis'));
@@ -22,9 +23,13 @@ class NotifikasiController extends Controller
     /** Tandai satu notifikasi sebagai sudah dibaca */
     public function markAsRead(Notifikasi $notifikasi)
     {
-        // Pastikan notifikasi milik user yang login
         if ($notifikasi->id_pengguna !== Auth::id()) {
             abort(403);
+        }
+
+        // Hanya bisa dibaca kalau statusnya terkirim
+        if ($notifikasi->status !== 'terkirim') {
+            return response()->json(['success' => false, 'message' => 'Notifikasi belum terkirim.'], 422);
         }
 
         $notifikasi->markAsRead();
@@ -32,10 +37,11 @@ class NotifikasiController extends Controller
         return response()->json(['success' => true]);
     }
 
-    /** Tandai semua notifikasi user sebagai sudah dibaca */
+    /** Tandai semua notifikasi terkirim milik user sebagai sudah dibaca */
     public function markAllRead()
     {
         Notifikasi::forUser(Auth::id())
+            ->where('status', 'terkirim')   // ← hanya yang terkirim
             ->unread()
             ->update([
                 'is_read' => true,

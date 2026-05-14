@@ -13,11 +13,25 @@ return new class extends Migration {
             $table->unsignedBigInteger('id_pengguna');
             $table->unsignedBigInteger('id_pelanggaran');
 
+            // Untuk tracking job Laravel Queue — dipakai sistem grace period EWS
+            $table->string('job_id')->nullable();
+
             $table->text('isi_pesan');
-            $table->string('jenis_notifikasi')->nullable(); // WA, Sistem, dll
+            $table->string('jenis_notifikasi')->nullable();
             $table->timestamp('waktu_dikirim')->nullable();
-            $table->string('status')->default('pending');
+
+            // pending   → notif dibuat, job belum jalan (dalam grace period)
+            // terkirim  → job sudah jalan, notif muncul di inbox penerima
+            // dibatalkan → pelanggaran diedit/dihapus sebelum grace period habis
+            // gagal     → job error setelah semua tries habis
+            $table->enum('status', ['pending', 'terkirim', 'dibatalkan', 'gagal'])
+                  ->default('pending');
+
             $table->text('pesan_error')->nullable();
+
+            // Untuk fitur baca/belum baca
+            $table->boolean('is_read')->default(false);
+            $table->timestamp('read_at')->nullable();
 
             $table->timestamps();
 

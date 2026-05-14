@@ -19,36 +19,23 @@ class PelanggaranController extends Controller
         $this->ews = $ews;
     }
 
+    // ── Index — dialihkan ke Livewire ──────────────────────────────────────
     public function index()
     {
-        $user = Auth::user();
-        $role = optional($user->role)->nama_role;
-
-        $query = Pelanggaran::with(['siswa', 'waliKelas.pengguna', 'jenisPelanggaran'])
-            ->orderBy('created_at', 'desc');
-
-        if ($role === 'wali_kelas') {
-            $query->where('id_walikelas', optional($user->waliKelas)->id_walikelas);
-        } elseif ($role === 'orang_tua') {
-            $query->whereHas('siswa', function ($q) use ($user) {
-                $q->where('id_walimurid', optional($user->waliMurid)->id_walimurid);
-            });
-        }
-
-        $pelanggarans = $query->paginate(10);
-
-        return view('pelanggaran.index', compact('pelanggarans'));
+        return view('pelanggaran.index');
     }
 
+    // ── Create ────────────────────────────────────────────────────────────
     public function create()
     {
-        $siswa            = Siswa::with('kelas.waliKelas.pengguna')->orderBy('nama')->get();
+        $siswa            = Siswa::with('kelas')->orderBy('nama')->get();
         $waliKelas        = WaliKelas::with('pengguna')->get();
         $jenisPelanggaran = JenisPelanggaran::orderBy('nama_pelanggaran')->get();
 
         return view('pelanggaran.create', compact('siswa', 'waliKelas', 'jenisPelanggaran'));
     }
 
+    // ── Store ─────────────────────────────────────────────────────────────
     public function store(Request $request)
     {
         $request->validate([
@@ -68,23 +55,33 @@ class PelanggaranController extends Controller
             'status_pembinaan'    => 'Belum Ditindak',
         ]);
 
-        $pelanggaran->load(['siswa.waliMurid.pengguna', 'waliKelas.pengguna', 'jenisPelanggaran']);
+        // Load relasi untuk EWS
+        $pelanggaran->load([
+            'siswa.waliMurid.pengguna',
+            'waliKelas.pengguna',
+            'jenisPelanggaran',
+        ]);
 
+        // EWS: simpan notif pending + dispatch job dengan delay 15 menit
         $this->ews->check($pelanggaran);
 
         return redirect()->route('pelanggaran.index')
-            ->with('success', 'Pelanggaran berhasil ditambahkan.');
+            ->with('success', 'Pelanggaran berhasil ditambahkan. Notifikasi akan dikirim dalam 15 menit jika tidak ada koreksi.');
     }
 
+    // ── Edit ──────────────────────────────────────────────────────────────
     public function edit(Pelanggaran $pelanggaran)
     {
-        $siswa            = Siswa::with('kelas.waliKelas.pengguna')->orderBy('nama')->get();
+        $siswa            = Siswa::with('kelas')->orderBy('nama')->get();
         $waliKelas        = WaliKelas::with('pengguna')->get();
         $jenisPelanggaran = JenisPelanggaran::orderBy('nama_pelanggaran')->get();
 
-        return view('pelanggaran.edit', compact('pelanggaran', 'siswa', 'waliKelas', 'jenisPelanggaran'));
+        return view('pelanggaran.edit', compact(
+            'pelanggaran', 'siswa', 'waliKelas', 'jenisPelanggaran'
+        ));
     }
 
+    // ── Update ────────────────────────────────────────────────────────────
     public function update(Request $request, Pelanggaran $pelanggaran)
     {
         $request->validate([
@@ -109,15 +106,25 @@ class PelanggaranController extends Controller
             'catatan_bk'          => $request->catatan_bk ?: null,
         ]);
 
+        // EWS recheck:
+        // 1. Batalkan notif pending lama
+        // 2. Evaluasi ulang dengan data baru → dispatch job baru jika perlu
+        $this->ews->recheck($pelanggaran);
+
         return redirect()->route('pelanggaran.index')
-            ->with('success', 'Pelanggaran berhasil diupdate.');
+            ->with('success', 'Pelanggaran berhasil diperbarui. Notifikasi pending telah dievaluasi ulang.');
     }
 
+    // ── Destroy (soft delete) ─────────────────────────────────────────────
     public function destroy(Pelanggaran $pelanggaran)
     {
+        // Batalkan notif pending sebelum hapus
+        // (job yang sudah di-queue akan lihat status 'dibatalkan' dan skip)
+        $this->ews->cancel($pelanggaran);
+
         $pelanggaran->delete();
 
         return redirect()->route('pelanggaran.index')
-            ->with('success', 'Pelanggaran berhasil dihapus.');
+            ->with('success', 'Pelanggaran berhasil dihapus. Notifikasi pending telah dibatalkan.');
     }
 }

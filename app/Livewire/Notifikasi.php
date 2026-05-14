@@ -3,12 +3,11 @@
 namespace App\Http\Livewire;
 
 use Livewire\Component;
-use App\Models\Notifikasi as NotifikasiModel; // alias agar tidak bentrok
-use App\Events\NotifikasiBaru;
+use App\Models\Notifikasi as NotifikasiModel;
 
 class NotifikasiRealtime extends Component
 {
-    public $notifikasiList = []; // ganti nama properti juga
+    public $notifikasiList = [];
 
     protected $listeners = [
         'echo-private:notifikasi.{id_pengguna},NotifikasiBaru' => 'agregarNotifikasi'
@@ -16,15 +15,23 @@ class NotifikasiRealtime extends Component
 
     public function mount()
     {
+        // Hanya muat notif yang sudah benar-benar terkirim
+        // Notif pending (dalam grace period 15 menit) tidak dimuat
         $this->notifikasiList = NotifikasiModel::where('id_pengguna', auth()->id())
-                                       ->orderBy('created_at', 'desc')
-                                       ->get()
-                                       ->toArray();
+            ->where('status', 'terkirim')        // ← filter ini yang hilang
+            ->orderBy('waktu_dikirim', 'desc')   // ← urut by waktu dikirim, bukan created_at
+            ->get()
+            ->toArray();
     }
 
     public function agregarNotifikasi($payload)
     {
-        array_unshift($this->notifikasiList, $payload['notifikasi']); // akses array dengan tanda []
+        // Hanya tambahkan ke list kalau status terkirim
+        // (real-time event dari Echo hanya dipush kalau job sudah selesai)
+        if (isset($payload['notifikasi']['status']) 
+            && $payload['notifikasi']['status'] === 'terkirim') {
+            array_unshift($this->notifikasiList, $payload['notifikasi']);
+        }
     }
 
     public function render()
@@ -32,4 +39,3 @@ class NotifikasiRealtime extends Component
         return view('livewire.notifikasi-realtime');
     }
 }
-

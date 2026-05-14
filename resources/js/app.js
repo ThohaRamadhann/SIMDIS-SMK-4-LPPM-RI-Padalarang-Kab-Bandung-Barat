@@ -1,8 +1,12 @@
-import './bootstrap'; // pastikan Echo di bootstrap.js
-import { listen } from 'laravel-echo';
+import './bootstrap';
 
+// Realtime admin users
 window.Echo.private('admin.users')
     .listen('.UserChanged', (e) => {
-        // contoh: emit event Livewire global supaya komponen Livewire reload
-        window.livewire.emit('refreshUsers');
+        console.log('UserChanged:', e);
+
+        // Reload Livewire component
+        if (window.Livewire) {
+            Livewire.dispatch('refreshUsers');
+        }
     });

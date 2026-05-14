@@ -1,16 +1,20 @@
-{{--
-    Komponen bell notifikasi untuk navbar.
-    Cara pakai: @include('components.notifikasi-bell')
---}}
-
 @php
-    $user          = Auth::user();
-    $notifikasis   = $user->notifikasi()
-                        ->with('pelanggaran.siswa')
-                        ->orderBy('created_at', 'desc')
-                        ->limit(10)
-                        ->get();
-    $unreadCount   = $notifikasis->where('is_read', false)->count();
+    $user = Auth::user();
+
+    // Hanya tampilkan notif yang sudah benar-benar terkirim
+    // Notif pending (dalam grace period) dan dibatalkan tidak muncul
+    $notifikasis = $user->notifikasi()
+        ->with('pelanggaran.siswa')
+        ->where('status', 'terkirim')
+        ->orderBy('waktu_dikirim', 'desc')
+        ->limit(10)
+        ->get();
+
+    // Hitung unread hanya dari yang terkirim
+    $unreadCount = $user->notifikasi()
+        ->where('status', 'terkirim')
+        ->where('is_read', false)
+        ->count();
 @endphp
 
 <style>
@@ -127,7 +131,7 @@
         font-size: 0.85rem;
     }
 
-    .notif-icon.panggil { background: #ffe4e4; }
+    .notif-icon.panggil   { background: #ffe4e4; }
     .notif-icon.pembinaan { background: #fff3cd; }
 
     .notif-body p {
@@ -196,12 +200,18 @@
                     <div class="notif-icon {{ $iconClass }}">{{ $icon }}</div>
                     <div class="notif-body">
                         <p>{{ $notif->isi_pesan }}</p>
-                        <small>{{ $notif->created_at->diffForHumans() }}</small>
+                        <small>
+                            {{-- Tampilkan waktu dikirim, bukan created_at --}}
+                            {{ $notif->waktu_dikirim
+                                ? $notif->waktu_dikirim->diffForHumans()
+                                : $notif->created_at->diffForHumans() }}
+                        </small>
                     </div>
                 </div>
             @empty
                 <div class="notif-empty">
-                    <i class="fas fa-check-circle" style="font-size:1.5rem;margin-bottom:.5rem;display:block;color:#a0aec0"></i>
+                    <i class="fas fa-check-circle"
+                       style="font-size:1.5rem;margin-bottom:.5rem;display:block;color:#a0aec0"></i>
                     Tidak ada notifikasi
                 </div>
             @endforelse
@@ -242,7 +252,8 @@
     const markAllBtn = document.getElementById('markAllRead');
     if (markAllBtn) {
         markAllBtn.addEventListener('click', function () {
-            document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+            document.querySelectorAll('.notif-item.unread')
+                .forEach(el => el.classList.remove('unread'));
             fetch('/notifikasi/read-all', {
                 method: 'POST',
                 headers: {

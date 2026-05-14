@@ -19,3 +19,8 @@ Broadcast::channel('admin.users', function ($user) {
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
+
+// Hanya user yang id_pengguna-nya cocok yang boleh subscribe
+Broadcast::channel('notifikasi.{id_pengguna}', function ($user, $id_pengguna) {
+    return (int) $user->id_pengguna === (int) $id_pengguna;
+});
