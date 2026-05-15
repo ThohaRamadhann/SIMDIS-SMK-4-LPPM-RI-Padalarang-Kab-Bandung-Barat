@@ -548,117 +548,143 @@
             const card = document.getElementById('card-' + i);
             card.classList.toggle('open');
         }
-
+    
         // ── ApexCharts ──
         const navyColor = '#0D2D6B';
         const goldColor = '#F5B800';
         const gridColor = '#f0f4fb';
-
+    
         const baseOptions = {
             chart:   { toolbar: { show: false }, fontFamily: 'inherit' },
             grid:    { borderColor: gridColor, strokeDashArray: 4 },
             tooltip: { theme: 'light' },
             dataLabels: { enabled: false },
         };
-
-        @if ($role === 'admin')
-
-            new ApexCharts(document.querySelector('#chartPenggunaBulanan'), {
-                ...baseOptions,
-                series: [{ name: 'Pengguna Baru', data: @json($charts['pengguna_bulanan']['data']) }],
-                chart: { ...baseOptions.chart, type: 'bar', height: 260 },
-                colors: [navyColor],
-                plotOptions: {
-                    bar: { borderRadius: 6, columnWidth: '50%', dataLabels: { position: 'top' } },
-                },
-                dataLabels: {
-                    enabled: true, offsetY: -18,
-                    style: { fontSize: '11px', fontWeight: 700, colors: [navyColor] },
-                    formatter: v => v > 0 ? v : '',
-                },
-                xaxis: {
-                    categories: @json($charts['pengguna_bulanan']['labels']),
-                    labels: { style: { fontSize: '11px', colors: '#718096' } },
-                    axisBorder: { show: false }, axisTicks: { show: false },
-                },
-                yaxis: {
-                    labels: { style: { fontSize: '11px', colors: '#718096' }, formatter: v => Math.floor(v) },
-                    min: 0,
-                },
-                tooltip: { theme: 'light', y: { formatter: v => v + ' pengguna' } },
-            }).render();
-
-            new ApexCharts(document.querySelector('#chartSiswaKelas'), {
-                ...baseOptions,
-                series: [{ name: 'Jumlah Siswa', data: @json($charts['siswa_per_kelas']['data']) }],
-                chart: { ...baseOptions.chart, type: 'bar', height: 260 },
-                colors: [goldColor],
-                plotOptions: { bar: { borderRadius: 6, horizontal: true, barHeight: '55%' } },
-                dataLabels: {
-                    enabled: true,
-                    style: { fontSize: '11px', fontWeight: 700, colors: [navyColor] },
-                    formatter: v => v > 0 ? v + ' siswa' : '',
-                },
-                xaxis: {
-                    categories: @json($charts['siswa_per_kelas']['labels']),
-                    labels: { style: { fontSize: '11px', colors: '#718096' } },
-                    axisBorder: { show: false }, axisTicks: { show: false },
-                },
-                yaxis: { labels: { style: { fontSize: '11px', colors: '#718096' } } },
-                tooltip: { theme: 'light', y: { formatter: v => v + ' siswa' } },
-            }).render();
-
-        @else
-
-            new ApexCharts(document.querySelector('#chartBulanan'), {
-                ...baseOptions,
-                series: [{ name: 'Pelanggaran', data: @json($charts['bulanan']['data']) }],
-                chart: { ...baseOptions.chart, type: 'area', height: 260 },
-                colors: [navyColor],
-                fill: {
-                    type: 'gradient',
-                    gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.02, stops: [0, 100] },
-                },
-                stroke: { curve: 'smooth', width: 2.5 },
-                markers: { size: 4, colors: ['#fff'], strokeColors: [navyColor], strokeWidth: 2 },
-                xaxis: {
-                    categories: @json($charts['bulanan']['labels']),
-                    labels: { style: { fontSize: '11px', colors: '#718096' }, rotate: -30 },
-                    axisBorder: { show: false }, axisTicks: { show: false },
-                },
-                yaxis: {
-                    labels: { style: { fontSize: '11px', colors: '#718096' }, formatter: v => Math.floor(v) },
-                    min: 0,
-                },
-                tooltip: { theme: 'light', y: { formatter: v => v + ' pelanggaran' } },
-            }).render();
-
-            new ApexCharts(document.querySelector('#chartJenis'), {
-                ...baseOptions,
-                series: [{ name: 'Jumlah', data: @json($charts['jenis']['data']) }],
-                chart: { ...baseOptions.chart, type: 'bar', height: 260 },
-                colors: [goldColor],
-                plotOptions: {
-                    bar: { borderRadius: 6, columnWidth: '50%', dataLabels: { position: 'top' } },
-                },
-                dataLabels: {
-                    enabled: true, offsetY: -18,
-                    style: { fontSize: '11px', fontWeight: 700, colors: [navyColor] },
-                    formatter: v => v > 0 ? v : '',
-                },
-                xaxis: {
-                    categories: @json($charts['jenis']['labels']),
-                    labels: { style: { fontSize: '11px', colors: '#718096' }, trim: true, maxHeight: 60 },
-                    axisBorder: { show: false }, axisTicks: { show: false },
-                },
-                yaxis: {
-                    labels: { style: { fontSize: '11px', colors: '#718096' }, formatter: v => Math.floor(v) },
-                    min: 0,
-                },
-                tooltip: { theme: 'light', y: { formatter: v => v + ' kali' } },
-            }).render();
-
-        @endif
+    
+        // Simpan instance chart agar bisa di-destroy
+        let chartInstances = [];
+    
+        function destroyCharts() {
+            chartInstances.forEach(c => { try { c.destroy(); } catch(e) {} });
+            chartInstances = [];
+        }
+    
+        function initCharts() {
+            destroyCharts();
+    
+            @if ($role === 'admin')
+    
+                const c1 = new ApexCharts(document.querySelector('#chartPenggunaBulanan'), {
+                    ...baseOptions,
+                    series: [{ name: 'Pengguna Baru', data: @json($charts['pengguna_bulanan']['data']) }],
+                    chart: { ...baseOptions.chart, type: 'bar', height: 260 },
+                    colors: [navyColor],
+                    plotOptions: {
+                        bar: { borderRadius: 6, columnWidth: '50%', dataLabels: { position: 'top' } },
+                    },
+                    dataLabels: {
+                        enabled: true, offsetY: -18,
+                        style: { fontSize: '11px', fontWeight: 700, colors: [navyColor] },
+                        formatter: v => v > 0 ? v : '',
+                    },
+                    xaxis: {
+                        categories: @json($charts['pengguna_bulanan']['labels']),
+                        labels: { style: { fontSize: '11px', colors: '#718096' } },
+                        axisBorder: { show: false }, axisTicks: { show: false },
+                    },
+                    yaxis: {
+                        labels: { style: { fontSize: '11px', colors: '#718096' }, formatter: v => Math.floor(v) },
+                        min: 0,
+                    },
+                    tooltip: { theme: 'light', y: { formatter: v => v + ' pengguna' } },
+                });
+                c1.render();
+                chartInstances.push(c1);
+    
+                const c2 = new ApexCharts(document.querySelector('#chartSiswaKelas'), {
+                    ...baseOptions,
+                    series: [{ name: 'Jumlah Siswa', data: @json($charts['siswa_per_kelas']['data']) }],
+                    chart: { ...baseOptions.chart, type: 'bar', height: 260 },
+                    colors: [goldColor],
+                    plotOptions: { bar: { borderRadius: 6, horizontal: true, barHeight: '55%' } },
+                    dataLabels: {
+                        enabled: true,
+                        style: { fontSize: '11px', fontWeight: 700, colors: [navyColor] },
+                        formatter: v => v > 0 ? v + ' siswa' : '',
+                    },
+                    xaxis: {
+                        categories: @json($charts['siswa_per_kelas']['labels']),
+                        labels: { style: { fontSize: '11px', colors: '#718096' } },
+                        axisBorder: { show: false }, axisTicks: { show: false },
+                    },
+                    yaxis: { labels: { style: { fontSize: '11px', colors: '#718096' } } },
+                    tooltip: { theme: 'light', y: { formatter: v => v + ' siswa' } },
+                });
+                c2.render();
+                chartInstances.push(c2);
+    
+            @else
+    
+                const c3 = new ApexCharts(document.querySelector('#chartBulanan'), {
+                    ...baseOptions,
+                    series: [{ name: 'Pelanggaran', data: @json($charts['bulanan']['data']) }],
+                    chart: { ...baseOptions.chart, type: 'area', height: 260 },
+                    colors: [navyColor],
+                    fill: {
+                        type: 'gradient',
+                        gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.02, stops: [0, 100] },
+                    },
+                    stroke: { curve: 'smooth', width: 2.5 },
+                    markers: { size: 4, colors: ['#fff'], strokeColors: [navyColor], strokeWidth: 2 },
+                    xaxis: {
+                        categories: @json($charts['bulanan']['labels']),
+                        labels: { style: { fontSize: '11px', colors: '#718096' }, rotate: -30 },
+                        axisBorder: { show: false }, axisTicks: { show: false },
+                    },
+                    yaxis: {
+                        labels: { style: { fontSize: '11px', colors: '#718096' }, formatter: v => Math.floor(v) },
+                        min: 0,
+                    },
+                    tooltip: { theme: 'light', y: { formatter: v => v + ' pelanggaran' } },
+                });
+                c3.render();
+                chartInstances.push(c3);
+    
+                const c4 = new ApexCharts(document.querySelector('#chartJenis'), {
+                    ...baseOptions,
+                    series: [{ name: 'Jumlah', data: @json($charts['jenis']['data']) }],
+                    chart: { ...baseOptions.chart, type: 'bar', height: 260 },
+                    colors: [goldColor],
+                    plotOptions: {
+                        bar: { borderRadius: 6, columnWidth: '50%', dataLabels: { position: 'top' } },
+                    },
+                    dataLabels: {
+                        enabled: true, offsetY: -18,
+                        style: { fontSize: '11px', fontWeight: 700, colors: [navyColor] },
+                        formatter: v => v > 0 ? v : '',
+                    },
+                    xaxis: {
+                        categories: @json($charts['jenis']['labels']),
+                        labels: { style: { fontSize: '11px', colors: '#718096' }, trim: true, maxHeight: 60 },
+                        axisBorder: { show: false }, axisTicks: { show: false },
+                    },
+                    yaxis: {
+                        labels: { style: { fontSize: '11px', colors: '#718096' }, formatter: v => Math.floor(v) },
+                        min: 0,
+                    },
+                    tooltip: { theme: 'light', y: { formatter: v => v + ' kali' } },
+                });
+                c4.render();
+                chartInstances.push(c4);
+    
+            @endif
+        }
+    
+        // Jalankan saat pertama load
+        document.addEventListener('DOMContentLoaded', initCharts);
+    
+        // Jalankan ulang setiap navigasi Livewire (wire:navigate)
+        document.addEventListener('livewire:navigated', initCharts);
     </script>
 
 </x-app-layout>
