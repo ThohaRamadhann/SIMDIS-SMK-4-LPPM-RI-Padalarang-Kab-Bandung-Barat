@@ -97,25 +97,19 @@ new class extends Component
                         notifikasis: {{ json_encode($notifikasis) }},
 
                         init() {
-                            // Subscribe ke private channel user ini
                             const userId = {{ auth()->user()->id_pengguna }};
 
                             window.Echo.private('notifikasi.' + userId)
                                 .listen('.NotifikasiBaru', (e) => {
                                     const notif = e.notifikasi;
 
-                                    // Tambah ke awal list
                                     this.notifikasis.unshift(notif);
 
-                                    // Batasi hanya 10 item
                                     if (this.notifikasis.length > 10) {
                                         this.notifikasis = this.notifikasis.slice(0, 10);
                                     }
 
-                                    // Naikkan badge
                                     this.unreadCount++;
-
-                                    // Bunyi notif (opsional)
                                     this.playSound();
                                 });
                         },
@@ -188,6 +182,7 @@ new class extends Component
 
                         {{-- Badge --}}
                         <span x-show="unreadCount > 0"
+                              style="display:none"
                               x-text="unreadCount > 9 ? '9+' : unreadCount"
                               class="absolute top-1 right-1 flex items-center justify-center
                                      w-4 h-4 text-[10px] font-bold text-white bg-red-500
@@ -197,6 +192,7 @@ new class extends Component
 
                     {{-- Dropdown --}}
                     <div x-show="open"
+                         style="display:none; top:100%"
                          x-transition:enter="transition ease-out duration-150"
                          x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
                          x-transition:enter-end="opacity-100 scale-100 translate-y-0"
@@ -204,8 +200,7 @@ new class extends Component
                          x-transition:leave-start="opacity-100 scale-100"
                          x-transition:leave-end="opacity-0 scale-95"
                          class="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-xl
-                                border border-[rgba(13,45,107,0.08)] z-50 overflow-hidden"
-                         style="top: 100%">
+                                border border-[rgba(13,45,107,0.08)] z-50 overflow-hidden">
 
                         {{-- Header --}}
                         <div class="flex items-center justify-between px-4 py-3
@@ -220,12 +215,14 @@ new class extends Component
                                 </svg>
                                 Notifikasi
                                 <span x-show="unreadCount > 0"
+                                      style="display:none"
                                       x-text="unreadCount"
                                       class="bg-[#F5B800] text-[#0D2D6B] text-[10px]
                                              font-bold px-1.5 py-0.5 rounded-full">
                                 </span>
                             </h6>
                             <button x-show="unreadCount > 0"
+                                    style="display:none"
                                     @click="markAllRead()"
                                     class="text-[#F5B800] text-xs font-semibold underline
                                            hover:text-yellow-300 transition-colors">
@@ -266,7 +263,9 @@ new class extends Component
                                            x-text="diffForHumans(notif.waktu_dikirim)"></p>
                                     </div>
 
-                                    <div x-show="!notif.is_read" class="flex-shrink-0 mt-1.5">
+                                    <div x-show="!notif.is_read"
+                                         style="display:none"
+                                         class="flex-shrink-0 mt-1.5">
                                         <span class="w-2 h-2 bg-[#F5B800] rounded-full block"></span>
                                     </div>
                                 </button>

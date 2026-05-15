@@ -130,10 +130,21 @@ class SendEarlyWarningNotification implements ShouldQueue
             return;
         }
 
-        $labelTingkat = ucfirst($tingkat);
-        $namaOrtu     = $orangTuaPengguna->name;
-        $namaSiswa    = $siswa->nama;
-        $kelasSiswa   = optional($siswa->kelas)->nama_kelas ?? '-';
+        // Ambil data pelanggaran terbaru siswa untuk info detail
+        $pelanggaranTerbaru = \App\Models\Pelanggaran::with('jenisPelanggaran')
+            ->where('id_siswa', $siswa->id_siswa)
+            ->whereHas('jenisPelanggaran', fn($q) => $q->where('tingkat_pelanggaran', $tingkat))
+            ->latest('waktu_kejadian')
+            ->first();
+
+        $labelTingkat    = ucfirst($tingkat);
+        $namaOrtu        = $orangTuaPengguna->name;
+        $namaSiswa       = $siswa->nama;
+        $kelasSiswa      = optional($siswa->kelas)->nama_kelas ?? '-';
+        $namaPelanggaran = optional($pelanggaranTerbaru?->jenisPelanggaran)->nama_pelanggaran ?? '-';
+        $waktuKejadian   = $pelanggaranTerbaru?->waktu_kejadian
+                            ? $pelanggaranTerbaru->waktu_kejadian->format('d M Y, H:i') . ' WIB'
+                            : '-';
 
         $pesan = "🚨 *PEMBERITAHUAN DARI SEKOLAH*\n\n"
                . "Yth. Bapak/Ibu *{$namaOrtu}*,\n\n"
@@ -141,19 +152,25 @@ class SendEarlyWarningNotification implements ShouldQueue
                . "👤 *{$namaSiswa}* ({$kelasSiswa})\n\n"
                . "telah melakukan *{$total}x pelanggaran {$labelTingkat}* "
                . "dan memerlukan *PEMANGGILAN ORANG TUA* ke sekolah.\n\n"
+               . "📋 *Detail Pelanggaran Terakhir:*\n"
+               . "• Jenis   : {$namaPelanggaran}\n"
+               . "• Tingkat : {$labelTingkat}\n"
+               . "• Waktu   : {$waktuKejadian}\n\n"
                . "Mohon segera menghubungi pihak sekolah atau Guru BK untuk "
                . "informasi lebih lanjut.\n\n"
                . "Terima kasih atas perhatian dan kerjasamanya.\n\n"
                . "_Sistem Informasi Disiplin Siswa (SIMDIS)_";
 
-        $fonnte = app(FonnteService::class);
+        $fonnte   = app(FonnteService::class);
         $berhasil = $fonnte->kirim($noTelpon, $pesan);
 
         Log::info('EWS WA: hasil pengiriman', [
-            'id_siswa'   => $siswa->id_siswa,
-            'nama_siswa' => $namaSiswa,
-            'no_telpon'  => $noTelpon,
-            'berhasil'   => $berhasil,
+            'id_siswa'        => $siswa->id_siswa,
+            'nama_siswa'      => $namaSiswa,
+            'no_telpon'       => $noTelpon,
+            'pelanggaran'     => $namaPelanggaran,
+            'waktu_kejadian'  => $waktuKejadian,
+            'berhasil'        => $berhasil,
         ]);
     }
 

@@ -35,4 +35,8 @@ return [
         'token' => env('FONNTE_TOKEN'),
     ],
 
+    'ews' => [
+        'grace_period_minutes' => env('EWS_GRACE_PERIOD_MINUTES', 10),
+    ],
+
 ];

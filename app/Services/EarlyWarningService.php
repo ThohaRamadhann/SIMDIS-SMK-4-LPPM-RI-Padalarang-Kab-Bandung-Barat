@@ -10,10 +10,14 @@ use App\Models\Pengguna;
 class EarlyWarningService
 {
     /**
-     * Grace period dalam menit sebelum notifikasi benar-benar dikirim.
-     * Beri waktu BK untuk koreksi jika terjadi salah input.
+     * Grace period diambil dari config — ubah via .env saja
+     * Development : EWS_GRACE_PERIOD_MINUTES=1
+     * Production  : EWS_GRACE_PERIOD_MINUTES=10
      */
-    const GRACE_PERIOD_MINUTES = 15;
+    private function gracePeriod(): int
+    {
+        return (int) config('services.ews.grace_period_minutes', 10);
+    }
 
     /**
      * Jalankan pengecekan EWS setelah pelanggaran baru disimpan.
@@ -35,58 +39,52 @@ class EarlyWarningService
         $aksi = $this->tentukanAksi($tingkat, $total);
 
         if ($aksi === null) {
-            return; // Belum mencapai threshold
+            return;
         }
 
-        $pesan = $this->buatPesan($siswa->nama, $tingkat, $total, $aksi);
-
-        // ── Simpan notif dengan status 'pending' dulu ──
-        // Notif pending ini bisa dibatalkan kalau BK edit/hapus
-        // dalam waktu GRACE_PERIOD_MINUTES menit ke depan
+        $pesan       = $this->buatPesan($siswa->nama, $tingkat, $total, $aksi);
         $penerimaIds = $this->kumpulkanPenerimaIds($pelanggaran, $siswa);
+        $grace       = $this->gracePeriod();
 
+        // Simpan notif pending — belum tampil di bell sampai grace period habis
         foreach ($penerimaIds as $idPengguna) {
             Notifikasi::create([
                 'id_pengguna'      => $idPengguna,
                 'id_pelanggaran'   => $pelanggaran->id_pelanggaran,
                 'isi_pesan'        => $pesan,
                 'jenis_notifikasi' => 'sistem',
-                'waktu_dikirim'    => now()->addMinutes(self::GRACE_PERIOD_MINUTES),
+                'waktu_dikirim'    => now()->addMinutes($grace),
                 'status'           => 'pending',
                 'is_read'          => false,
             ]);
         }
 
-        // ── Dispatch job dengan delay grace period ──
+        // Dispatch job dengan delay sesuai grace period dari config
         SendEarlyWarningNotification::dispatch(
             $pelanggaran->id_pelanggaran,
             $pesan,
             $aksi,
-        )->delay(now()->addMinutes(self::GRACE_PERIOD_MINUTES));
+        )->delay(now()->addMinutes($grace));
     }
 
     /**
      * Dipanggil saat pelanggaran diedit.
-     * Batalkan notif pending lama, lalu evaluasi ulang dengan data baru.
+     * Batalkan notif pending lama, evaluasi ulang dengan data baru.
      */
     public function recheck(Pelanggaran $pelanggaran): void
     {
-        // Batalkan semua notif pending terkait pelanggaran ini
-        // (job lama akan lihat status 'dibatalkan' dan tidak akan kirim)
         Notifikasi::where('id_pelanggaran', $pelanggaran->id_pelanggaran)
             ->where('status', 'pending')
             ->update(['status' => 'dibatalkan']);
 
-        // Muat ulang relasi setelah update
         $pelanggaran->load(['siswa.waliMurid.pengguna', 'waliKelas.pengguna', 'jenisPelanggaran']);
 
-        // Evaluasi ulang dengan data pelanggaran yang sudah diedit
         $this->check($pelanggaran);
     }
 
     /**
      * Dipanggil saat pelanggaran dihapus (soft delete).
-     * Batalkan semua notif pending — tidak perlu kirim notif.
+     * Batalkan semua notif pending.
      */
     public function cancel(Pelanggaran $pelanggaran): void
     {
@@ -95,7 +93,7 @@ class EarlyWarningService
             ->update(['status' => 'dibatalkan']);
     }
 
-    // ── Private helpers ─────────────────────────────────────────────────────
+    // ── Helpers ─────────────────────────────────────────────────────────────
 
     public function tentukanAksi(string $tingkat, int $total): ?string
     {
@@ -126,18 +124,15 @@ class EarlyWarningService
     {
         $ids = [];
 
-        // 1. Semua guru BK
         $guruBK = Pengguna::whereHas('role', fn($q) => $q->where('nama_role', 'guru_bk'))
                     ->pluck('id_pengguna')->toArray();
         $ids = array_merge($ids, $guruBK);
 
-        // 2. Wali kelas
         $wkPengguna = optional($pelanggaran->waliKelas)->pengguna;
         if ($wkPengguna) {
             $ids[] = $wkPengguna->id_pengguna;
         }
 
-        // 3. Orang tua
         $orangTua = optional($siswa->waliMurid)->pengguna ?? null;
         if ($orangTua) {
             $ids[] = $orangTua->id_pengguna;

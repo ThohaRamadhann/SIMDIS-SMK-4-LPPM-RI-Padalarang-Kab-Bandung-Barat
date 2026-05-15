@@ -62,11 +62,11 @@ class PelanggaranController extends Controller
             'jenisPelanggaran',
         ]);
 
-        // EWS: simpan notif pending + dispatch job dengan delay 15 menit
+        // EWS: simpan notif pending + dispatch job dengan delay 10 menit
         $this->ews->check($pelanggaran);
 
         return redirect()->route('pelanggaran.index')
-            ->with('success', 'Pelanggaran berhasil ditambahkan. Notifikasi akan dikirim dalam 15 menit jika tidak ada koreksi.');
+            ->with('success', 'Pelanggaran berhasil ditambahkan. Notifikasi akan dikirim dalam 10 menit jika tidak ada koreksi.');
     }
 
     // ── Edit ──────────────────────────────────────────────────────────────
