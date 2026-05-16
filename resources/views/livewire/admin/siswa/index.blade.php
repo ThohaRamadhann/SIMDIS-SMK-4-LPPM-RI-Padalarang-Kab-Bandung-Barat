@@ -2,10 +2,11 @@
 
     {{-- SUCCESS NOTIFICATION --}}
     @if (session()->has('success'))
-        <div class="flex items-center gap-3 bg-green-50 border border-green-200
+        <div
+            class="flex items-center gap-3 bg-green-50 border border-green-200
                    text-green-700 px-3 py-2 rounded-xl shadow-sm">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
             <span class="text-sm font-medium">{{ session('success') }}</span>
         </div>
@@ -27,20 +28,22 @@
 
                     <div>
                         <label class="text-xs font-semibold text-[#0D2D6B]">Nama Siswa *</label>
-                        <input type="text" wire:model="nama"
-                            placeholder="Masukkan nama siswa"
+                        <input type="text" wire:model="nama" placeholder="Masukkan nama siswa"
                             class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                    focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
-                        @error('nama') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        @error('nama')
+                            <span class="text-xs text-red-500">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div>
                         <label class="text-xs font-semibold text-[#0D2D6B]">NIS *</label>
-                        <input type="text" wire:model="nis"
-                            placeholder="Nomor Induk Siswa"
+                        <input type="text" wire:model="nis" placeholder="Nomor Induk Siswa"
                             class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                    focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
-                        @error('nis') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        @error('nis')
+                            <span class="text-xs text-red-500">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div>
@@ -49,27 +52,120 @@
                             class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                    focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
                             <option value="">-- Pilih Kelas --</option>
-                            @foreach($kelas as $k)
+                            @foreach ($kelas as $k)
                                 <option value="{{ $k->id_kelas }}">{{ $k->nama_kelas }}</option>
                             @endforeach
                         </select>
-                        @error('id_kelas') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        @error('id_kelas')
+                            <span class="text-xs text-red-500">{{ $message }}</span>
+                        @enderror
                     </div>
 
-                    <div>
-                        <label class="text-xs font-semibold text-[#0D2D6B]">Wali Murid *</label>
-                        <select wire:model="id_walimurid"
-                            class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
-                                   focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
-                            <option value="">-- Pilih Wali Murid --</option>
-                            @foreach($wali as $w)
-                                <option value="{{ $w->id_walimurid }}">
-                                    {{ optional($w->pengguna)->name ?? '-' }}
-                                    {{ $w->hubungan ? '(' . $w->hubungan . ')' : '' }}
-                                </option>
+                    <div x-data="{
+                        open: false,
+                        search: '',
+                        selected: @entangle('id_walimurid'),
+                    
+                        get filteredWali() {
+                            return this.walis.filter(w =>
+                                w.name.toLowerCase().includes(this.search.toLowerCase())
+                            )
+                        },
+                    
+                        walis: [
+                            @foreach($wali as $w) {
+                                id: {{ $w->id_walimurid }},
+                                name: '{{ optional($w->pengguna)->name ?? '-' }} {{ $w->hubungan ? '(' . $w->hubungan . ')' : '' }}'
+                            },
                             @endforeach
-                        </select>
-                        @error('id_walimurid') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        ],
+                    
+                        selectedName() {
+                            const found = this.walis.find(w => w.id == this.selected)
+                            return found ? found.name : '-- Pilih Wali Murid --'
+                        }
+                    }" class="relative">
+
+                        <label class="text-xs font-semibold text-[#0D2D6B]">
+                            Wali Murid *
+                        </label>
+
+                        {{-- INPUT --}}
+                        <button type="button" @click="open = !open"
+                            class="mt-0.5 w-full h-10 px-3
+               rounded-lg border border-gray-200
+               bg-gray-50 text-left text-sm
+               flex items-center justify-between
+               hover:bg-white
+               focus:border-[#F5B800]
+               transition">
+
+                            <span class="truncate" :class="selected ? 'text-gray-700' : 'text-gray-400'"
+                                x-text="selectedName()">
+                            </span>
+
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        {{-- DROPDOWN --}}
+                        <div x-show="open" @click.outside="open = false" x-transition
+                            class="absolute z-50 mt-2 w-full
+               bg-white border border-gray-200
+               rounded-xl shadow-xl overflow-hidden"
+                            style="display:none">
+
+                            {{-- SEARCH --}}
+                            <div class="p-2 border-b border-gray-100">
+
+                                <input type="text" x-model="search" placeholder="Cari nama wali murid..."
+                                    class="w-full h-9 px-3 text-sm
+                       rounded-lg border border-gray-200
+                       bg-gray-50
+                       focus:bg-white
+                       focus:border-[#F5B800]
+                       outline-none transition">
+                            </div>
+
+                            {{-- LIST --}}
+                            <div class="max-h-56 overflow-y-auto">
+
+                                <template x-if="filteredWali.length === 0">
+                                    <div class="px-3 py-4 text-sm text-gray-400 text-center">
+                                        Wali murid tidak ditemukan
+                                    </div>
+                                </template>
+
+                                <template x-for="wali in filteredWali" :key="wali.id">
+
+                                    <button type="button"
+                                        @click="
+                        selected = wali.id;
+                        open = false;
+                        search = '';
+                    "
+                                        class="w-full px-3 py-2.5
+                           text-left text-sm
+                           hover:bg-[#F0F4FB]
+                           transition
+                           border-b border-gray-50">
+
+                                        <span x-text="wali.name"></span>
+                                    </button>
+
+                                </template>
+
+                            </div>
+                        </div>
+
+                        @error('id_walimurid')
+                            <span class="text-xs text-red-500">
+                                {{ $message }}
+                            </span>
+                        @enderror
                     </div>
 
                     <div>
@@ -105,7 +201,8 @@
                     </div>
 
                     {{-- Catatan --}}
-                    <ul class="mt-2 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3
+                    <ul
+                        class="mt-2 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3
                                text-xs text-[#4A5E8A] space-y-1 list-none">
                         <li><span class="text-[#F5B800] font-bold">•</span> Pastikan wali murid sudah terdaftar</li>
                         <li><span class="text-[#F5B800] font-bold">•</span> NIS harus unik per siswa</li>
@@ -143,7 +240,8 @@
                             <i class="fas {{ $showTrash ? 'fa-arrow-left' : 'fa-trash-can' }}"></i>
                             {{ $showTrash ? 'Kembali' : 'Sampah' }}
                             @if (!$showTrash && $trashCount > 0)
-                                <span class="ml-1 bg-red-500 text-white text-[10px] font-bold
+                                <span
+                                    class="ml-1 bg-red-500 text-white text-[10px] font-bold
                                              px-1.5 py-0.5 rounded-full leading-none">
                                     {{ $trashCount }}
                                 </span>
@@ -158,15 +256,15 @@
 
                         {{-- Search --}}
                         <div class="col-span-2 relative">
-                            <input type="text"
-                                wire:model.live.debounce.300ms="search"
+                            <input type="text" wire:model.live.debounce.300ms="search"
                                 placeholder="Cari nama atau NIS..."
                                 class="w-full h-9 pl-8 pr-8 text-xs rounded-lg border border-gray-200
                                        bg-gray-50 focus:bg-white focus:border-[#F5B800]
                                        focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
-                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2
+                            <i
+                                class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2
                                       text-gray-400 text-xs pointer-events-none"></i>
-                            @if($search)
+                            @if ($search)
                                 <button wire:click="$set('search','')"
                                     class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                                     <i class="fas fa-xmark text-xs"></i>
@@ -219,7 +317,7 @@
 
                     </div>
                 @else
-                    @if($trashCount > 0)
+                    @if ($trashCount > 0)
                         <div class="flex justify-end mb-3">
                             <button wire:click="emptyTrash"
                                 wire:confirm="Hapus SEMUA siswa di tong sampah secara permanen? Tidak bisa dikembalikan."
@@ -259,7 +357,8 @@
 
                                     <td class="px-3 py-2">
                                         <div class="flex items-center gap-2">
-                                            <div style="width:24px;height:24px;border-radius:50%;flex-shrink:0;
+                                            <div
+                                                style="width:24px;height:24px;border-radius:50%;flex-shrink:0;
                                                         background:linear-gradient(135deg,#0D2D6B,#163580);
                                                         color:#F5B800;font-size:10px;font-weight:700;
                                                         display:flex;align-items:center;justify-content:center;">
@@ -267,8 +366,9 @@
                                             </div>
                                             <span class="font-semibold text-[#0D2D6B] text-xs">
                                                 {{ $s->nama }}
-                                                @if($s->trashed())
-                                                    <span style="font-size:10px;color:#DC2626;background:rgba(229,62,62,0.08);
+                                                @if ($s->trashed())
+                                                    <span
+                                                        style="font-size:10px;color:#DC2626;background:rgba(229,62,62,0.08);
                                                                  padding:1px 6px;border-radius:20px;margin-left:4px;font-weight:600;">
                                                         Dihapus
                                                     </span>
@@ -280,12 +380,12 @@
                                     <td class="px-3 py-2 text-gray-500 text-xs">{{ $s->nis }}</td>
 
                                     <td class="px-3 py-2 text-gray-600 text-xs">
-                                        @if($s->kelas)
+                                        @if ($s->kelas)
                                             <div class="flex flex-col">
                                                 <span class="font-medium text-[#0D2D6B]">
                                                     {{ $s->kelas->nama_kelas }}
                                                 </span>
-                                    
+
                                                 <span class="text-[11px] text-gray-700">
                                                     {{ $s->kelas->tingkat }}
                                                     {{ $s->kelas->jurusan }}
@@ -302,10 +402,9 @@
                                     </td>
 
                                     <td class="px-3 py-2">
-                                        <span class="text-[10px] font-semibold px-2 py-1 rounded-full
-                                            {{ $s->status === 'aktif'
-                                                ? 'bg-green-50 text-green-600'
-                                                : 'bg-red-50 text-red-500' }}">
+                                        <span
+                                            class="text-[10px] font-semibold px-2 py-1 rounded-full
+                                            {{ $s->status === 'aktif' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500' }}">
                                             {{ ucfirst($s->status) }}
                                         </span>
                                     </td>
@@ -313,8 +412,7 @@
                                     <td class="px-3 py-2 text-center whitespace-nowrap">
                                         @if ($showTrash)
                                             <button wire:click="restore({{ $s->id_siswa }})"
-                                                class="text-xs font-semibold mr-2 transition"
-                                                style="color:#276749;">
+                                                class="text-xs font-semibold mr-2 transition" style="color:#276749;">
                                                 <i class="fas fa-rotate-left"></i> Pulihkan
                                             </button>
                                             <button wire:click="forceDelete({{ $s->id_siswa }})"
@@ -341,7 +439,8 @@
                             @empty
                                 <tr>
                                     <td colspan="7" class="text-center py-8 text-gray-400 text-xs">
-                                        <i class="fas fa-{{ $showTrash ? 'trash' : 'user-graduate' }} block text-2xl mb-2 opacity-25"></i>
+                                        <i
+                                            class="fas fa-{{ $showTrash ? 'trash' : 'user-graduate' }} block text-2xl mb-2 opacity-25"></i>
                                         {{ $showTrash ? 'Tong sampah kosong.' : 'Tidak ada siswa ditemukan.' }}
                                     </td>
                                 </tr>
@@ -371,10 +470,7 @@
                             @endif
 
                             {{-- Nomor halaman --}}
-                            @foreach ($dataSiswa->getUrlRange(
-                                max(1, $dataSiswa->currentPage() - 2),
-                                min($dataSiswa->lastPage(), $dataSiswa->currentPage() + 2)
-                            ) as $page => $url)
+                            @foreach ($dataSiswa->getUrlRange(max(1, $dataSiswa->currentPage() - 2), min($dataSiswa->lastPage(), $dataSiswa->currentPage() + 2)) as $page => $url)
                                 @if ($page == $dataSiswa->currentPage())
                                     <span class="simdis-page-btn simdis-page-active">{{ $page }}</span>
                                 @else

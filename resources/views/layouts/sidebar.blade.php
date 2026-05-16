@@ -341,6 +341,14 @@
             </a>
         @endif
 
+        @if ($role === 'guru_bk')
+            <a href="{{ route('jenis-pelanggaran') }}"
+                class="simdis-nav-link {{ request()->routeIs('jenis-pelanggaran') ? 'active' : '' }}">
+                <i class="fas fa-list-alt simdis-nav-icon"></i>
+                Jenis Pelanggaran
+            </a>
+        @endif
+
         {{-- Administrasi Sistem (admin only) --}}
         @if ($role === 'admin')
             <div class="simdis-section-label">Administrasi Sistem</div>

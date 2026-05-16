@@ -25,48 +25,73 @@
     @endif
 
     {{-- RINGKASAN STATUS (hanya guru_bk & wali_kelas) --}}
-    @if(in_array($role, ['guru_bk', 'wali_kelas']))
-        <div class="grid grid-cols-3 gap-3">
+@if(in_array($role, ['guru_bk', 'wali_kelas']))
+<div class="grid grid-cols-3 gap-2 sm:gap-3">
 
-            <button wire:click="$set('filterStatus', '')"
-                    class="flex items-center gap-3 bg-white border rounded-xl px-4 py-3 text-left
-                           hover:shadow-md transition-shadow
-                           {{ $filterStatus === '' ? 'border-[#0D2D6B] ring-2 ring-[#0D2D6B]/10' : 'border-gray-100' }}">
-                <div class="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-base flex-shrink-0">📋</div>
-                <div>
-                    <div class="text-[11px] font-600 text-gray-500 uppercase tracking-wide">Semua</div>
-                    <div class="text-xl font-bold text-[#0D2D6B]">{{ $pelanggarans->total() }}</div>
-                </div>
-            </button>
-
-            <button wire:click="$set('filterStatus', 'Belum Ditindak')"
-                    class="flex items-center gap-3 bg-white border rounded-xl px-4 py-3 text-left
-                           hover:shadow-md transition-shadow
-                           {{ $filterStatus === 'Belum Ditindak' ? 'border-red-400 ring-2 ring-red-100' : 'border-gray-100' }}">
-                <div class="w-9 h-9 rounded-lg bg-red-100 flex items-center justify-center text-base flex-shrink-0">⏳</div>
-                <div>
-                    <div class="text-[11px] font-600 text-gray-500 uppercase tracking-wide">Belum Ditindak</div>
-                    <div class="text-xl font-bold text-red-600">
-                        {{ $pelanggarans->getCollection()->where('status_pembinaan', 'Belum Ditindak')->count() }}
-                    </div>
-                </div>
-            </button>
-
-            <button wire:click="$set('filterStatus', 'Dalam Proses')"
-                    class="flex items-center gap-3 bg-white border rounded-xl px-4 py-3 text-left
-                           hover:shadow-md transition-shadow
-                           {{ $filterStatus === 'Dalam Proses' ? 'border-yellow-400 ring-2 ring-yellow-100' : 'border-gray-100' }}">
-                <div class="w-9 h-9 rounded-lg bg-yellow-100 flex items-center justify-center text-base flex-shrink-0">🔄</div>
-                <div>
-                    <div class="text-[11px] font-600 text-gray-500 uppercase tracking-wide">Dalam Proses</div>
-                    <div class="text-xl font-bold text-yellow-600">
-                        {{ $pelanggarans->getCollection()->where('status_pembinaan', 'Dalam Proses')->count() }}
-                    </div>
-                </div>
-            </button>
-
+    {{-- SEMUA --}}
+    <button wire:click="$set('filterStatus', '')"
+            class="flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-3
+                   bg-white border rounded-xl px-2 sm:px-4 py-3 text-center sm:text-left
+                   hover:shadow-md transition-shadow
+                   {{ $filterStatus === '' ? 'border-[#0D2D6B] ring-2 ring-[#0D2D6B]/10' : 'border-gray-100' }}">
+        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-gray-100
+                    flex items-center justify-center text-sm sm:text-base flex-shrink-0">
+            📋
         </div>
-    @endif
+        <div>
+            <div class="text-[9px] sm:text-[11px] font-semibold text-gray-500 uppercase tracking-wide leading-tight">
+                Semua
+            </div>
+            <div class="text-lg sm:text-xl font-bold text-[#0D2D6B]">
+                {{ $pelanggarans->total() }}
+            </div>
+        </div>
+    </button>
+
+    {{-- BELUM DITINDAK --}}
+    <button wire:click="$set('filterStatus', 'Belum Ditindak')"
+            class="flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-3
+                   bg-white border rounded-xl px-2 sm:px-4 py-3 text-center sm:text-left
+                   hover:shadow-md transition-shadow
+                   {{ $filterStatus === 'Belum Ditindak' ? 'border-red-400 ring-2 ring-red-100' : 'border-gray-100' }}">
+        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-red-100
+                    flex items-center justify-center text-sm sm:text-base flex-shrink-0">
+            ⏳
+        </div>
+        <div>
+            <div class="text-[9px] sm:text-[11px] font-semibold text-gray-500 uppercase tracking-wide leading-tight">
+                <span class="sm:hidden">Belum</span>
+                <span class="hidden sm:inline">Belum Ditindak</span>
+            </div>
+            <div class="text-lg sm:text-xl font-bold text-red-600">
+                {{ $pelanggarans->getCollection()->where('status_pembinaan', 'Belum Ditindak')->count() }}
+            </div>
+        </div>
+    </button>
+
+    {{-- DALAM PROSES --}}
+    <button wire:click="$set('filterStatus', 'Dalam Proses')"
+            class="flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-3
+                   bg-white border rounded-xl px-2 sm:px-4 py-3 text-center sm:text-left
+                   hover:shadow-md transition-shadow
+                   {{ $filterStatus === 'Dalam Proses' ? 'border-yellow-400 ring-2 ring-yellow-100' : 'border-gray-100' }}">
+        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-yellow-100
+                    flex items-center justify-center text-sm sm:text-base flex-shrink-0">
+            🔄
+        </div>
+        <div>
+            <div class="text-[9px] sm:text-[11px] font-semibold text-gray-500 uppercase tracking-wide leading-tight">
+                <span class="sm:hidden">Proses</span>
+                <span class="hidden sm:inline">Dalam Proses</span>
+            </div>
+            <div class="text-lg sm:text-xl font-bold text-yellow-600">
+                {{ $pelanggarans->getCollection()->where('status_pembinaan', 'Dalam Proses')->count() }}
+            </div>
+        </div>
+    </button>
+
+</div>
+@endif
 
     {{-- FILTER --}}
     <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-4">

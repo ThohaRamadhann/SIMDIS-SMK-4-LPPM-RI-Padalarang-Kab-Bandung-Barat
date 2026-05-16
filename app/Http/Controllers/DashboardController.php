@@ -58,7 +58,8 @@ class DashboardController extends Controller
                     'data'   => $bulanData,
                 ],
                 'siswa_per_kelas' => [
-                    'labels' => $kelasData->map(fn ($k) =>
+                    'labels' => $kelasData->map(
+                        fn($k) =>
                         $k->nama_kelas . ($k->jurusan ? ' ' . $k->jurusan : '')
                     )->toArray(),
                     'data' => $kelasData->pluck('siswa_count')->toArray(),
@@ -80,7 +81,8 @@ class DashboardController extends Controller
                     'icon'    => '👨‍👩‍👧',
                     'judul'   => 'Siswa Belum Punya Wali Murid',
                     'jumlah'  => $siswaTanpaWali->count(),
-                    'detail'  => $siswaTanpaWali->take(5)->map(fn ($s) =>
+                    'detail'  => $siswaTanpaWali->take(5)->map(
+                        fn($s) =>
                         $s->nama . ($s->nis ? ' (NIS: ' . $s->nis . ')' : '')
                     )->toArray(),
                     'ada_lagi' => max(0, $siswaTanpaWali->count() - 5),
@@ -98,7 +100,8 @@ class DashboardController extends Controller
                     'icon'    => '🏫',
                     'judul'   => 'Siswa Belum Masuk Kelas',
                     'jumlah'  => $siswaTanpaKelas->count(),
-                    'detail'  => $siswaTanpaKelas->take(5)->map(fn ($s) =>
+                    'detail'  => $siswaTanpaKelas->take(5)->map(
+                        fn($s) =>
                         $s->nama . ($s->nis ? ' (NIS: ' . $s->nis . ')' : '')
                     )->toArray(),
                     'ada_lagi' => max(0, $siswaTanpaKelas->count() - 5),
@@ -108,9 +111,11 @@ class DashboardController extends Controller
 
             // 3. Akun orang tua belum terhubung ke data wali murid
             $idSudahAdaWaliMurid = WaliMurid::pluck('id_pengguna')->toArray();
-            $orangTuaBelumTerhubung = Pengguna::whereHas('role', fn ($q) =>
-                    $q->where('nama_role', 'orang_tua')
-                )
+            $orangTuaBelumTerhubung = Pengguna::whereHas(
+                'role',
+                fn($q) =>
+                $q->where('nama_role', 'orang_tua')
+            )
                 ->whereNotIn('id_pengguna', $idSudahAdaWaliMurid)
                 ->get(['id_pengguna', 'name', 'username']);
             if ($orangTuaBelumTerhubung->isNotEmpty()) {
@@ -119,7 +124,8 @@ class DashboardController extends Controller
                     'icon'    => '🔗',
                     'judul'   => 'Akun Orang Tua Belum Terhubung',
                     'jumlah'  => $orangTuaBelumTerhubung->count(),
-                    'detail'  => $orangTuaBelumTerhubung->take(5)->map(fn ($p) =>
+                    'detail'  => $orangTuaBelumTerhubung->take(5)->map(
+                        fn($p) =>
                         $p->name . ' (@' . $p->username . ')'
                     )->toArray(),
                     'ada_lagi' => max(0, $orangTuaBelumTerhubung->count() - 5),
@@ -138,7 +144,8 @@ class DashboardController extends Controller
                     'icon'    => '📱',
                     'judul'   => 'Nomor Telepon Kosong',
                     'jumlah'  => $tanpaNoTelpon->count(),
-                    'detail'  => $tanpaNoTelpon->take(5)->map(fn ($p) =>
+                    'detail'  => $tanpaNoTelpon->take(5)->map(
+                        fn($p) =>
                         $p->name . ' (' . (optional($p->role)->nama_role ?? '-') . ')'
                     )->toArray(),
                     'ada_lagi' => max(0, $tanpaNoTelpon->count() - 5),
@@ -158,9 +165,10 @@ class DashboardController extends Controller
                     'icon'    => '⚠️',
                     'judul'   => 'Potensi Data Duplikat Siswa',
                     'jumlah'  => $duplikat->count(),
-                    'detail'  => $duplikat->take(5)->map(fn ($d) =>
+                    'detail'  => $duplikat->take(5)->map(
+                        fn($d) =>
                         $d->nama . ' — ' . (optional($d->kelas)->nama_kelas ?? 'Tanpa Kelas') .
-                        ' (' . $d->total . 'x)'
+                            ' (' . $d->total . 'x)'
                     )->toArray(),
                     'ada_lagi' => max(0, $duplikat->count() - 5),
                     'link'    => route('siswa'),
@@ -180,7 +188,8 @@ class DashboardController extends Controller
                     'icon'    => '👨‍🏫',
                     'judul'   => 'Wali Kelas Belum Mengampu Kelas',
                     'jumlah'  => $waliKelasTanpaKelas->count(),
-                    'detail'  => $waliKelasTanpaKelas->take(5)->map(fn ($wk) =>
+                    'detail'  => $waliKelasTanpaKelas->take(5)->map(
+                        fn($wk) =>
                         optional($wk->pengguna)->name ?? 'Tidak diketahui'
                     )->toArray(),
                     'ada_lagi' => max(0, $waliKelasTanpaKelas->count() - 5),
@@ -199,7 +208,8 @@ class DashboardController extends Controller
                     'icon'    => '🪪',
                     'judul'   => 'NUPTK Wali Kelas Kosong',
                     'jumlah'  => $waliKelasTanpaNuptk->count(),
-                    'detail'  => $waliKelasTanpaNuptk->take(5)->map(fn ($wk) =>
+                    'detail'  => $waliKelasTanpaNuptk->take(5)->map(
+                        fn($wk) =>
                         optional($wk->pengguna)->name ?? 'Tidak diketahui'
                     )->toArray(),
                     'ada_lagi' => max(0, $waliKelasTanpaNuptk->count() - 5),
@@ -216,19 +226,19 @@ class DashboardController extends Controller
 
         if ($role === 'wali_kelas') {
             $idWaliKelas = optional($user->waliKelas)->id_walikelas;
-            $baseQuery   = fn () => Pelanggaran::where('id_walikelas', $idWaliKelas);
+            $baseQuery   = fn() => Pelanggaran::where('id_walikelas', $idWaliKelas);
             $kelas       = Kelas::where('id_walikelas', $idWaliKelas)->first();
             $jumlahSiswa = $kelas ? Siswa::where('id_kelas', $kelas->id_kelas)->count() : 0;
-
         } elseif ($role === 'orang_tua') {
             $idWaliMurid = optional($user->waliMurid)->id_walimurid;
-            $baseQuery   = fn () => Pelanggaran::whereHas('siswa', fn ($q) =>
+            $baseQuery   = fn() => Pelanggaran::whereHas(
+                'siswa',
+                fn($q) =>
                 $q->where('id_walimurid', $idWaliMurid)
             );
-
         } else {
             // guru_bk
-            $baseQuery   = fn () => Pelanggaran::query();
+            $baseQuery   = fn() => Pelanggaran::query();
             $jumlahSiswa = Siswa::count();
         }
 
@@ -274,10 +284,16 @@ class DashboardController extends Controller
             ->get();
 
         $charts['jenis'] = [
-            'labels' => $jenisPelanggaran->map(fn ($p) =>
+            'labels'  => $jenisPelanggaran->map(
+                fn($p) =>
                 optional($p->jenisPelanggaran)->nama_pelanggaran ?? 'Tidak diketahui'
             )->toArray(),
-            'data' => $jenisPelanggaran->pluck('total')->toArray(),
+            'data'    => $jenisPelanggaran->pluck('total')->toArray(),
+            // ← tambahkan ini
+            'tingkat' => $jenisPelanggaran->map(
+                fn($p) =>
+                optional($p->jenisPelanggaran)->tingkat_pelanggaran ?? 'Ringan'
+            )->toArray(),
         ];
 
         $kelengkapan = [];

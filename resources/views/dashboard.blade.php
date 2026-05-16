@@ -19,10 +19,12 @@
             gap: 1rem;
             transition: transform 0.18s ease, box-shadow 0.18s ease;
         }
+
         .dash-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 24px rgba(13, 45, 107, 0.13);
         }
+
         .dash-card-icon {
             width: 52px;
             height: 52px;
@@ -33,6 +35,7 @@
             font-size: 1.4rem;
             flex-shrink: 0;
         }
+
         .dash-card-label {
             font-size: 0.72rem;
             font-weight: 600;
@@ -41,17 +44,20 @@
             letter-spacing: 0.05em;
             margin-bottom: 0.2rem;
         }
+
         .dash-card-value {
             font-size: 1.9rem;
             font-weight: 800;
             color: #0D2D6B;
             line-height: 1;
         }
+
         .dash-card-sub {
             font-size: 0.72rem;
             color: #718096;
             margin-top: 0.25rem;
         }
+
         .chart-card {
             background: #fff;
             border-radius: 14px;
@@ -59,17 +65,20 @@
             box-shadow: 0 2px 12px rgba(13, 45, 107, 0.08);
             border: 1px solid rgba(13, 45, 107, 0.07);
         }
+
         .chart-title {
             font-size: 0.9rem;
             font-weight: 700;
             color: #0D2D6B;
             margin-bottom: 0.2rem;
         }
+
         .chart-subtitle {
             font-size: 0.72rem;
             color: #718096;
             margin-bottom: 1rem;
         }
+
         .section-label {
             font-size: 0.7rem;
             font-weight: 700;
@@ -78,6 +87,7 @@
             color: #4A5E8A;
             margin-bottom: 0.75rem;
         }
+
         .trend-badge {
             display: inline-flex;
             align-items: center;
@@ -87,9 +97,21 @@
             padding: 0.2rem 0.55rem;
             border-radius: 20px;
         }
-        .trend-up   { background: #ffe4e4; color: #c53030; }
-        .trend-down { background: #e6ffed; color: #276749; }
-        .trend-same { background: #f0f4fb; color: #4A5E8A; }
+
+        .trend-up {
+            background: #ffe4e4;
+            color: #c53030;
+        }
+
+        .trend-down {
+            background: #e6ffed;
+            color: #276749;
+        }
+
+        .trend-same {
+            background: #f0f4fb;
+            color: #4A5E8A;
+        }
 
         /* ── Kelengkapan Data ── */
         .kelengkapan-card {
@@ -100,9 +122,11 @@
             overflow: hidden;
             transition: box-shadow 0.18s ease;
         }
+
         .kelengkapan-card:hover {
             box-shadow: 0 6px 20px rgba(13, 45, 107, 0.13);
         }
+
         .kelengkapan-header {
             display: flex;
             align-items: center;
@@ -112,6 +136,7 @@
             user-select: none;
             gap: 0.75rem;
         }
+
         .kelengkapan-header-left {
             display: flex;
             align-items: center;
@@ -119,6 +144,7 @@
             flex: 1;
             min-width: 0;
         }
+
         .kelengkapan-icon-wrap {
             width: 38px;
             height: 38px;
@@ -129,17 +155,20 @@
             font-size: 1.1rem;
             flex-shrink: 0;
         }
+
         .kelengkapan-judul {
             font-size: 0.83rem;
             font-weight: 700;
             color: #1a202c;
             line-height: 1.3;
         }
+
         .kelengkapan-sub {
             font-size: 0.7rem;
             color: #718096;
             margin-top: 0.1rem;
         }
+
         .kelengkapan-badge {
             font-size: 0.72rem;
             font-weight: 700;
@@ -147,23 +176,28 @@
             border-radius: 20px;
             flex-shrink: 0;
         }
+
         .kelengkapan-chevron {
             flex-shrink: 0;
             transition: transform 0.2s ease;
             color: #a0aec0;
             font-size: 0.75rem;
         }
+
         .kelengkapan-card.open .kelengkapan-chevron {
             transform: rotate(180deg);
         }
+
         .kelengkapan-body {
             display: none;
             border-top: 1px solid #f0f4fb;
             padding: 0.75rem 1.1rem 1rem;
         }
+
         .kelengkapan-card.open .kelengkapan-body {
             display: block;
         }
+
         .kelengkapan-item {
             display: flex;
             align-items: center;
@@ -173,20 +207,24 @@
             color: #2d3748;
             border-bottom: 1px dashed #f0f4fb;
         }
+
         .kelengkapan-item:last-child {
             border-bottom: none;
         }
+
         .kelengkapan-item::before {
             content: '•';
             color: #a0aec0;
             flex-shrink: 0;
         }
+
         .kelengkapan-more {
             font-size: 0.72rem;
             color: #718096;
             margin-top: 0.5rem;
             font-style: italic;
         }
+
         .kelengkapan-link {
             display: inline-flex;
             align-items: center;
@@ -201,23 +239,51 @@
             border-radius: 6px;
             transition: background 0.15s, color 0.15s;
         }
+
         .kelengkapan-link:hover {
             background: #0D2D6B;
             color: #fff;
         }
 
         /* Tipe warna */
-        .tipe-warning .kelengkapan-icon-wrap { background: #fff8e1; }
-        .tipe-warning .kelengkapan-badge     { background: #fff8e1; color: #b7791f; }
-        .tipe-warning .kelengkapan-header    { border-left: 4px solid #F5B800; }
+        .tipe-warning .kelengkapan-icon-wrap {
+            background: #fff8e1;
+        }
 
-        .tipe-danger .kelengkapan-icon-wrap  { background: #fff0f0; }
-        .tipe-danger .kelengkapan-badge      { background: #fff0f0; color: #c53030; }
-        .tipe-danger .kelengkapan-header     { border-left: 4px solid #fc8181; }
+        .tipe-warning .kelengkapan-badge {
+            background: #fff8e1;
+            color: #b7791f;
+        }
 
-        .tipe-info .kelengkapan-icon-wrap    { background: #ebf8ff; }
-        .tipe-info .kelengkapan-badge        { background: #ebf8ff; color: #2b6cb0; }
-        .tipe-info .kelengkapan-header       { border-left: 4px solid #63b3ed; }
+        .tipe-warning .kelengkapan-header {
+            border-left: 4px solid #F5B800;
+        }
+
+        .tipe-danger .kelengkapan-icon-wrap {
+            background: #fff0f0;
+        }
+
+        .tipe-danger .kelengkapan-badge {
+            background: #fff0f0;
+            color: #c53030;
+        }
+
+        .tipe-danger .kelengkapan-header {
+            border-left: 4px solid #fc8181;
+        }
+
+        .tipe-info .kelengkapan-icon-wrap {
+            background: #ebf8ff;
+        }
+
+        .tipe-info .kelengkapan-badge {
+            background: #ebf8ff;
+            color: #2b6cb0;
+        }
+
+        .tipe-info .kelengkapan-header {
+            border-left: 4px solid #63b3ed;
+        }
 
         /* Semua data lengkap */
         .kelengkapan-ok {
@@ -354,7 +420,6 @@
                             </div>
                         @endforeach
                     </div>
-
                 @else
                     <div class="kelengkapan-ok">
                         <div style="font-size:2.5rem;margin-bottom:.5rem">✅</div>
@@ -386,11 +451,10 @@
                 </div>
             </div>
 
-        {{-- ══════════════════════════════════════════════════
+            {{-- ══════════════════════════════════════════════════
              ORANG TUA
         ══════════════════════════════════════════════════ --}}
         @elseif ($role === 'orang_tua')
-
             <div>
                 <p class="section-label">Ringkasan Pelanggaran Anak</p>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -436,13 +500,19 @@
                             </div>
                             @php
                                 $d = $charts['bulanan']['data'];
-                                $last = end($d); $prev = count($d) >= 2 ? $d[count($d)-2] : 0;
+                                $last = end($d);
+                                $prev = count($d) >= 2 ? $d[count($d) - 2] : 0;
                                 $diff = $last - $prev;
                             @endphp
-                            <span class="trend-badge {{ $diff > 0 ? 'trend-up' : ($diff < 0 ? 'trend-down' : 'trend-same') }}">
-                                @if ($diff > 0) ▲ Naik {{ $diff }}
-                                @elseif ($diff < 0) ▼ Turun {{ abs($diff) }}
-                                @else → Sama @endif vs bulan lalu
+                            <span
+                                class="trend-badge {{ $diff > 0 ? 'trend-up' : ($diff < 0 ? 'trend-down' : 'trend-same') }}">
+                                @if ($diff > 0)
+                                    ▲ Naik {{ $diff }}
+                                @elseif ($diff < 0)
+                                    ▼ Turun {{ abs($diff) }}
+                                @else
+                                    → Sama
+                                @endif vs bulan lalu
                             </span>
                         </div>
                         <div id="chartBulanan"></div>
@@ -455,11 +525,10 @@
                 </div>
             </div>
 
-        {{-- ══════════════════════════════════════════════════
+            {{-- ══════════════════════════════════════════════════
              GURU BK & WALI KELAS
         ══════════════════════════════════════════════════ --}}
         @else
-
             <div>
                 <p class="section-label">Ringkasan Data</p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -516,13 +585,19 @@
                             </div>
                             @php
                                 $d = $charts['bulanan']['data'];
-                                $last = end($d); $prev = count($d) >= 2 ? $d[count($d)-2] : 0;
+                                $last = end($d);
+                                $prev = count($d) >= 2 ? $d[count($d) - 2] : 0;
                                 $diff = $last - $prev;
                             @endphp
-                            <span class="trend-badge {{ $diff > 0 ? 'trend-up' : ($diff < 0 ? 'trend-down' : 'trend-same') }}">
-                                @if ($diff > 0) ▲ Naik {{ $diff }}
-                                @elseif ($diff < 0) ▼ Turun {{ abs($diff) }}
-                                @else → Sama @endif vs bulan lalu
+                            <span
+                                class="trend-badge {{ $diff > 0 ? 'trend-up' : ($diff < 0 ? 'trend-down' : 'trend-same') }}">
+                                @if ($diff > 0)
+                                    ▲ Naik {{ $diff }}
+                                @elseif ($diff < 0)
+                                    ▼ Turun {{ abs($diff) }}
+                                @else
+                                    → Sama
+                                @endif vs bulan lalu
                             </span>
                         </div>
                         <div id="chartBulanan"></div>
@@ -549,23 +624,22 @@
             card.classList.toggle('open');
         }
     
-        // ── ApexCharts ──
+        // ── ApexCharts globals ──
         const navyColor = '#0D2D6B';
         const goldColor = '#F5B800';
         const gridColor = '#f0f4fb';
     
         const baseOptions = {
-            chart:   { toolbar: { show: false }, fontFamily: 'inherit' },
-            grid:    { borderColor: gridColor, strokeDashArray: 4 },
-            tooltip: { theme: 'light' },
+            chart:      { toolbar: { show: false }, fontFamily: 'inherit' },
+            grid:       { borderColor: gridColor, strokeDashArray: 4 },
+            tooltip:    { theme: 'light' },
             dataLabels: { enabled: false },
         };
     
-        // Simpan instance chart agar bisa di-destroy
         let chartInstances = [];
     
         function destroyCharts() {
-            chartInstances.forEach(c => { try { c.destroy(); } catch(e) {} });
+            chartInstances.forEach(c => { try { c.destroy(); } catch (e) {} });
             chartInstances = [];
         }
     
@@ -574,39 +648,52 @@
     
             @if ($role === 'admin')
     
+                // ── Chart 1: Pertumbuhan Pengguna Per Bulan ──
+                const penggunaData = @json($charts['pengguna_bulanan']['data']);
+                const maxPengguna  = Math.max(1, Math.max(...penggunaData));
+    
                 const c1 = new ApexCharts(document.querySelector('#chartPenggunaBulanan'), {
                     ...baseOptions,
-                    series: [{ name: 'Pengguna Baru', data: @json($charts['pengguna_bulanan']['data']) }],
-                    chart: { ...baseOptions.chart, type: 'bar', height: 260 },
+                    series: [{ name: 'Pengguna Baru', data: penggunaData }],
+                    chart:  { ...baseOptions.chart, type: 'bar', height: 260 },
                     colors: [navyColor],
                     plotOptions: {
                         bar: { borderRadius: 6, columnWidth: '50%', dataLabels: { position: 'top' } },
                     },
                     dataLabels: {
-                        enabled: true, offsetY: -18,
+                        enabled: true,
+                        offsetY: -18,
                         style: { fontSize: '11px', fontWeight: 700, colors: [navyColor] },
                         formatter: v => v > 0 ? v : '',
                     },
                     xaxis: {
                         categories: @json($charts['pengguna_bulanan']['labels']),
                         labels: { style: { fontSize: '11px', colors: '#718096' } },
-                        axisBorder: { show: false }, axisTicks: { show: false },
+                        axisBorder: { show: false },
+                        axisTicks:  { show: false },
                     },
                     yaxis: {
-                        labels: { style: { fontSize: '11px', colors: '#718096' }, formatter: v => Math.floor(v) },
                         min: 0,
+                        tickAmount: maxPengguna,
+                        labels: {
+                            style: { fontSize: '11px', colors: '#718096' },
+                            formatter: v => Number.isInteger(v) ? v : '',
+                        },
                     },
                     tooltip: { theme: 'light', y: { formatter: v => v + ' pengguna' } },
                 });
                 c1.render();
                 chartInstances.push(c1);
     
+                // ── Chart 2: Distribusi Siswa per Kelas ──
                 const c2 = new ApexCharts(document.querySelector('#chartSiswaKelas'), {
                     ...baseOptions,
                     series: [{ name: 'Jumlah Siswa', data: @json($charts['siswa_per_kelas']['data']) }],
-                    chart: { ...baseOptions.chart, type: 'bar', height: 260 },
+                    chart:  { ...baseOptions.chart, type: 'bar', height: 260 },
                     colors: [goldColor],
-                    plotOptions: { bar: { borderRadius: 6, horizontal: true, barHeight: '55%' } },
+                    plotOptions: {
+                        bar: { borderRadius: 6, horizontal: true, barHeight: '55%' },
+                    },
                     dataLabels: {
                         enabled: true,
                         style: { fontSize: '11px', fontWeight: 700, colors: [navyColor] },
@@ -615,9 +702,12 @@
                     xaxis: {
                         categories: @json($charts['siswa_per_kelas']['labels']),
                         labels: { style: { fontSize: '11px', colors: '#718096' } },
-                        axisBorder: { show: false }, axisTicks: { show: false },
+                        axisBorder: { show: false },
+                        axisTicks:  { show: false },
                     },
-                    yaxis: { labels: { style: { fontSize: '11px', colors: '#718096' } } },
+                    yaxis: {
+                        labels: { style: { fontSize: '11px', colors: '#718096' } },
+                    },
                     tooltip: { theme: 'light', y: { formatter: v => v + ' siswa' } },
                 });
                 c2.render();
@@ -625,54 +715,136 @@
     
             @else
     
+                // ── Chart 3: Tren Pelanggaran Per Bulan ──
+                const bulananData = @json($charts['bulanan']['data']);
+                const maxBulanan  = Math.max(1, Math.max(...bulananData));
+    
                 const c3 = new ApexCharts(document.querySelector('#chartBulanan'), {
                     ...baseOptions,
-                    series: [{ name: 'Pelanggaran', data: @json($charts['bulanan']['data']) }],
-                    chart: { ...baseOptions.chart, type: 'area', height: 260 },
+                    series: [{ name: 'Pelanggaran', data: bulananData }],
+                    chart:  { ...baseOptions.chart, type: 'area', height: 280 },
                     colors: [navyColor],
                     fill: {
                         type: 'gradient',
-                        gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.02, stops: [0, 100] },
+                        gradient: {
+                            shadeIntensity: 1,
+                            opacityFrom: 0.45,
+                            opacityTo:   0.02,
+                            stops: [0, 90, 100],
+                        },
                     },
-                    stroke: { curve: 'smooth', width: 2.5 },
-                    markers: { size: 4, colors: ['#fff'], strokeColors: [navyColor], strokeWidth: 2 },
+                    stroke:  { curve: 'smooth', width: 2.5 },
+                    markers: {
+                        size: 5,
+                        colors: ['#fff'],
+                        strokeColors: [navyColor],
+                        strokeWidth: 2.5,
+                        hover: { size: 7 },
+                    },
                     xaxis: {
                         categories: @json($charts['bulanan']['labels']),
-                        labels: { style: { fontSize: '11px', colors: '#718096' }, rotate: -30 },
-                        axisBorder: { show: false }, axisTicks: { show: false },
+                        labels: {
+                            style: { fontSize: '10px', colors: '#718096' },
+                            rotate: -45,
+                            rotateAlways: false,
+                            hideOverlappingLabels: true,
+                        },
+                        axisBorder: { show: false },
+                        axisTicks:  { show: false },
                     },
                     yaxis: {
-                        labels: { style: { fontSize: '11px', colors: '#718096' }, formatter: v => Math.floor(v) },
                         min: 0,
+                        tickAmount: maxBulanan,
+                        labels: {
+                            style: { fontSize: '11px', colors: '#718096' },
+                            formatter: v => Number.isInteger(v) ? v : '',
+                        },
                     },
-                    tooltip: { theme: 'light', y: { formatter: v => v + ' pelanggaran' } },
+                    tooltip: {
+                        theme: 'light',
+                        x: { show: true },
+                        y: { formatter: v => v + ' pelanggaran' },
+                    },
                 });
                 c3.render();
                 chartInstances.push(c3);
     
+                // ── Chart 4: Jenis Pelanggaran Terbanyak ──
+                @php
+                    $tingkatList = $charts['jenis']['tingkat'] ?? [];
+                    $jenisList   = $charts['jenis']['labels']  ?? [];
+                    $jenisData   = $charts['jenis']['data']    ?? [];
+                @endphp
+    
+                const jenisLabels  = @json($jenisList);
+                const jenisTingkat = @json($tingkatList);
+                const jenisData    = @json($jenisData);
+                const maxJenis     = Math.max(1, Math.max(...jenisData));
+    
+                // ← lowercase agar cocok meski DB simpan huruf kecil/kapital
+                const tingkatColors = jenisTingkat.map(t => {
+                    const val = t ? t.toLowerCase() : '';
+                    if (val === 'berat')  return '#ef4444'; // merah
+                    if (val === 'sedang') return '#f97316'; // oranye
+                    return '#F5B800';                       // kuning (ringan/default)
+                });
+    
                 const c4 = new ApexCharts(document.querySelector('#chartJenis'), {
                     ...baseOptions,
-                    series: [{ name: 'Jumlah', data: @json($charts['jenis']['data']) }],
-                    chart: { ...baseOptions.chart, type: 'bar', height: 260 },
-                    colors: [goldColor],
+                    series: [{ name: 'Jumlah Kejadian', data: jenisData }],
+                    chart:  { ...baseOptions.chart, type: 'bar', height: Math.max(200, jenisLabels.length * 70) },
+                    colors: [function({ dataPointIndex }) {
+                        return tingkatColors[dataPointIndex] || '#F5B800';
+                    }],
                     plotOptions: {
-                        bar: { borderRadius: 6, columnWidth: '50%', dataLabels: { position: 'top' } },
+                        bar: {
+                            borderRadius: 5,
+                            horizontal:  true,   // ← nama terbaca penuh di kiri
+                            barHeight:   '55%',
+                            distributed: true,   // ← warna per-bar
+                            dataLabels:  { position: 'right' },
+                        },
                     },
                     dataLabels: {
-                        enabled: true, offsetY: -18,
-                        style: { fontSize: '11px', fontWeight: 700, colors: [navyColor] },
-                        formatter: v => v > 0 ? v : '',
+                        enabled: true,
+                        offsetX: 6,
+                        style: { fontSize: '11px', fontWeight: 700, colors: ['#1e3a6e'] },
+                        formatter: v => v > 0 ? v + 'x' : '',
                     },
+                    legend: { show: false },
+                    // ← categories WAJIB di xaxis untuk horizontal bar
                     xaxis: {
-                        categories: @json($charts['jenis']['labels']),
-                        labels: { style: { fontSize: '11px', colors: '#718096' }, trim: true, maxHeight: 60 },
-                        axisBorder: { show: false }, axisTicks: { show: false },
+                        categories: jenisLabels,
+                        min: 0,
+                        tickAmount: maxJenis,
+                        labels: {
+                            style: { fontSize: '11px', colors: '#718096' },
+                            formatter: v => Number.isInteger(Number(v)) ? Math.floor(Number(v)) : '',
+                        },
+                        axisBorder: { show: false },
+                        axisTicks:  { show: false },
                     },
                     yaxis: {
-                        labels: { style: { fontSize: '11px', colors: '#718096' }, formatter: v => Math.floor(v) },
-                        min: 0,
+                        labels: {
+                            maxWidth: 160,
+                            style: { fontSize: '11px', colors: '#1e3a6e', fontWeight: 600 },
+                            // potong nama panjang, tampilkan lengkap di tooltip
+                            formatter: v => v && v.length > 24 ? v.substring(0, 24) + '…' : v,
+                        },
                     },
-                    tooltip: { theme: 'light', y: { formatter: v => v + ' kali' } },
+                    tooltip: {
+                        theme: 'light',
+                        x: {
+                            // nama lengkap + tingkat tampil di tooltip
+                            formatter: (val, { dataPointIndex }) =>
+                                `<strong>${jenisLabels[dataPointIndex] ?? ''}</strong>` +
+                                `<br>Tingkat: ${jenisTingkat[dataPointIndex] ?? '-'}`,
+                        },
+                        y: {
+                            title:     { formatter: () => '' },
+                            formatter: v => v + ' kejadian',
+                        },
+                    },
                 });
                 c4.render();
                 chartInstances.push(c4);
@@ -680,10 +852,7 @@
             @endif
         }
     
-        // Jalankan saat pertama load
         document.addEventListener('DOMContentLoaded', initCharts);
-    
-        // Jalankan ulang setiap navigasi Livewire (wire:navigate)
         document.addEventListener('livewire:navigated', initCharts);
     </script>
 

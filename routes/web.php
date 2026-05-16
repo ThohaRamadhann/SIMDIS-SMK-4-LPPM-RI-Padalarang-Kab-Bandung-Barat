@@ -35,6 +35,13 @@ Route::middleware(['auth'])->group(function () {
         Route::view('/kelas', 'admin.kelas')->name('kelas');
     });
 
+    // routes/web.php
+    Route::middleware(['auth', 'guru_bk'])->group(function () {
+        Route::get('/jenis-pelanggaran', function () {
+            return view('jenispelanggaran.index');
+        })->name('jenis-pelanggaran');
+    });
+
     // Rute CRUD Pelanggaran (UNTUK ADMIN DAN GURU BK, atau role lain yang Anda izinkan)
     // Perbaikan ada di sini: role:admin,guru_bk
     // Untuk orang_tua: hanya boleh lihat
@@ -52,9 +59,9 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::prefix('notifikasi')->name('notifikasi.')->group(function () {
-        Route::get('/',              [NotifikasiController::class, 'index'])       ->name('index');
-        Route::post('/{notifikasi}/read', [NotifikasiController::class, 'markAsRead']) ->name('read');
-        Route::post('/read-all',     [NotifikasiController::class, 'markAllRead']) ->name('read-all');
+        Route::get('/',              [NotifikasiController::class, 'index'])->name('index');
+        Route::post('/{notifikasi}/read', [NotifikasiController::class, 'markAsRead'])->name('read');
+        Route::post('/read-all',     [NotifikasiController::class, 'markAllRead'])->name('read-all');
     });
 });
 

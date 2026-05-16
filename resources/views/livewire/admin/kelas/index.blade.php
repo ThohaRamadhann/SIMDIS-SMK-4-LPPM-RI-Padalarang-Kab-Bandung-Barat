@@ -38,7 +38,7 @@
                     <div>
                         <label class="text-xs font-semibold text-[#0D2D6B]">Nama Kelas *</label>
                         <input type="text" wire:model.defer="nama_kelas"
-                            placeholder="Contoh: X IPA 1"
+                            placeholder="Contoh: X TJA 1"
                             class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                    focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
                         @error('nama_kelas')
@@ -48,26 +48,40 @@
 
                     {{-- Tingkat & Jurusan (2 kolom) --}}
                     <div class="grid grid-cols-2 gap-2">
+
+                        {{-- Tingkat: X / XI / XII --}}
                         <div>
                             <label class="text-xs font-semibold text-[#0D2D6B]">Tingkat *</label>
-                            <input type="text" wire:model.defer="tingkat"
-                                placeholder="X / XI / XII"
+                            <select wire:model.defer="tingkat"
                                 class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                        focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
+                                <option value="">-- Pilih --</option>
+                                <option value="X">X</option>
+                                <option value="XI">XI</option>
+                                <option value="XII">XII</option>
+                            </select>
                             @error('tingkat')
                                 <span class="text-xs text-red-500">{{ $message }}</span>
                             @enderror
                         </div>
+
+                        {{-- Jurusan --}}
                         <div>
                             <label class="text-xs font-semibold text-[#0D2D6B]">Jurusan *</label>
-                            <input type="text" wire:model.defer="jurusan"
-                                placeholder="IPA / IPS / dll"
+                            <select wire:model.defer="jurusan"
                                 class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                        focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
+                                <option value="">-- Pilih --</option>
+                                <option value="Teknik Jaringan Akses">Teknik Jaringan Akses</option>
+                                <option value="Rekayasa Perangkat Lunak">Rekayasa Perangkat Lunak</option>
+                                <option value="Perhotelan">Perhotelan</option>
+                                <option value="Otomotif">Otomotif</option>
+                            </select>
                             @error('jurusan')
                                 <span class="text-xs text-red-500">{{ $message }}</span>
                             @enderror
                         </div>
+
                     </div>
 
                     {{-- Tahun Ajaran --}}
@@ -82,22 +96,117 @@
                         @enderror
                     </div>
 
-                    {{-- Wali Kelas --}}
-                    <div>
-                        <label class="text-xs font-semibold text-[#0D2D6B]">Wali Kelas</label>
-                        <select wire:model.defer="id_walikelas"
-                            class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
-                                   focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
-                            <option value="">-- Pilih Wali Kelas (Opsional) --</option>
-                            @foreach ($waliKelasList as $wali)
-                                <option value="{{ $wali->id_walikelas }}">
-                                    {{ optional($wali->pengguna)->name ?? '-' }}
-                                </option>
+                    {{-- Wali Kelas: Alpine.js search (sama polanya dengan wali murid) --}}
+                    <div x-data="{
+                        open: false,
+                        search: '',
+                        selected: @entangle('id_walikelas'),
+
+                        get filteredWali() {
+                            if (this.search === '') return this.walis
+                            return this.walis.filter(w =>
+                                w.name.toLowerCase().includes(this.search.toLowerCase())
+                            )
+                        },
+
+                        walis: [
+                            @foreach($waliKelasList as $w)
+                            {
+                                id: {{ $w->id_walikelas }},
+                                name: '{{ addslashes(optional($w->pengguna)->name ?? '-') }}'
+                            },
                             @endforeach
-                        </select>
+                        ],
+
+                        selectedName() {
+                            if (!this.selected) return '-- Pilih Wali Kelas (Opsional) --'
+                            const found = this.walis.find(w => w.id == this.selected)
+                            return found ? found.name : '-- Pilih Wali Kelas (Opsional) --'
+                        }
+                    }" class="relative">
+
+                        <label class="text-xs font-semibold text-[#0D2D6B]">Wali Kelas</label>
+
+                        {{-- Trigger button --}}
+                        <button type="button" @click="open = !open"
+                            class="mt-0.5 w-full h-10 px-3 rounded-lg border border-gray-200
+                                   bg-gray-50 text-left text-sm flex items-center justify-between
+                                   hover:bg-white focus:border-[#F5B800] transition">
+                            <span class="truncate"
+                                :class="selected ? 'text-gray-700' : 'text-gray-400'"
+                                x-text="selectedName()">
+                            </span>
+                            <div class="flex items-center gap-1 flex-shrink-0">
+                                {{-- Tombol clear jika sudah dipilih --}}
+                                <span x-show="selected"
+                                    @click.stop="selected = ''; search = ''; open = false"
+                                    class="text-gray-300 hover:text-red-400 transition cursor-pointer p-0.5 rounded">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </span>
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </div>
+                        </button>
+
+                        {{-- Dropdown --}}
+                        <div x-show="open" @click.outside="open = false" x-transition
+                            class="absolute z-50 mt-1 w-full bg-white border border-gray-200
+                                   rounded-xl shadow-xl overflow-hidden"
+                            style="display:none">
+
+                            {{-- Search input --}}
+                            <div class="p-2 border-b border-gray-100">
+                                <input type="text" x-model="search"
+                                    placeholder="Cari nama wali kelas..."
+                                    @click.stop
+                                    class="w-full h-9 px-3 text-sm rounded-lg border border-gray-200
+                                           bg-gray-50 focus:bg-white focus:border-[#F5B800] outline-none transition">
+                            </div>
+
+                            {{-- List --}}
+                            <div class="max-h-52 overflow-y-auto">
+
+                                {{-- Opsi kosongkan --}}
+                                <button type="button"
+                                    @click="selected = ''; open = false; search = ''"
+                                    class="w-full px-3 py-2.5 text-left text-sm text-gray-400 italic
+                                           hover:bg-[#F0F4FB] transition border-b border-gray-50">
+                                    Tidak ada wali kelas
+                                </button>
+
+                                <template x-if="filteredWali.length === 0">
+                                    <div class="px-3 py-4 text-sm text-gray-400 text-center">
+                                        <i class="fas fa-user-slash block text-lg mb-1 opacity-30"></i>
+                                        Wali kelas tidak ditemukan
+                                    </div>
+                                </template>
+
+                                <template x-for="wali in filteredWali" :key="wali.id">
+                                    <button type="button"
+                                        @click="selected = wali.id; open = false; search = ''"
+                                        class="w-full px-3 py-2.5 text-left text-sm
+                                               hover:bg-[#F0F4FB] transition border-b border-gray-50
+                                               flex items-center gap-2">
+                                        {{-- Avatar inisial --}}
+                                        <div style="width:26px;height:26px;border-radius:50%;flex-shrink:0;
+                                                    background:linear-gradient(135deg,#0D2D6B,#163580);
+                                                    color:#F5B800;font-size:9px;font-weight:700;
+                                                    display:flex;align-items:center;justify-content:center;"
+                                            x-text="wali.name.charAt(0).toUpperCase()">
+                                        </div>
+                                        <span x-text="wali.name" class="text-[#0D2D6B] font-medium"></span>
+                                    </button>
+                                </template>
+
+                            </div>
+                        </div>
+
                     </div>
 
-                    {{-- Info mode --}}
+                    {{-- Info mode edit --}}
                     @if ($editingId)
                         <div class="text-xs px-3 py-2 rounded-lg border bg-amber-50 text-amber-700 border-amber-100">
                             <i class="fas fa-pen-to-square mr-1"></i>

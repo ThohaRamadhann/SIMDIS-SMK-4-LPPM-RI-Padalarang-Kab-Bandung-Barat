@@ -29,16 +29,39 @@ class NotifikasiBaru implements ShouldBroadcastNow
         return 'NotifikasiBaru';
     }
 
+    /**
+     * Kirim data lengkap ke frontend — konsisten dengan loadNotifikasi()
+     * di navigation.blade.php agar tampilan realtime sama dengan setelah refresh
+     */
     public function broadcastWith(): array
     {
+        // Load semua relasi yang dibutuhkan untuk tampilan lengkap
+        $notif = $this->notifikasi->load([
+            'pelanggaran.siswa',
+            'pelanggaran.jenisPelanggaran',
+        ]);
+
         return [
             'notifikasi' => [
-                'id_notifikasi'    => $this->notifikasi->id_notifikasi,
-                'isi_pesan'        => $this->notifikasi->isi_pesan,
-                'jenis_notifikasi' => $this->notifikasi->jenis_notifikasi,
-                'waktu_dikirim'    => $this->notifikasi->waktu_dikirim?->toISOString(),
-                'status'           => $this->notifikasi->status,
+                // ── Data notifikasi dasar ──
+                'id_notifikasi'    => $notif->id_notifikasi,
+                'isi_pesan'        => $notif->isi_pesan,
+                'jenis_notifikasi' => $notif->jenis_notifikasi,
+                'waktu_dikirim'    => $notif->waktu_dikirim?->toDateTimeString(),
+                'status'           => $notif->status,
                 'is_read'          => false,
+                'read_at'          => null,
+
+                // ── Detail siswa ──
+                'nama_siswa'       => optional(optional($notif->pelanggaran)->siswa)->nama ?? null,
+                'nis_siswa'        => optional(optional($notif->pelanggaran)->siswa)->nis  ?? null,
+
+                // ── Detail pelanggaran ──
+                'nama_pelanggaran' => optional(optional($notif->pelanggaran)->jenisPelanggaran)->nama_pelanggaran ?? null,
+                'tingkat'          => optional(optional($notif->pelanggaran)->jenisPelanggaran)->tingkat_pelanggaran ?? null,
+                'waktu_kejadian'   => optional(optional($notif->pelanggaran)->waktu_kejadian)?->toDateTimeString() ?? null,
+                'deskripsi'        => optional($notif->pelanggaran)->deskripsi ?? null,
+                'status_pembinaan' => optional($notif->pelanggaran)->status_pembinaan ?? null,
             ],
         ];
     }
