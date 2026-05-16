@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Kelas;
 
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Validation\Rule;
 use App\Models\Kelas;
 use App\Models\WaliKelas;
 
@@ -24,7 +25,7 @@ class Index extends Component
     public $filterTingkat = '';
     public $filterJurusan = '';
     public $filterTahun   = '';
-    public $filterWali    = '';   // 'ada' | 'kosong' | ''
+    public $filterWali    = '';
     public $sortBy        = 'terbaru';
     public $perPage       = 10;
     public $showTrash     = false;
@@ -49,7 +50,7 @@ class Index extends Component
     public function updatingShowTrash()     { $this->resetPage(); }
 
     // ── Reset form ──
-    public function resetForm()
+    public function resetForm(): void
     {
         $this->nama_kelas   = '';
         $this->tingkat      = '';
@@ -61,7 +62,7 @@ class Index extends Component
     }
 
     // ── Reset semua filter ──
-    public function resetFilters()
+    public function resetFilters(): void
     {
         $this->search        = '';
         $this->filterTingkat = '';
@@ -73,13 +74,31 @@ class Index extends Component
     }
 
     // ── Simpan / Update ──
-    public function save()
+    public function save(): void
     {
         $this->validate([
             'nama_kelas'   => 'required|string|max:100',
-            'tingkat'      => 'required|string|max:20',
-            'jurusan'      => 'required|string|max:100',
+            'tingkat'      => ['required', 'string', Rule::in(['X', 'XI', 'XII'])],
+            'jurusan'      => ['required', 'string', Rule::in([
+                'Teknik Jaringan Akses',
+                'Rekayasa Perangkat Lunak',
+                'Perhotelan',
+                'Otomotif',
+            ])],
             'tahun_ajaran' => 'required|string|max:20',
+
+            // Unique: 1 wali kelas hanya boleh mengampu 1 kelas
+            // Saat edit, ignore kelas yang sedang diedit
+            'id_walikelas' => [
+                'nullable',
+                Rule::unique('kelas', 'id_walikelas')
+                    ->ignore($this->editingId, 'id_kelas')
+                    ->whereNull('deleted_at'), // abaikan kelas yang sudah dihapus (soft delete)
+            ],
+        ], [
+            'tingkat.in'      => 'Tingkat harus X, XI, atau XII.',
+            'jurusan.in'      => 'Jurusan tidak valid.',
+            'id_walikelas.unique' => 'Wali kelas ini sudah mengampu kelas lain. Pilih wali kelas yang berbeda.',
         ]);
 
         $data = [
@@ -102,7 +121,7 @@ class Index extends Component
     }
 
     // ── Edit ──
-    public function edit($id)
+    public function edit($id): void
     {
         $k = Kelas::findOrFail($id);
 
@@ -115,28 +134,28 @@ class Index extends Component
     }
 
     // ── Soft Delete ──
-    public function hapus($id)
+    public function hapus($id): void
     {
         Kelas::findOrFail($id)->delete();
         session()->flash('success', 'Kelas dipindahkan ke tong sampah.');
     }
 
     // ── Restore ──
-    public function restore($id)
+    public function restore($id): void
     {
         Kelas::onlyTrashed()->findOrFail($id)->restore();
         session()->flash('success', 'Kelas berhasil dipulihkan.');
     }
 
     // ── Force Delete ──
-    public function forceDelete($id)
+    public function forceDelete($id): void
     {
         Kelas::onlyTrashed()->findOrFail($id)->forceDelete();
         session()->flash('success', 'Kelas dihapus permanen.');
     }
 
     // ── Kosongkan Trash ──
-    public function emptyTrash()
+    public function emptyTrash(): void
     {
         Kelas::onlyTrashed()->forceDelete();
         session()->flash('success', 'Tong sampah dikosongkan.');
@@ -151,48 +170,52 @@ class Index extends Component
             $query->onlyTrashed();
         }
 
-        // Search nama kelas
         if ($this->search) {
             $query->where('nama_kelas', 'like', "%{$this->search}%");
         }
 
-        // Filter tingkat
         if ($this->filterTingkat) {
             $query->where('tingkat', $this->filterTingkat);
         }
 
-        // Filter jurusan
         if ($this->filterJurusan) {
             $query->where('jurusan', 'like', "%{$this->filterJurusan}%");
         }
 
-        // Filter tahun ajaran
         if ($this->filterTahun) {
             $query->where('tahun_ajaran', $this->filterTahun);
         }
 
-        // Filter status wali kelas
         if ($this->filterWali === 'ada') {
             $query->whereNotNull('id_walikelas');
         } elseif ($this->filterWali === 'kosong') {
             $query->whereNull('id_walikelas');
         }
 
-        // Sorting
         match ($this->sortBy) {
             'az'    => $query->orderBy('nama_kelas', 'asc'),
             'za'    => $query->orderBy('nama_kelas', 'desc'),
             default => $query->orderBy('id_kelas', 'desc'),
         };
 
-        // Opsi dinamis untuk dropdown filter (ambil dari DB)
-        $tingkatOptions   = Kelas::select('tingkat')->distinct()->orderBy('tingkat')->pluck('tingkat');
-        $jurusanOptions   = Kelas::select('jurusan')->distinct()->orderBy('jurusan')->pluck('jurusan');
-        $tahunOptions     = Kelas::select('tahun_ajaran')->distinct()->orderByDesc('tahun_ajaran')->pluck('tahun_ajaran');
+        $tingkatOptions = Kelas::select('tingkat')->distinct()->orderBy('tingkat')->pluck('tingkat');
+        $jurusanOptions = Kelas::select('jurusan')->distinct()->orderBy('jurusan')->pluck('jurusan');
+        $tahunOptions   = Kelas::select('tahun_ajaran')->distinct()->orderByDesc('tahun_ajaran')->pluck('tahun_ajaran');
+
+        // ── Wali kelas yang sudah mengampu kelas aktif lain (kecuali kelas yang sedang diedit) ──
+        $sudahDipakai = Kelas::whereNotNull('id_walikelas')
+            ->when($this->editingId, fn($q) => $q->where('id_kelas', '!=', $this->editingId))
+            ->pluck('id_walikelas');
+
+        // Hanya tampilkan wali yang belum mengampu kelas manapun
+        // + wali dari kelas yang sedang diedit (agar tetap muncul di dropdown)
+        $waliKelasList = WaliKelas::with('pengguna')
+            ->whereNotIn('id_walikelas', $sudahDipakai)
+            ->get();
 
         return view('livewire.admin.kelas.index', [
             'kelas'            => $query->paginate($this->perPage),
-            'waliKelasList'    => WaliKelas::with('pengguna')->get(),
+            'waliKelasList'    => $waliKelasList,
             'trashCount'       => Kelas::onlyTrashed()->count(),
             'tingkatOptions'   => $tingkatOptions,
             'jurusanOptions'   => $jurusanOptions,

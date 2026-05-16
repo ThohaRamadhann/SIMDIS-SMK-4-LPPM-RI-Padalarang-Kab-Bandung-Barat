@@ -15,10 +15,10 @@ class KelasSeeder extends Seeder
         foreach ($waliKelas as $index => $wali) {
             Kelas::create([
                 'id_walikelas' => $wali->id_walikelas,
-                'tingkat' => '10',
-                'nama_kelas' => '10 Kelas ' . ($index + 1),
+                'tingkat' => 'X',
+                'nama_kelas' => 'X RPL ' . ($index + 1),
                 'jurusan' => 'RPL',
-                'tahun_ajaran' => '2024/2025',
+                'tahun_ajaran' => '2025/2026',
             ]);
         }
     }
