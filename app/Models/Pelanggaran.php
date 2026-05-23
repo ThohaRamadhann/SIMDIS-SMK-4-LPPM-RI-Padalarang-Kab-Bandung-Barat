@@ -19,11 +19,13 @@ class Pelanggaran extends Model
         'deskripsi',
         'status_pembinaan',
         'tanggal_pembinaan',
+        'jam_pembinaan',   // ← TAMBAH
         'catatan_bk',
     ];
-
+    
     protected $casts = [
-        'waktu_kejadian' => 'datetime',
+        'waktu_kejadian'   => 'datetime',
+        'tanggal_pembinaan' => 'date',     // ← opsional tapi bagus
     ];
 
     // ── Relasi ──────────────────────────────────────────

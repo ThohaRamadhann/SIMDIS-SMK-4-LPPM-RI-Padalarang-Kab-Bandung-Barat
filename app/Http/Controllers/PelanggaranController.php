@@ -46,6 +46,21 @@ class PelanggaranController extends Controller
             'deskripsi'           => 'required|string',
         ]);
 
+        // Anti-duplikat: siswa + jenis pelanggaran yang sama tidak boleh diinput di hari yang sama
+        $waktu    = \Carbon\Carbon::parse($request->waktu_kejadian);
+        $duplikat = Pelanggaran::where('id_siswa', $request->id_siswa)
+            ->where('id_jenispelanggaran', $request->id_jenispelanggaran)
+            ->whereDate('waktu_kejadian', $waktu->toDateString())
+            ->exists();
+
+        if ($duplikat) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'id_jenispelanggaran' => 'Pelanggaran ini sudah pernah dicatat untuk siswa yang sama pada hari ini.',
+                ]);
+        }
+
         $pelanggaran = Pelanggaran::create([
             'id_siswa'            => $request->id_siswa,
             'id_walikelas'        => $request->id_walikelas,
@@ -55,14 +70,12 @@ class PelanggaranController extends Controller
             'status_pembinaan'    => 'Belum Ditindak',
         ]);
 
-        // Load relasi untuk EWS
         $pelanggaran->load([
             'siswa.waliMurid.pengguna',
             'waliKelas.pengguna',
             'jenisPelanggaran',
         ]);
 
-        // EWS: simpan notif pending + dispatch job dengan delay 10 menit
         $this->ews->check($pelanggaran);
 
         return redirect()->route('pelanggaran.index')
@@ -77,7 +90,10 @@ class PelanggaranController extends Controller
         $jenisPelanggaran = JenisPelanggaran::orderBy('nama_pelanggaran')->get();
 
         return view('pelanggaran.edit', compact(
-            'pelanggaran', 'siswa', 'waliKelas', 'jenisPelanggaran'
+            'pelanggaran',
+            'siswa',
+            'waliKelas',
+            'jenisPelanggaran'
         ));
     }
 
@@ -92,6 +108,7 @@ class PelanggaranController extends Controller
             'deskripsi'           => 'required|string',
             'status_pembinaan'    => 'required|in:Belum Ditindak,Dalam Proses,Selesai',
             'tanggal_pembinaan'   => 'nullable|date',
+            'jam_pembinaan'       => 'nullable|date_format:H:i',  // ← TAMBAH
             'catatan_bk'          => 'nullable|string|max:2000',
         ]);
 
@@ -103,6 +120,7 @@ class PelanggaranController extends Controller
             'deskripsi'           => $request->deskripsi,
             'status_pembinaan'    => $request->status_pembinaan,
             'tanggal_pembinaan'   => $request->tanggal_pembinaan ?: null,
+            'jam_pembinaan'       => $request->jam_pembinaan ?: null,  // ← TAMBAH
             'catatan_bk'          => $request->catatan_bk ?: null,
         ]);
 

@@ -9,12 +9,24 @@ class WaliMuridSeeder extends Seeder
 {
     public function run(): void
     {
-        WaliMurid::updateOrCreate(
-            ['id_walimurid' => 1],
+        $data = [
             [
-                'id_pengguna' => 4,  
-                'hubungan' => 'orang tua'
-            ]
-        );
+                'id_pengguna' => 5,
+                'hubungan' => 'Ayah',
+            ],
+            [
+                'id_pengguna' => 6,
+                'hubungan' => 'Ibu',
+            ],
+        ];
+
+        foreach ($data as $index => $wali) {
+            WaliMurid::updateOrCreate(
+                ['id_pengguna' => $wali['id_pengguna']],
+                [
+                    'hubungan' => $wali['hubungan']
+                ]
+            );
+        }
     }
 }

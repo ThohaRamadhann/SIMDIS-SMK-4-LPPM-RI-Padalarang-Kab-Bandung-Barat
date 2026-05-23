@@ -408,6 +408,36 @@
                     </div>
 
                     <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1.5">Jam Pembinaan</label>
+                        <div class="flex items-center gap-2">
+                            <select wire:model="modalJamHour"
+                                class="flex-1 h-10 px-3 rounded-xl border border-gray-200 text-sm
+                                       focus:border-[#F5B800] focus:ring-[#F5B800]">
+                                <option value="">Jam</option>
+                                @for ($h = 6; $h <= 18; $h++)
+                                    <option value="{{ str_pad($h, 2, '0', STR_PAD_LEFT) }}">
+                                        {{ str_pad($h, 2, '0', STR_PAD_LEFT) }}
+                                    </option>
+                                @endfor
+                            </select>
+                    
+                            <span class="text-gray-400 font-bold">:</span>
+                    
+                            <select wire:model="modalJamMinute"
+                                class="flex-1 h-10 px-3 rounded-xl border border-gray-200 text-sm
+                                       focus:border-[#F5B800] focus:ring-[#F5B800]">
+                                <option value="">Menit</option>
+                                @foreach (['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'] as $m)
+                                    <option value="{{ $m }}">{{ $m }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @error('modalJam')
+                            <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1.5">Catatan BK</label>
                         <textarea wire:model="modalCatatan" rows="3" placeholder="Tuliskan catatan hasil pembinaan..."
                             class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm

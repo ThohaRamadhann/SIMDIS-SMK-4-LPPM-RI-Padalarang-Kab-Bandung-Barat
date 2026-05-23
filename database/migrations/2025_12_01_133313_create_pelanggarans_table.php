@@ -28,6 +28,7 @@ return new class extends Migration {
 
             // TANGGAL PEMBINAAN BK
             $table->date('tanggal_pembinaan')->nullable();
+            $table->time('jam_pembinaan')->nullable();
 
             // CATATAN BK
             $table->text('catatan_bk')->nullable();

@@ -26,14 +26,18 @@ class EarlyWarningService
     public function check(Pelanggaran $pelanggaran): void
     {
         $siswa   = $pelanggaran->siswa;
-        $tingkat = optional($pelanggaran->jenisPelanggaran)->tingkat_pelanggaran;
+
+        // Langsung pakai nilai DB (Ringan / Sedang / Berat) — sudah konsisten kapital
+        $tingkat = optional($pelanggaran->jenisPelanggaran)->tingkat_pelanggaran ?? '';
 
         if (! $siswa || ! $tingkat) {
             return;
         }
 
         $total = Pelanggaran::where('id_siswa', $siswa->id_siswa)
-            ->whereHas('jenisPelanggaran', fn($q) => $q->where('tingkat_pelanggaran', $tingkat))
+            ->whereHas('jenisPelanggaran', fn($q) =>
+                $q->where('tingkat_pelanggaran', $tingkat)
+            )
             ->count();
 
         $aksi = $this->tentukanAksi($tingkat, $total);
@@ -95,29 +99,33 @@ class EarlyWarningService
 
     // ── Helpers ─────────────────────────────────────────────────────────────
 
+    /**
+     * Tentukan aksi berdasarkan tingkat dan total pelanggaran.
+     * Nilai tingkat: 'Ringan' | 'Sedang' | 'Berat' (kapital, sesuai ENUM DB)
+     */
     public function tentukanAksi(string $tingkat, int $total): ?string
     {
         return match ($tingkat) {
-            'ringan' => ($total % 3 !== 0) ? null : ($total > 5 ? 'panggil_ortu' : 'pembinaan'),
-            'sedang' => match (true) {
+            'Ringan' => ($total % 3 !== 0) ? null : ($total > 5 ? 'panggil_ortu' : 'pembinaan'),
+            'Sedang' => match (true) {
                 $total === 1                    => 'pembinaan',
                 $total >= 2 && $total % 2 === 0 => 'panggil_ortu',
                 default                         => null,
             },
-            'berat'  => 'panggil_ortu',
+            'Berat'  => 'panggil_ortu',
             default  => null,
         };
     }
 
     private function buatPesan(string $namaSiswa, string $tingkat, int $total, string $aksi): string
     {
-        $labelTingkat = ucfirst($tingkat);
-        $labelAksi    = $aksi === 'pembinaan'
+        // $tingkat sudah kapital dari DB (Ringan/Sedang/Berat), tidak perlu ucfirst
+        $labelAksi = $aksi === 'pembinaan'
             ? 'perlu dilakukan PEMBINAAN'
             : 'perlu dilakukan PEMANGGILAN ORANG TUA';
 
         return "⚠️ Early Warning: Siswa {$namaSiswa} telah melakukan {$total}x pelanggaran "
-             . "{$labelTingkat}. Siswa {$labelAksi}.";
+             . "{$tingkat}. Siswa {$labelAksi}.";
     }
 
     private function kumpulkanPenerimaIds(Pelanggaran $pelanggaran, $siswa): array

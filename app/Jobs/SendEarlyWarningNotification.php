@@ -39,8 +39,10 @@ class SendEarlyWarningNotification implements ShouldQueue
             return;
         }
 
-        $siswa   = $pelanggaran->siswa;
-        $tingkat = optional($pelanggaran->jenisPelanggaran)->tingkat_pelanggaran;
+        $siswa = $pelanggaran->siswa;
+
+        // Langsung pakai nilai DB (Ringan / Sedang / Berat) — sudah konsisten kapital
+        $tingkat = optional($pelanggaran->jenisPelanggaran)->tingkat_pelanggaran ?? '';
 
         if (! $siswa || ! $tingkat) {
             $this->batalkanNotifPending();
@@ -48,7 +50,9 @@ class SendEarlyWarningNotification implements ShouldQueue
         }
 
         $total = Pelanggaran::where('id_siswa', $siswa->id_siswa)
-            ->whereHas('jenisPelanggaran', fn($q) => $q->where('tingkat_pelanggaran', $tingkat))
+            ->whereHas('jenisPelanggaran', fn($q) =>
+                $q->where('tingkat_pelanggaran', $tingkat)
+            )
             ->count();
 
         $aksiSekarang = $this->tentukanAksi($tingkat, $total);
@@ -133,11 +137,13 @@ class SendEarlyWarningNotification implements ShouldQueue
         // Ambil data pelanggaran terbaru siswa untuk info detail
         $pelanggaranTerbaru = \App\Models\Pelanggaran::with('jenisPelanggaran')
             ->where('id_siswa', $siswa->id_siswa)
-            ->whereHas('jenisPelanggaran', fn($q) => $q->where('tingkat_pelanggaran', $tingkat))
+            ->whereHas('jenisPelanggaran', fn($q) =>
+                $q->where('tingkat_pelanggaran', $tingkat)
+            )
             ->latest('waktu_kejadian')
             ->first();
 
-        $labelTingkat    = ucfirst($tingkat);
+        // $tingkat sudah kapital dari DB — tidak perlu ucfirst
         $namaOrtu        = $orangTuaPengguna->name;
         $namaSiswa       = $siswa->nama;
         $kelasSiswa      = optional($siswa->kelas)->nama_kelas ?? '-';
@@ -150,11 +156,11 @@ class SendEarlyWarningNotification implements ShouldQueue
                . "Yth. Bapak/Ibu *{$namaOrtu}*,\n\n"
                . "Kami memberitahukan bahwa putra/putri Anda:\n"
                . "👤 *{$namaSiswa}* ({$kelasSiswa})\n\n"
-               . "telah melakukan *{$total}x pelanggaran {$labelTingkat}* "
+               . "telah melakukan *{$total}x pelanggaran {$tingkat}* "
                . "dan memerlukan *PEMANGGILAN ORANG TUA* ke sekolah.\n\n"
                . "📋 *Detail Pelanggaran Terakhir:*\n"
                . "• Jenis   : {$namaPelanggaran}\n"
-               . "• Tingkat : {$labelTingkat}\n"
+               . "• Tingkat : {$tingkat}\n"
                . "• Waktu   : {$waktuKejadian}\n\n"
                . "Mohon segera menghubungi pihak sekolah atau Guru BK untuk "
                . "informasi lebih lanjut.\n\n"
@@ -165,12 +171,12 @@ class SendEarlyWarningNotification implements ShouldQueue
         $berhasil = $fonnte->kirim($noTelpon, $pesan);
 
         Log::info('EWS WA: hasil pengiriman', [
-            'id_siswa'        => $siswa->id_siswa,
-            'nama_siswa'      => $namaSiswa,
-            'no_telpon'       => $noTelpon,
-            'pelanggaran'     => $namaPelanggaran,
-            'waktu_kejadian'  => $waktuKejadian,
-            'berhasil'        => $berhasil,
+            'id_siswa'       => $siswa->id_siswa,
+            'nama_siswa'     => $namaSiswa,
+            'no_telpon'      => $noTelpon,
+            'pelanggaran'    => $namaPelanggaran,
+            'waktu_kejadian' => $waktuKejadian,
+            'berhasil'       => $berhasil,
         ]);
     }
 
@@ -181,16 +187,20 @@ class SendEarlyWarningNotification implements ShouldQueue
             ->update(['status' => 'dibatalkan']);
     }
 
+    /**
+     * Tentukan aksi berdasarkan tingkat dan total pelanggaran.
+     * Nilai tingkat: 'Ringan' | 'Sedang' | 'Berat' (kapital, sesuai ENUM DB)
+     */
     private function tentukanAksi(string $tingkat, int $total): ?string
     {
         return match ($tingkat) {
-            'ringan' => ($total % 3 !== 0) ? null : ($total > 5 ? 'panggil_ortu' : 'pembinaan'),
-            'sedang' => match (true) {
+            'Ringan' => ($total % 3 !== 0) ? null : ($total > 5 ? 'panggil_ortu' : 'pembinaan'),
+            'Sedang' => match (true) {
                 $total === 1                    => 'pembinaan',
                 $total >= 2 && $total % 2 === 0 => 'panggil_ortu',
                 default                         => null,
             },
-            'berat'  => 'panggil_ortu',
+            'Berat'  => 'panggil_ortu',
             default  => null,
         };
     }

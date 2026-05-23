@@ -12,15 +12,34 @@ class KelasSeeder extends Seeder
     {
         $waliKelas = WaliKelas::all();
 
-        foreach ($waliKelas as $index => $wali) {
-            Kelas::create([
-                'id_walikelas' => $wali->id_walikelas,
+        // Pastikan minimal ada 2 wali kelas
+        if ($waliKelas->count() < 2) {
+            $this->command->warn('Minimal harus ada 2 data wali kelas.');
+            return;
+        }
+
+        $dataKelas = [
+            [
+                'id_walikelas' => $waliKelas[0]->id_walikelas,
                 'tingkat' => 'X',
-                'nama_kelas' => 'X RPL ' . ($index + 1),
+                'nama_kelas' => 'X RPL 1',
                 'jurusan' => 'RPL',
                 'tahun_ajaran' => '2025/2026',
-            ]);
+            ],
+            [
+                'id_walikelas' => $waliKelas[1]->id_walikelas,
+                'tingkat' => 'XI',
+                'nama_kelas' => 'XI TKJ 1',
+                'jurusan' => 'TKJ',
+                'tahun_ajaran' => '2025/2026',
+            ],
+        ];
+
+        foreach ($dataKelas as $kelas) {
+            Kelas::updateOrCreate(
+                ['nama_kelas' => $kelas['nama_kelas']],
+                $kelas
+            );
         }
     }
 }
-

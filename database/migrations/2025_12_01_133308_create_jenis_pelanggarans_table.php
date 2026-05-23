@@ -10,7 +10,7 @@ return new class extends Migration {
         Schema::create('jenis_pelanggaran', function (Blueprint $table) {
             $table->id('id_jenispelanggaran');
             $table->string('nama_pelanggaran');
-            $table->enum('tingkat_pelanggaran', ['ringan', 'sedang', 'berat']);
+            $table->enum('tingkat_pelanggaran', ['Ringan', 'Sedang', 'Berat']);
             $table->timestamps();
         });
     }

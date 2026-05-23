@@ -339,6 +339,11 @@
                 {{-- Label berbeda untuk orang_tua agar lebih kontekstual --}}
                 {{ $role === 'orang_tua' ? 'Pelanggaran Anak' : 'Data Pelanggaran' }}
             </a>
+            <a href="{{ route('monitoring.index') }}"
+                class="simdis-nav-link {{ request()->routeIs('monitoring.*') ? 'active' : '' }}">
+                <i class="fas fa-chart-line simdis-nav-icon"></i>
+                Monitoring Siswa
+            </a>
         @endif
 
         @if ($role === 'guru_bk')
@@ -348,6 +353,7 @@
                 Jenis Pelanggaran
             </a>
         @endif
+
 
         {{-- Administrasi Sistem (admin only) --}}
         @if ($role === 'admin')

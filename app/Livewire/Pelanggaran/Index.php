@@ -18,12 +18,15 @@ class Index extends Component
     protected $paginationTheme = 'tailwind';
 
     // ── MODAL UPDATE STATUS ─────────────────────────────────
-    public $showModalStatus = false;
-    public $modalId         = null;
-    public $modalSiswa      = '';
-    public $modalStatus     = 'Belum Ditindak';
-    public $modalTanggal    = '';
-    public $modalCatatan    = '';
+public $showModalStatus = false;
+public $modalId         = null;
+public $modalSiswa      = '';
+public $modalStatus     = 'Belum Ditindak';
+public $modalTanggal    = '';
+public $modalJam        = '';
+public $modalJamHour    = '';   // ← TAMBAH
+public $modalJamMinute  = '';   // ← TAMBAH
+public $modalCatatan    = '';
 
     // ── FILTER ──────────────────────────────────────────────
     public $search          = '';
@@ -44,14 +47,38 @@ class Index extends Component
         'sortBy' => ['except' => 'terbaru'],
     ];
 
-    public function updatingSearch()          { $this->resetPage(); }
-    public function updatingFilterJenis()     { $this->resetPage(); }
-    public function updatingFilterTingkat()   { $this->resetPage(); }
-    public function updatingFilterStatus()    { $this->resetPage(); }
-    public function updatingFilterWaliKelas() { $this->resetPage(); }
-    public function updatingSortBy()          { $this->resetPage(); }
-    public function updatingPerPage()         { $this->resetPage(); }
-    public function updatingShowTrash()       { $this->resetPage(); }
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+    public function updatingFilterJenis()
+    {
+        $this->resetPage();
+    }
+    public function updatingFilterTingkat()
+    {
+        $this->resetPage();
+    }
+    public function updatingFilterStatus()
+    {
+        $this->resetPage();
+    }
+    public function updatingFilterWaliKelas()
+    {
+        $this->resetPage();
+    }
+    public function updatingSortBy()
+    {
+        $this->resetPage();
+    }
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
+    public function updatingShowTrash()
+    {
+        $this->resetPage();
+    }
 
     // ── HAPUS (SOFT DELETE) — hanya admin & guru_bk ─────────
     public function hapus($id): void
@@ -85,59 +112,81 @@ class Index extends Component
         session()->flash('success', 'Tong sampah dikosongkan.');
     }
 
-    // ── BUKA MODAL STATUS — hanya guru_bk & wali_kelas ──────
+    // ── BUKA MODAL STATUS ────────────────────────────────────
     public function bukaModalStatus($id): void
-    {
-        $this->cekAkses(['guru_bk', 'wali_kelas']);
+{
+    $this->cekAkses(['guru_bk', 'wali_kelas']);
 
-        $data = Pelanggaran::with('siswa')->findOrFail($id);
+    $data = Pelanggaran::with('siswa')->findOrFail($id);
 
-        $this->modalId      = $data->id_pelanggaran;
-        $this->modalSiswa   = optional($data->siswa)->nama ?? '-';
-        $this->modalStatus  = $data->status_pembinaan;
-        $this->modalTanggal = $data->tanggal_pembinaan
-            ? \Carbon\Carbon::parse($data->tanggal_pembinaan)->format('Y-m-d')
-            : '';
-        $this->modalCatatan    = $data->catatan_bk ?? '';
-        $this->showModalStatus = true;
+    $this->modalId      = $data->id_pelanggaran;
+    $this->modalSiswa   = optional($data->siswa)->nama ?? '-';
+    $this->modalStatus  = $data->status_pembinaan;
+    $this->modalTanggal = $data->tanggal_pembinaan
+        ? \Carbon\Carbon::parse($data->tanggal_pembinaan)->format('Y-m-d')
+        : '';
+
+    // Pecah jam ke hour & minute untuk dropdown
+    $jamRaw = $data->getRawOriginal('jam_pembinaan');
+    if ($jamRaw) {
+        [$this->modalJamHour, $this->modalJamMinute] = explode(':', substr($jamRaw, 0, 5));
+    } else {
+        $this->modalJamHour   = '';
+        $this->modalJamMinute = '';
     }
 
-    // ── TUTUP MODAL ─────────────────────────────────────────
+    $this->modalJam        = '';
+    $this->modalCatatan    = $data->catatan_bk ?? '';
+    $this->showModalStatus = true;
+}
+
+    // ── TUTUP MODAL ──────────────────────────────────────────
     public function tutupModalStatus(): void
-    {
-        $this->showModalStatus = false;
-        $this->modalId         = null;
-        $this->modalSiswa      = '';
-        $this->modalStatus     = 'Belum Ditindak';
-        $this->modalTanggal    = '';
-        $this->modalCatatan    = '';
-        $this->resetErrorBag();
-    }
+{
+    $this->showModalStatus = false;
+    $this->modalId         = null;
+    $this->modalSiswa      = '';
+    $this->modalStatus     = 'Belum Ditindak';
+    $this->modalTanggal    = '';
+    $this->modalJam        = '';
+    $this->modalJamHour    = '';   // ← TAMBAH
+    $this->modalJamMinute  = '';   // ← TAMBAH
+    $this->modalCatatan    = '';
+    $this->resetErrorBag();
+}
 
-    // ── SIMPAN STATUS — hanya guru_bk & wali_kelas ──────────
+    // ── SIMPAN STATUS ────────────────────────────────────────
     public function simpanStatus(): void
-    {
-        $this->cekAkses(['guru_bk', 'wali_kelas']);
+{
+    $this->cekAkses(['guru_bk', 'wali_kelas']);
 
-        $this->validate([
-            'modalStatus'  => 'required|in:Belum Ditindak,Dalam Proses,Selesai',
-            'modalTanggal' => 'nullable|date',
-            'modalCatatan' => 'nullable|string|max:1000',
-        ], [
-            'modalStatus.required' => 'Status pembinaan wajib dipilih.',
-            'modalStatus.in'       => 'Status tidak valid.',
-            'modalTanggal.date'    => 'Format tanggal tidak valid.',
-        ]);
+    // Gabung dropdown hour + minute jadi "H:i"
+    $this->modalJam = ($this->modalJamHour && $this->modalJamMinute)
+        ? $this->modalJamHour . ':' . $this->modalJamMinute
+        : null;
 
-        Pelanggaran::findOrFail($this->modalId)->update([
-            'status_pembinaan'  => $this->modalStatus,
-            'tanggal_pembinaan' => $this->modalTanggal ?: null,
-            'catatan_bk'        => $this->modalCatatan ?: null,
-        ]);
+    $this->validate([
+        'modalStatus'  => 'required|in:Belum Ditindak,Dalam Proses,Selesai',
+        'modalTanggal' => 'nullable|date',
+        'modalJam'     => 'nullable|date_format:H:i',
+        'modalCatatan' => 'nullable|string|max:1000',
+    ], [
+        'modalStatus.required' => 'Status pembinaan wajib dipilih.',
+        'modalStatus.in'       => 'Status tidak valid.',
+        'modalTanggal.date'    => 'Format tanggal tidak valid.',
+        'modalJam.date_format' => 'Format jam tidak valid.',
+    ]);
 
-        session()->flash('success', 'Status pembinaan berhasil diperbarui.');
-        $this->tutupModalStatus();
-    }
+    Pelanggaran::findOrFail($this->modalId)->update([
+        'status_pembinaan'  => $this->modalStatus,
+        'tanggal_pembinaan' => $this->modalTanggal ?: null,
+        'jam_pembinaan'     => $this->modalJam ?: null,
+        'catatan_bk'        => $this->modalCatatan ?: null,
+    ]);
+
+    session()->flash('success', 'Status pembinaan berhasil diperbarui.');
+    $this->tutupModalStatus();
+}
 
     // ── HELPER: cek akses role ───────────────────────────────
     private function cekAkses(array $roles): void
@@ -178,7 +227,7 @@ class Index extends Component
         if ($this->search) {
             $query->whereHas('siswa', function ($s) {
                 $s->where('nama', 'like', '%' . $this->search . '%')
-                  ->orWhere('nis', 'like', '%' . $this->search . '%');
+                    ->orWhere('nis', 'like', '%' . $this->search . '%');
             });
         }
 
@@ -208,11 +257,11 @@ class Index extends Component
         match ($this->sortBy) {
             'terlama' => $query->orderBy('created_at', 'asc'),
             'az'      => $query->join('siswa', 'pelanggaran.id_siswa', '=', 'siswa.id_siswa')
-                               ->orderBy('siswa.nama', 'asc')
-                               ->select('pelanggaran.*'),
+                ->orderBy('siswa.nama', 'asc')
+                ->select('pelanggaran.*'),
             'za'      => $query->join('siswa', 'pelanggaran.id_siswa', '=', 'siswa.id_siswa')
-                               ->orderBy('siswa.nama', 'desc')
-                               ->select('pelanggaran.*'),
+                ->orderBy('siswa.nama', 'desc')
+                ->select('pelanggaran.*'),
             default   => $query->orderBy('created_at', 'desc'),
         };
 

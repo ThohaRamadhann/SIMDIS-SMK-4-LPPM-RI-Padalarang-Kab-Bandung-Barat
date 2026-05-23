@@ -47,6 +47,9 @@ Route::middleware(['auth'])->group(function () {
     // Untuk orang_tua: hanya boleh lihat
     Route::middleware(['role:guru_bk,wali_kelas,orang_tua'])->group(function () {
         Route::get('/pelanggaran', [PelanggaranController::class, 'index'])->name('pelanggaran.index');
+        Route::get('/monitoring', function () {
+            return view('monitoring.index');
+        })->name('monitoring.index');
     });
 
     // Untuk guru_bk dan wali_kelas: boleh CRUD
