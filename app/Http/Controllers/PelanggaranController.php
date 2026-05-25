@@ -99,39 +99,50 @@ class PelanggaranController extends Controller
 
     // ── Update ────────────────────────────────────────────────────────────
     public function update(Request $request, Pelanggaran $pelanggaran)
-    {
-        $request->validate([
-            'id_siswa'            => 'required|exists:siswa,id_siswa',
-            'id_walikelas'        => 'required|exists:wali_kelas,id_walikelas',
-            'id_jenispelanggaran' => 'required|exists:jenis_pelanggaran,id_jenispelanggaran',
-            'waktu_kejadian'      => 'required|date',
-            'deskripsi'           => 'required|string',
-            'status_pembinaan'    => 'required|in:Belum Ditindak,Dalam Proses,Selesai',
-            'tanggal_pembinaan'   => 'nullable|date',
-            'jam_pembinaan'       => 'nullable|date_format:H:i',  // ← TAMBAH
-            'catatan_bk'          => 'nullable|string|max:2000',
-        ]);
+{
+    $request->validate([
+        'id_siswa'              => 'required|exists:siswa,id_siswa',
+        'id_walikelas'          => 'required|exists:wali_kelas,id_walikelas',
+        'id_jenispelanggaran'   => 'required|exists:jenis_pelanggaran,id_jenispelanggaran',
+        'waktu_kejadian_date'   => 'required|date',
+        'waktu_kejadian_hour'   => 'required|string',
+        'waktu_kejadian_minute' => 'required|string',
+        'deskripsi'             => 'required|string',
+        'status_pembinaan'      => 'required|in:Belum Ditindak,Dalam Proses,Selesai',
+        'tanggal_pembinaan'     => 'nullable|date',
+        'jam_pembinaan_hour'    => 'nullable|string',
+        'jam_pembinaan_minute'  => 'nullable|string',
+        'catatan_bk'            => 'nullable|string|max:2000',
+    ]);
 
-        $pelanggaran->update([
-            'id_siswa'            => $request->id_siswa,
-            'id_walikelas'        => $request->id_walikelas,
-            'id_jenispelanggaran' => $request->id_jenispelanggaran,
-            'waktu_kejadian'      => $request->waktu_kejadian,
-            'deskripsi'           => $request->deskripsi,
-            'status_pembinaan'    => $request->status_pembinaan,
-            'tanggal_pembinaan'   => $request->tanggal_pembinaan ?: null,
-            'jam_pembinaan'       => $request->jam_pembinaan ?: null,  // ← TAMBAH
-            'catatan_bk'          => $request->catatan_bk ?: null,
-        ]);
+    // Gabung tanggal + jam kejadian
+    $waktuKejadian = $request->waktu_kejadian_date
+        . ' ' . $request->waktu_kejadian_hour
+        . ':' . $request->waktu_kejadian_minute
+        . ':00';
 
-        // EWS recheck:
-        // 1. Batalkan notif pending lama
-        // 2. Evaluasi ulang dengan data baru → dispatch job baru jika perlu
-        $this->ews->recheck($pelanggaran);
+    // Gabung jam pembinaan
+    $jamPembinaan = ($request->jam_pembinaan_hour && $request->jam_pembinaan_minute)
+        ? $request->jam_pembinaan_hour . ':' . $request->jam_pembinaan_minute . ':00'
+        : null;
 
-        return redirect()->route('pelanggaran.index')
-            ->with('success', 'Pelanggaran berhasil diperbarui. Notifikasi pending telah dievaluasi ulang.');
-    }
+    $pelanggaran->update([
+        'id_siswa'            => $request->id_siswa,
+        'id_walikelas'        => $request->id_walikelas,
+        'id_jenispelanggaran' => $request->id_jenispelanggaran,
+        'waktu_kejadian'      => $waktuKejadian,
+        'deskripsi'           => $request->deskripsi,
+        'status_pembinaan'    => $request->status_pembinaan,
+        'tanggal_pembinaan'   => $request->tanggal_pembinaan ?: null,
+        'jam_pembinaan'       => $jamPembinaan,
+        'catatan_bk'          => $request->catatan_bk ?: null,
+    ]);
+
+    $this->ews->recheck($pelanggaran);
+
+    return redirect()->route('pelanggaran.index')
+        ->with('success', 'Pelanggaran berhasil diperbarui. Notifikasi pending telah dievaluasi ulang.');
+}
 
     // ── Destroy (soft delete) ─────────────────────────────────────────────
     public function destroy(Pelanggaran $pelanggaran)

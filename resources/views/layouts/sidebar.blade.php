@@ -315,12 +315,16 @@
     <nav class="simdis-nav">
 
         {{-- General --}}
-        <a href="{{ route('dashboard') }}" class="simdis-nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+        <a href="{{ route('dashboard') }}" 
+        wire:navigate
+        class="simdis-nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
             <i class="fas fa-tachometer-alt simdis-nav-icon"></i>
             Dashboard
         </a>
 
-        <a href="{{ route('profile') }}" class="simdis-nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">
+        <a href="{{ route('profile') }}" 
+        wire:navigate
+        class="simdis-nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">
             <i class="fas fa-user-circle simdis-nav-icon"></i>
             Profile
         </a>
@@ -334,12 +338,14 @@
 
         @if (in_array($role, ['guru_bk', 'wali_kelas', 'orang_tua']))
             <a href="{{ route('pelanggaran.index') }}"
+                wire:navigate
                 class="simdis-nav-link {{ request()->routeIs('pelanggaran.*') ? 'active' : '' }}">
                 <i class="fas fa-exclamation-triangle simdis-nav-icon"></i>
                 {{-- Label berbeda untuk orang_tua agar lebih kontekstual --}}
                 {{ $role === 'orang_tua' ? 'Pelanggaran Anak' : 'Data Pelanggaran' }}
             </a>
             <a href="{{ route('monitoring.index') }}"
+                wire:navigate
                 class="simdis-nav-link {{ request()->routeIs('monitoring.*') ? 'active' : '' }}">
                 <i class="fas fa-chart-line simdis-nav-icon"></i>
                 Monitoring Siswa
@@ -348,6 +354,7 @@
 
         @if ($role === 'guru_bk')
             <a href="{{ route('jenis-pelanggaran') }}"
+                wire:navigate
                 class="simdis-nav-link {{ request()->routeIs('jenis-pelanggaran') ? 'active' : '' }}">
                 <i class="fas fa-list-alt simdis-nav-icon"></i>
                 Jenis Pelanggaran
@@ -359,29 +366,37 @@
         @if ($role === 'admin')
             <div class="simdis-section-label">Administrasi Sistem</div>
 
-            <a href="{{ route('users') }}" class="simdis-nav-link {{ request()->routeIs('users') ? 'active' : '' }}">
+            <a href="{{ route('users') }}" 
+            wire:navigate
+            class="simdis-nav-link {{ request()->routeIs('users') ? 'active' : '' }}">
                 <i class="fas fa-users-cog simdis-nav-icon"></i>
                 Pengguna
             </a>
 
-            <a href="{{ route('siswa') }}" class="simdis-nav-link {{ request()->routeIs('siswa') ? 'active' : '' }}">
+            <a href="{{ route('siswa') }}" 
+            wire:navigate
+            class="simdis-nav-link {{ request()->routeIs('siswa') ? 'active' : '' }}">
                 <i class="fas fa-user-graduate simdis-nav-icon"></i>
                 Siswa
             </a>
 
             <a href="{{ route('wali-murid') }}"
-                class="simdis-nav-link {{ request()->routeIs('wali-murid') ? 'active' : '' }}">
+            wire:navigate    
+            class="simdis-nav-link {{ request()->routeIs('wali-murid') ? 'active' : '' }}">
                 <i class="fas fa-user-tie simdis-nav-icon"></i>
                 Wali Murid
             </a>
 
             <a href="{{ route('wali-kelas') }}"
-                class="simdis-nav-link {{ request()->routeIs('wali-kelas') ? 'active' : '' }}">
+            wire:navigate    
+            class="simdis-nav-link {{ request()->routeIs('wali-kelas') ? 'active' : '' }}">
                 <i class="fas fa-chalkboard-teacher simdis-nav-icon"></i>
                 Wali Kelas
             </a>
 
-            <a href="{{ route('kelas') }}" class="simdis-nav-link {{ request()->routeIs('kelas') ? 'active' : '' }}">
+            <a href="{{ route('kelas') }}" 
+            wire:navigate
+            class="simdis-nav-link {{ request()->routeIs('kelas') ? 'active' : '' }}">
                 <i class="fas fa-school simdis-nav-icon"></i>
                 Kelas
             </a>

@@ -69,8 +69,7 @@
                         @foreach($jenisPelanggaran as $j)
                             <option value="{{ $j->id_jenispelanggaran }}"
                                     {{ old('id_jenispelanggaran', $pelanggaran->id_jenispelanggaran) == $j->id_jenispelanggaran ? 'selected' : '' }}>
-                                {{ $j->nama_pelanggaran }}
-                                ({{ ucfirst($j->tingkat_pelanggaran) }})
+                                {{ $j->nama_pelanggaran }} ({{ ucfirst($j->tingkat_pelanggaran) }})
                             </option>
                         @endforeach
                     </select>
@@ -84,8 +83,6 @@
                             class="mt-1 w-full h-11 px-3 text-sm rounded-xl
                                    border border-gray-200 bg-gray-50 text-black
                                    focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20">
-
-                        {{-- FIX: nilai konsisten dengan enum DB --}}
                         <option value="Belum Ditindak"
                             {{ old('status_pembinaan', $pelanggaran->status_pembinaan) === 'Belum Ditindak' ? 'selected' : '' }}>
                             🔴 Belum Ditindak
@@ -101,7 +98,7 @@
                     </select>
                 </div>
 
-                {{-- ── INFO STATUS (dinamis via JS) ── --}}
+                {{-- ── INFO STATUS ── --}}
                 @php $statusSaat = old('status_pembinaan', $pelanggaran->status_pembinaan); @endphp
                 <div id="infoStatus">
                     @if($statusSaat === 'Belum Ditindak')
@@ -122,25 +119,106 @@
                 {{-- ── TANGGAL PEMBINAAN ── --}}
                 <div>
                     <label class="text-xs font-semibold text-[#0D2D6B]">Tanggal Pembinaan</label>
-                    <input type="datetime-local"
+                    <input type="date"
                            name="tanggal_pembinaan"
                            value="{{ old('tanggal_pembinaan', $pelanggaran->tanggal_pembinaan
-                               ? \Carbon\Carbon::parse($pelanggaran->tanggal_pembinaan)->format('Y-m-d\TH:i')
+                               ? \Carbon\Carbon::parse($pelanggaran->tanggal_pembinaan)->format('Y-m-d')
                                : '') }}"
                            class="mt-1 w-full h-11 px-3 text-sm rounded-xl
                                   border border-gray-200 bg-gray-50 text-black
                                   focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20">
                 </div>
 
-                {{-- ── WAKTU KEJADIAN ── --}}
+                {{-- ── JAM PEMBINAAN (dropdown 24 jam) ── --}}
+                @php
+                    $jamRaw    = $pelanggaran->getRawOriginal('jam_pembinaan');
+                    $jamParts  = $jamRaw ? explode(':', substr($jamRaw, 0, 5)) : ['', ''];
+                    $jamH      = old('jam_pembinaan_hour', $jamParts[0] ?? '');
+                    $jamM      = old('jam_pembinaan_minute', $jamParts[1] ?? '');
+                @endphp
+                <div>
+                    <label class="text-xs font-semibold text-[#0D2D6B]">Jam Pembinaan</label>
+                    <div class="flex items-center gap-2 mt-1">
+
+                        {{-- Jam --}}
+                        <select name="jam_pembinaan_hour"
+                                class="flex-1 h-11 px-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-black
+                                       focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20">
+                            <option value="">Jam</option>
+                            @for ($h = 6; $h <= 18; $h++)
+                                @php $val = str_pad($h, 2, '0', STR_PAD_LEFT); @endphp
+                                <option value="{{ $val }}" {{ $jamH === $val ? 'selected' : '' }}>
+                                    {{ $val }}
+                                </option>
+                            @endfor
+                        </select>
+
+                        <span class="text-gray-400 font-bold text-lg">:</span>
+
+                        {{-- Menit --}}
+                        <select name="jam_pembinaan_minute"
+                                class="flex-1 h-11 px-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-black
+                                       focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20">
+                            <option value="">Menit</option>
+                            @foreach (['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'] as $m)
+                                <option value="{{ $m }}" {{ $jamM === $m ? 'selected' : '' }}>
+                                    {{ $m }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                    </div>
+                    <p class="text-[10px] text-gray-400 mt-1">Kosongkan jika jam pembinaan belum diketahui</p>
+                </div>
+
+                {{-- ── WAKTU KEJADIAN (dropdown tanggal + jam + menit) ── --}}
+                @php
+                    $wk      = \Carbon\Carbon::parse($pelanggaran->waktu_kejadian);
+                    $wkTgl   = old('waktu_kejadian_date', $wk->format('Y-m-d'));
+                    $wkH     = old('waktu_kejadian_hour', $wk->format('H'));
+                    $wkM     = old('waktu_kejadian_minute', $wk->format('i'));
+                    // Bulatkan menit ke kelipatan 5 terdekat
+                    $wkM     = str_pad((int)(round((int)$wkM / 5) * 5), 2, '0', STR_PAD_LEFT);
+                    $wkH     = str_pad((int)$wkH, 2, '0', STR_PAD_LEFT);
+                @endphp
                 <div>
                     <label class="text-xs font-semibold text-[#0D2D6B]">Waktu Kejadian</label>
-                    <input type="datetime-local"
-                           name="waktu_kejadian"
-                           value="{{ old('waktu_kejadian', optional(\Carbon\Carbon::parse($pelanggaran->waktu_kejadian))->format('Y-m-d\TH:i')) }}"
+
+                    {{-- Tanggal kejadian --}}
+                    <input type="date"
+                           name="waktu_kejadian_date"
+                           value="{{ $wkTgl }}"
                            class="mt-1 w-full h-11 px-3 text-sm rounded-xl
                                   border border-gray-200 bg-gray-50 text-black
                                   focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20">
+
+                    {{-- Jam & menit kejadian --}}
+                    <div class="flex items-center gap-2 mt-2">
+                        <select name="waktu_kejadian_hour"
+                                class="flex-1 h-11 px-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-black
+                                       focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20">
+                            <option value="">Jam</option>
+                            @for ($h = 6; $h <= 18; $h++)
+                                @php $val = str_pad($h, 2, '0', STR_PAD_LEFT); @endphp
+                                <option value="{{ $val }}" {{ $wkH === $val ? 'selected' : '' }}>
+                                    {{ $val }}
+                                </option>
+                            @endfor
+                        </select>
+
+                        <span class="text-gray-400 font-bold text-lg">:</span>
+
+                        <select name="waktu_kejadian_minute"
+                                class="flex-1 h-11 px-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-black
+                                       focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20">
+                            <option value="">Menit</option>
+                            @foreach (['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'] as $m)
+                                <option value="{{ $m }}" {{ $wkM === $m ? 'selected' : '' }}>
+                                    {{ $m }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
                 {{-- ── DESKRIPSI ── --}}

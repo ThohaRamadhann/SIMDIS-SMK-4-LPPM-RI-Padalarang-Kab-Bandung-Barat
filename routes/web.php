@@ -52,8 +52,8 @@ Route::middleware(['auth'])->group(function () {
         })->name('monitoring.index');
     });
 
-    // Untuk guru_bk dan wali_kelas: boleh CRUD
-    Route::middleware(['role:guru_bk,wali_kelas'])->group(function () {
+    // hanya guru_bk boleh CRUD pelanggaran siswa
+    Route::middleware(['role:guru_bk'])->group(function () {
         Route::get('/pelanggaran/create', [PelanggaranController::class, 'create'])->name('pelanggaran.create');
         Route::post('/pelanggaran', [PelanggaranController::class, 'store'])->name('pelanggaran.store');
         Route::get('/pelanggaran/{pelanggaran}/edit', [PelanggaranController::class, 'edit'])->name('pelanggaran.edit');
