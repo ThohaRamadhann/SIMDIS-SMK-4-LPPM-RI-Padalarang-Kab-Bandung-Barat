@@ -2,11 +2,12 @@
 
 namespace App\Livewire\Admin\Siswa;
 
+use App\Models\Kelas;
+use App\Models\Siswa;
+use App\Models\WaliMurid;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Siswa;
-use App\Models\Kelas;
-use App\Models\WaliMurid;
 
 class Index extends Component
 {
@@ -188,4 +189,6 @@ class Index extends Component
             'trashCount' => Siswa::onlyTrashed()->count(),
         ]);
     }
+    #[On('refresh')]
+public function refreshData(): void {}
 }

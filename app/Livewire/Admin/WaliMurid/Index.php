@@ -2,10 +2,11 @@
 
 namespace App\Livewire\Admin\WaliMurid;
 
+use App\Models\Pengguna;
+use App\Models\WaliMurid;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\WaliMurid;
-use App\Models\Pengguna;
 
 class Index extends Component
 {
@@ -182,4 +183,7 @@ class Index extends Component
             'trashCount' => WaliMurid::onlyTrashed()->count(),
         ]);
     }
+
+    #[On('refresh')]
+public function refreshData(): void {}
 }

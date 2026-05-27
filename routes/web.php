@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\TemplateImportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\PelanggaranController;
@@ -33,6 +34,11 @@ Route::middleware(['auth'])->group(function () {
         Route::view('/wali-murid', 'admin.walimurid')->name('wali-murid'); // pengelolaan wali murid
         Route::view('/wali-kelas', 'admin.walikelas')->name('wali-kelas'); // pengelolaan wali kelas
         Route::view('/kelas', 'admin.kelas')->name('kelas');
+
+        // Download template import
+        Route::get('/admin/template/{type}', [TemplateImportController::class, 'download'])
+            ->name('admin.template.download')
+            ->where('type', 'pengguna|wali_kelas|wali_murid|kelas|siswa');
     });
 
     // routes/web.php

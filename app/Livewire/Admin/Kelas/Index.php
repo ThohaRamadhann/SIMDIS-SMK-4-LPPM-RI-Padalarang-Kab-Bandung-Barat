@@ -2,11 +2,13 @@
 
 namespace App\Livewire\Admin\Kelas;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use Illuminate\Validation\Rule;
 use App\Models\Kelas;
 use App\Models\WaliKelas;
+use Illuminate\Validation\Rule;
+use Livewire\Attributes\On;
+use Livewire\Component;
+use Livewire\WithPagination;
+
 
 class Index extends Component
 {
@@ -80,10 +82,10 @@ class Index extends Component
             'nama_kelas'   => 'required|string|max:100',
             'tingkat'      => ['required', 'string', Rule::in(['X', 'XI', 'XII'])],
             'jurusan'      => ['required', 'string', Rule::in([
-                'Teknik Jaringan Akses',
-                'Rekayasa Perangkat Lunak',
                 'Perhotelan',
-                'Otomotif',
+                'Rekayasa Perangkat Lunak',
+                'Teknik Komputer Jaringan',
+                'Teknik Bisnis Sepeda Motor',
             ])],
             'tahun_ajaran' => 'required|string|max:20',
 
@@ -225,4 +227,7 @@ class Index extends Component
                                   || $this->filterWali),
         ]);
     }
+
+    #[On('refresh')]
+public function refreshData(): void {}
 }

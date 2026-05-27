@@ -252,6 +252,31 @@
 
                 {{-- ── TOOLBAR ── --}}
                 @if (!$showTrash)
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 p-3 bg-gray-50 border border-gray-100 rounded-xl">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">
+                                <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                </svg>
+                                Import Data
+                            </p>
+                            @livewire('admin.import-data', ['type' => 'siswa'])
+                        </div>
+                        <div class="sm:border-l sm:border-gray-200 sm:pl-3">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">
+                                <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Export Data
+                            </p>
+                            @livewire('admin.export-data', ['type' => 'siswa'])
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
 
                         {{-- Search --}}

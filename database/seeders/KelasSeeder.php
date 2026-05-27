@@ -23,15 +23,15 @@ class KelasSeeder extends Seeder
                 'id_walikelas' => $waliKelas[0]->id_walikelas,
                 'tingkat' => 'X',
                 'nama_kelas' => 'X RPL 1',
-                'jurusan' => 'RPL',
-                'tahun_ajaran' => '2025/2026',
+                'jurusan' => 'Rekayasa Perangkat Lunak',
+                'tahun_ajaran' => '2025-2026',
             ],
             [
                 'id_walikelas' => $waliKelas[1]->id_walikelas,
                 'tingkat' => 'XI',
-                'nama_kelas' => 'XI TKJ 1',
+                'nama_kelas' => 'XI Teknik Komputer Jaringan 1',
                 'jurusan' => 'TKJ',
-                'tahun_ajaran' => '2025/2026',
+                'tahun_ajaran' => '2025-2026',
             ],
         ];
 

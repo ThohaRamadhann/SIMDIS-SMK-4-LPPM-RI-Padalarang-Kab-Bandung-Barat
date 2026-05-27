@@ -2,10 +2,11 @@
 
     {{-- ── FLASH MESSAGE ── --}}
     @if (session()->has('success'))
-        <div class="flex items-center gap-2 bg-green-50 border border-green-200
+        <div
+            class="flex items-center gap-2 bg-green-50 border border-green-200
                     text-green-700 px-3 py-2 rounded-xl text-sm">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
             <span class="font-medium">{{ session('success') }}</span>
         </div>
@@ -17,12 +18,12 @@
         <div class="xl:col-span-2">
             <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-4
                         {{ $editingId ? 'border-[rgba(245,184,0,0.4)] ring-2 ring-[rgba(245,184,0,0.12)]' : '' }}"
-                 style="transition: box-shadow .25s, border-color .25s;">
+                style="transition: box-shadow .25s, border-color .25s;">
 
                 {{-- Banner edit --}}
                 @if ($editingId)
                     <div class="-mx-4 -mt-4 mb-3 px-4 py-2 rounded-t-2xl text-[11px] font-semibold"
-                         style="background:rgba(245,184,0,0.1);border-bottom:1px solid rgba(245,184,0,0.3);color:#7a5c00;">
+                        style="background:rgba(245,184,0,0.1);border-bottom:1px solid rgba(245,184,0,0.3);color:#7a5c00;">
                         <i class="fas fa-pen-to-square mr-1"></i> Mode Edit Kelas
                     </div>
                 @endif
@@ -37,8 +38,7 @@
                     {{-- Nama Kelas --}}
                     <div>
                         <label class="text-xs font-semibold text-[#0D2D6B]">Nama Kelas *</label>
-                        <input type="text" wire:model.defer="nama_kelas"
-                            placeholder="Contoh: X TJA 1"
+                        <input type="text" wire:model.defer="nama_kelas" placeholder="Contoh: X TJA 1"
                             class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                    focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
                         @error('nama_kelas')
@@ -70,12 +70,12 @@
                             <label class="text-xs font-semibold text-[#0D2D6B]">Jurusan *</label>
                             <select wire:model.defer="jurusan"
                                 class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
-                                       focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
+           focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
                                 <option value="">-- Pilih --</option>
-                                <option value="Teknik Jaringan Akses">Teknik Jaringan Akses</option>
-                                <option value="Rekayasa Perangkat Lunak">Rekayasa Perangkat Lunak</option>
                                 <option value="Perhotelan">Perhotelan</option>
-                                <option value="Otomotif">Otomotif</option>
+                                <option value="Rekayasa Perangkat Lunak">Rekayasa Perangkat Lunak</option>
+                                <option value="Teknik Komputer Jaringan">Teknik Komputer Jaringan</option>
+                                <option value="Teknik Bisnis Sepeda Motor">Teknik Bisnis Sepeda Motor</option>
                             </select>
                             @error('jurusan')
                                 <span class="text-xs text-red-500">{{ $message }}</span>
@@ -87,8 +87,7 @@
                     {{-- Tahun Ajaran --}}
                     <div>
                         <label class="text-xs font-semibold text-[#0D2D6B]">Tahun Ajaran *</label>
-                        <input type="text" wire:model.defer="tahun_ajaran"
-                            placeholder="Contoh: 2024/2025"
+                        <input type="text" wire:model.defer="tahun_ajaran" placeholder="Contoh: 2024/2025"
                             class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                    focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
                         @error('tahun_ajaran')
@@ -101,23 +100,22 @@
                         open: false,
                         search: '',
                         selected: @entangle('id_walikelas'),
-
+                    
                         get filteredWali() {
                             if (this.search === '') return this.walis
                             return this.walis.filter(w =>
                                 w.name.toLowerCase().includes(this.search.toLowerCase())
                             )
                         },
-
+                    
                         walis: [
-                            @foreach($waliKelasList as $w)
-                            {
+                            @foreach($waliKelasList as $w) {
                                 id: {{ $w->id_walikelas }},
                                 name: '{{ addslashes(optional($w->pengguna)->name ?? '-') }}'
                             },
                             @endforeach
                         ],
-
+                    
                         selectedName() {
                             if (!this.selected) return '-- Pilih Wali Kelas (Opsional) --'
                             const found = this.walis.find(w => w.id == this.selected)
@@ -132,21 +130,22 @@
                             class="mt-0.5 w-full h-10 px-3 rounded-lg border border-gray-200
                                    bg-gray-50 text-left text-sm flex items-center justify-between
                                    hover:bg-white focus:border-[#F5B800] transition">
-                            <span class="truncate"
-                                :class="selected ? 'text-gray-700' : 'text-gray-400'"
+                            <span class="truncate" :class="selected ? 'text-gray-700' : 'text-gray-400'"
                                 x-text="selectedName()">
                             </span>
                             <div class="flex items-center gap-1 flex-shrink-0">
                                 {{-- Tombol clear jika sudah dipilih --}}
-                                <span x-show="selected"
-                                    @click.stop="selected = ''; search = ''; open = false"
+                                <span x-show="selected" @click.stop="selected = ''; search = ''; open = false"
                                     class="text-gray-300 hover:text-red-400 transition cursor-pointer p-0.5 rounded">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                            d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </span>
-                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7" />
                                 </svg>
                             </div>
                         </button>
@@ -159,9 +158,7 @@
 
                             {{-- Search input --}}
                             <div class="p-2 border-b border-gray-100">
-                                <input type="text" x-model="search"
-                                    placeholder="Cari nama wali kelas..."
-                                    @click.stop
+                                <input type="text" x-model="search" placeholder="Cari nama wali kelas..." @click.stop
                                     class="w-full h-9 px-3 text-sm rounded-lg border border-gray-200
                                            bg-gray-50 focus:bg-white focus:border-[#F5B800] outline-none transition">
                             </div>
@@ -170,8 +167,7 @@
                             <div class="max-h-52 overflow-y-auto">
 
                                 {{-- Opsi kosongkan --}}
-                                <button type="button"
-                                    @click="selected = ''; open = false; search = ''"
+                                <button type="button" @click="selected = ''; open = false; search = ''"
                                     class="w-full px-3 py-2.5 text-left text-sm text-gray-400 italic
                                            hover:bg-[#F0F4FB] transition border-b border-gray-50">
                                     Tidak ada wali kelas
@@ -185,8 +181,7 @@
                                 </template>
 
                                 <template x-for="wali in filteredWali" :key="wali.id">
-                                    <button type="button"
-                                        @click="selected = wali.id; open = false; search = ''"
+                                    <button type="button" @click="selected = wali.id; open = false; search = ''"
                                         class="w-full px-3 py-2.5 text-left text-sm
                                                hover:bg-[#F0F4FB] transition border-b border-gray-50
                                                flex items-center gap-2">
@@ -261,7 +256,8 @@
                             <i class="fas {{ $showTrash ? 'fa-arrow-left' : 'fa-trash-can' }}"></i>
                             {{ $showTrash ? 'Kembali' : 'Sampah' }}
                             @if (!$showTrash && $trashCount > 0)
-                                <span class="ml-1 bg-red-500 text-white text-[10px] font-bold
+                                <span
+                                    class="ml-1 bg-red-500 text-white text-[10px] font-bold
                                              px-1.5 py-0.5 rounded-full leading-none">
                                     {{ $trashCount }}
                                 </span>
@@ -273,19 +269,41 @@
                 {{-- ── TOOLBAR ── --}}
                 @if (!$showTrash)
                     <div class="space-y-2 mb-3">
-
+                         {{-- Import & Export --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-gray-50 border border-gray-100 rounded-xl">
+            <div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">
+                    <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                    Import Data
+                </p>
+                @livewire('admin.import-data', ['type' => 'kelas'])
+            </div>
+            <div class="sm:border-l sm:border-gray-200 sm:pl-3">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">
+                    <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Export Data
+                </p>
+                @livewire('admin.export-data', ['type' => 'kelas']) {{-- ← fix typo dari wali_kelas --}}
+            </div>
+        </div>
                         {{-- Row 1: Search + Sort + Per Page --}}
                         <div class="flex flex-wrap gap-2">
 
                             {{-- Search --}}
                             <div class="relative flex-1 min-w-[150px]">
-                                <input type="text"
-                                    wire:model.live.debounce.300ms="search"
+                                <input type="text" wire:model.live.debounce.300ms="search"
                                     placeholder="Cari nama kelas..."
                                     class="w-full h-9 pl-8 pr-8 text-xs rounded-lg border border-gray-200
                                            bg-gray-50 focus:bg-white focus:border-[#F5B800]
                                            focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
-                                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2
+                                <i
+                                    class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2
                                           text-gray-400 text-xs pointer-events-none"></i>
                                 @if ($search)
                                     <button wire:click="$set('search', '')"
@@ -327,7 +345,8 @@
                                            : 'bg-gray-50 border-gray-200 text-gray-600 focus:border-[#F5B800]' }}">
                                 <option value="">Semua Tingkat</option>
                                 @foreach ($tingkatOptions as $t)
-                                    <option value="{{ $t }}" {{ $filterTingkat === $t ? 'selected' : '' }}>
+                                    <option value="{{ $t }}"
+                                        {{ $filterTingkat === $t ? 'selected' : '' }}>
                                         Tingkat {{ $t }}
                                     </option>
                                 @endforeach
@@ -341,7 +360,8 @@
                                            : 'bg-gray-50 border-gray-200 text-gray-600 focus:border-[#F5B800]' }}">
                                 <option value="">Semua Jurusan</option>
                                 @foreach ($jurusanOptions as $j)
-                                    <option value="{{ $j }}" {{ $filterJurusan === $j ? 'selected' : '' }}>
+                                    <option value="{{ $j }}"
+                                        {{ $filterJurusan === $j ? 'selected' : '' }}>
                                         {{ $j }}
                                     </option>
                                 @endforeach
@@ -432,7 +452,8 @@
                                             {{ $k->nama_kelas }}
                                         </span>
                                         @if ($k->trashed())
-                                            <span style="font-size:10px;color:#DC2626;background:rgba(229,62,62,0.08);
+                                            <span
+                                                style="font-size:10px;color:#DC2626;background:rgba(229,62,62,0.08);
                                                          padding:1px 6px;border-radius:20px;margin-left:4px;font-weight:600;">
                                                 Dihapus
                                             </span>
@@ -441,14 +462,16 @@
 
                                     {{-- Tingkat --}}
                                     <td class="px-3 py-2">
-                                        <span class="text-[10px] font-bold px-2 py-1 rounded-full bg-purple-50 text-purple-600">
+                                        <span
+                                            class="text-[10px] font-bold px-2 py-1 rounded-full bg-purple-50 text-purple-600">
                                             {{ $k->tingkat }}
                                         </span>
                                     </td>
 
                                     {{-- Jurusan --}}
                                     <td class="px-3 py-2">
-                                        <span class="text-[10px] font-semibold px-2 py-1 rounded-full bg-blue-50 text-blue-600">
+                                        <span
+                                            class="text-[10px] font-semibold px-2 py-1 rounded-full bg-blue-50 text-blue-600">
                                             {{ $k->jurusan }}
                                         </span>
                                     </td>
@@ -462,7 +485,8 @@
                                     <td class="px-3 py-2">
                                         @if (optional($k->waliKelas)->pengguna)
                                             <div class="flex items-center gap-1.5">
-                                                <div style="width:20px;height:20px;border-radius:50%;flex-shrink:0;
+                                                <div
+                                                    style="width:20px;height:20px;border-radius:50%;flex-shrink:0;
                                                             background:linear-gradient(135deg,#0D2D6B,#163580);
                                                             color:#F5B800;font-size:9px;font-weight:700;
                                                             display:flex;align-items:center;justify-content:center;">
@@ -473,7 +497,8 @@
                                                 </span>
                                             </div>
                                         @else
-                                            <span class="text-[10px] font-semibold px-2 py-1 rounded-full bg-red-50 text-red-400">
+                                            <span
+                                                class="text-[10px] font-semibold px-2 py-1 rounded-full bg-red-50 text-red-400">
                                                 Belum ada
                                             </span>
                                         @endif
@@ -483,8 +508,7 @@
                                     <td class="px-3 py-2 text-center whitespace-nowrap">
                                         @if ($showTrash)
                                             <button wire:click="restore({{ $k->id_kelas }})"
-                                                class="text-xs font-semibold mr-2 transition"
-                                                style="color:#276749;">
+                                                class="text-xs font-semibold mr-2 transition" style="color:#276749;">
                                                 <i class="fas fa-rotate-left"></i> Pulihkan
                                             </button>
                                             <button wire:click="forceDelete({{ $k->id_kelas }})"
@@ -511,7 +535,8 @@
                             @empty
                                 <tr>
                                     <td colspan="7" class="text-center py-8 text-gray-400 text-xs">
-                                        <i class="fas fa-{{ $showTrash ? 'trash' : 'school' }} block text-2xl mb-2 opacity-25"></i>
+                                        <i
+                                            class="fas fa-{{ $showTrash ? 'trash' : 'school' }} block text-2xl mb-2 opacity-25"></i>
                                         {{ $showTrash ? 'Tong sampah kosong.' : 'Tidak ada data kelas ditemukan.' }}
                                     </td>
                                 </tr>
@@ -539,10 +564,7 @@
                                 </button>
                             @endif
 
-                            @foreach ($kelas->getUrlRange(
-                                max(1, $kelas->currentPage() - 2),
-                                min($kelas->lastPage(), $kelas->currentPage() + 2)
-                            ) as $page => $url)
+                            @foreach ($kelas->getUrlRange(max(1, $kelas->currentPage() - 2), min($kelas->lastPage(), $kelas->currentPage() + 2)) as $page => $url)
                                 @if ($page == $kelas->currentPage())
                                     <span class="simdis-page-btn simdis-page-active">{{ $page }}</span>
                                 @else

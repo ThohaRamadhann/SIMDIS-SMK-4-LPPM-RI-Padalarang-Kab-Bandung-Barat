@@ -2,10 +2,11 @@
 
 namespace App\Livewire\Admin\WaliKelas;
 
-use Livewire\Component;
-use Livewire\WithPagination;
 use App\Models\Pengguna;
 use App\Models\WaliKelas;
+use Livewire\Attributes\On;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
@@ -188,4 +189,7 @@ class Index extends Component
             'trashCount' => WaliKelas::onlyTrashed()->count(),
         ]);
     }
+
+    #[On('refresh')]
+public function refreshData(): void {}
 }

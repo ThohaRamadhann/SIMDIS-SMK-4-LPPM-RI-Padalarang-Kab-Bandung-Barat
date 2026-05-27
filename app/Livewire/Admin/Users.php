@@ -6,10 +6,11 @@ use App\Models\Pengguna;
 use App\Models\Role;
 use App\Models\WaliKelas;
 use App\Models\WaliMurid;
-use Livewire\Component;
-use Livewire\WithPagination;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\On;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Users extends Component
 {
@@ -37,11 +38,26 @@ class Users extends Component
         'perPage'    => ['except' => 10],
     ];
 
-    public function updatingSearch()    { $this->resetPage(); }
-    public function updatingFilterRole(){ $this->resetPage(); }
-    public function updatingSortBy()    { $this->resetPage(); }
-    public function updatingPerPage()   { $this->resetPage(); }
-    public function updatingShowTrash() { $this->resetPage(); }
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+    public function updatingFilterRole()
+    {
+        $this->resetPage();
+    }
+    public function updatingSortBy()
+    {
+        $this->resetPage();
+    }
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
+    public function updatingShowTrash()
+    {
+        $this->resetPage();
+    }
 
     // ── Computed: nama role yang dipilih ──
     public function getSelectedRoleNameProperty()
@@ -58,7 +74,9 @@ class Users extends Component
         $rules = [
             'name'      => 'required|string|max:255',
             'username'  => [
-                'required', 'string', 'max:255',
+                'required',
+                'string',
+                'max:255',
                 Rule::unique('pengguna', 'username')
                     ->ignore($this->editingId, 'id_pengguna'),
             ],
@@ -79,8 +97,12 @@ class Users extends Component
                 $pengguna    = Pengguna::with('waliKelas')->find($this->editingId);
                 $waliKelasId = optional($pengguna?->waliKelas)->id_walikelas;
             }
-            $rules['nuptk']   = ['required', 'string', 'max:50',
-                Rule::unique('wali_kelas', 'nuptk')->ignore($waliKelasId, 'id_walikelas')];
+            $rules['nuptk']   = [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('wali_kelas', 'nuptk')->ignore($waliKelasId, 'id_walikelas')
+            ];
             $rules['jabatan'] = 'required|string|max:100';
         }
 
@@ -96,35 +118,35 @@ class Users extends Component
     {
         $query = Pengguna::with('role', 'waliKelas', 'waliMurid');
 
-        // Soft delete toggle
         if ($this->showTrash) {
             $query->onlyTrashed();
         }
 
-        // Search nama atau username
         if ($this->search) {
             $query->where(function ($q) {
                 $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('username', 'like', '%' . $this->search . '%');
+                    ->orWhere('username', 'like', '%' . $this->search . '%');
             });
         }
 
-        // Filter role
         if ($this->filterRole) {
             $query->where('id_role', $this->filterRole);
         }
 
-        // Sorting
         match ($this->sortBy) {
-            'az'      => $query->orderBy('name', 'asc'),
-            'za'      => $query->orderBy('name', 'desc'),
-            default   => $query->orderBy('id_pengguna', 'desc'),
+            'az'    => $query->orderBy('name', 'asc'),
+            'za'    => $query->orderBy('name', 'desc'),
+            default => $query->orderBy('id_pengguna', 'desc'),
         };
 
+        // Di render(), ganti startNo jadi selalu firstItem
+        $users = $query->paginate($this->perPage);
+
         return view('livewire.admin.users', [
-            'users'       => $query->paginate($this->perPage),
-            'roles'       => Role::all(),
-            'trashCount'  => Pengguna::onlyTrashed()->count(),
+            'users'      => $users,
+            'roles'      => Role::all(),
+            'trashCount' => Pengguna::onlyTrashed()->count(),
+            'startNo'    => $users->firstItem(), // ← selalu mulai dari firstItem
         ]);
     }
 
@@ -132,9 +154,16 @@ class Users extends Component
     public function resetForm()
     {
         $this->reset([
-            'editingId', 'name', 'username', 'email',
-            'no_telpon', 'id_role', 'password',
-            'nuptk', 'jabatan', 'hubungan',
+            'editingId',
+            'name',
+            'username',
+            'email',
+            'no_telpon',
+            'id_role',
+            'password',
+            'nuptk',
+            'jabatan',
+            'hubungan',
         ]);
     }
 
@@ -250,4 +279,7 @@ class Users extends Component
         }
         session()->flash('success', 'Tong sampah dikosongkan.');
     }
+
+    #[On('refresh')]
+    public function refreshData(): void {}
 }

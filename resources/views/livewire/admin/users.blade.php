@@ -2,10 +2,11 @@
 
     {{-- SUCCESS NOTIFICATION --}}
     @if (session()->has('success'))
-        <div class="flex items-center gap-3 bg-green-50 border border-green-200
+        <div
+            class="flex items-center gap-3 bg-green-50 border border-green-200
                    text-green-700 px-3 py-2 rounded-xl shadow-sm">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
             <span class="text-sm font-medium">{{ session('success') }}</span>
         </div>
@@ -27,25 +28,35 @@
                         <div>
                             <label class="simdis-label">Nama</label>
                             <input type="text" wire:model="name" placeholder="Masukkan nama" class="simdis-input">
-                            @error('name') <div class="simdis-error">{{ $message }}</div> @enderror
+                            @error('name')
+                                <div class="simdis-error">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div>
                             <label class="simdis-label">Username</label>
-                            <input type="text" wire:model="username" placeholder="Masukkan username" class="simdis-input">
-                            @error('username') <div class="simdis-error">{{ $message }}</div> @enderror
+                            <input type="text" wire:model="username" placeholder="Masukkan username"
+                                class="simdis-input">
+                            @error('username')
+                                <div class="simdis-error">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div>
                             <label class="simdis-label">Email</label>
                             <input type="email" wire:model="email" placeholder="Email opsional" class="simdis-input">
-                            @error('email') <div class="simdis-error">{{ $message }}</div> @enderror
+                            @error('email')
+                                <div class="simdis-error">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div>
                             <label class="simdis-label">Nomor Telepon</label>
-                            <input type="text" wire:model="no_telpon" placeholder="08xxxxxxxxxx" class="simdis-input">
-                            @error('no_telpon') <div class="simdis-error">{{ $message }}</div> @enderror
+                            <input type="text" wire:model="no_telpon" placeholder="08xxxxxxxxxx"
+                                class="simdis-input">
+                            @error('no_telpon')
+                                <div class="simdis-error">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="sm:col-span-2">
@@ -56,7 +67,9 @@
                                     <option value="{{ $r->id_role }}">{{ $r->nama_role }}</option>
                                 @endforeach
                             </select>
-                            @error('id_role') <div class="simdis-error">{{ $message }}</div> @enderror
+                            @error('id_role')
+                                <div class="simdis-error">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="sm:col-span-2">
@@ -64,7 +77,9 @@
                             <input type="password" wire:model="password"
                                 placeholder="{{ $editingId ? 'Kosongkan jika tidak diubah' : 'Masukkan password' }}"
                                 class="simdis-input">
-                            @error('password') <div class="simdis-error">{{ $message }}</div> @enderror
+                            @error('password')
+                                <div class="simdis-error">{{ $message }}</div>
+                            @enderror
                         </div>
 
                     </div>
@@ -76,13 +91,19 @@
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label class="simdis-label">NUPTK</label>
-                                    <input type="text" wire:model="nuptk" placeholder="Masukkan NUPTK" class="simdis-input">
-                                    @error('nuptk') <div class="simdis-error">{{ $message }}</div> @enderror
+                                    <input type="text" wire:model="nuptk" placeholder="Masukkan NUPTK"
+                                        class="simdis-input">
+                                    @error('nuptk')
+                                        <div class="simdis-error">{{ $message }}</div>
+                                    @enderror
                                 </div>
                                 <div>
                                     <label class="simdis-label">Jabatan</label>
-                                    <input type="text" wire:model="jabatan" placeholder="Masukkan jabatan" class="simdis-input">
-                                    @error('jabatan') <div class="simdis-error">{{ $message }}</div> @enderror
+                                    <input type="text" wire:model="jabatan" placeholder="Masukkan jabatan"
+                                        class="simdis-input">
+                                    @error('jabatan')
+                                        <div class="simdis-error">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
                         </div>
@@ -92,8 +113,11 @@
                     @if ($this->selectedRoleName === 'orang_tua')
                         <div class="pt-3 border-t">
                             <h4 class="simdis-section-title">Detail Wali Murid</h4>
-                            <input type="text" wire:model="hubungan" placeholder="Ayah / Ibu / Wali" class="simdis-input">
-                            @error('hubungan') <div class="simdis-error">{{ $message }}</div> @enderror
+                            <input type="text" wire:model="hubungan" placeholder="Ayah / Ibu / Wali"
+                                class="simdis-input">
+                            @error('hubungan')
+                                <div class="simdis-error">{{ $message }}</div>
+                            @enderror
                         </div>
                     @endif
 
@@ -135,7 +159,8 @@
                         <i class="fas {{ $showTrash ? 'fa-arrow-left' : 'fa-trash-can' }}"></i>
                         {{ $showTrash ? 'Kembali' : 'Tong Sampah' }}
                         @if (!$showTrash && $trashCount > 0)
-                            <span class="ml-1 bg-red-500 text-white text-[10px] font-bold
+                            <span
+                                class="ml-1 bg-red-500 text-white text-[10px] font-bold
                                          px-1.5 py-0.5 rounded-full leading-none">
                                 {{ $trashCount }}
                             </span>
@@ -145,18 +170,43 @@
 
                 {{-- ── TOOLBAR ── --}}
                 @if (!$showTrash)
+                    {{-- Import & Export --}}
+                    <div
+                        class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 p-3 bg-gray-50 border border-gray-100 rounded-xl">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">
+                                <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                </svg>
+                                Import Data
+                            </p>
+                            @livewire('admin.import-data', ['type' => 'pengguna'])
+                        </div>
+                        <div class="sm:border-l sm:border-gray-200 sm:pl-3">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">
+                                <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Export Data
+                            </p>
+                            @livewire('admin.export-data', ['type' => 'pengguna'])
+                        </div>
+                    </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
 
                         {{-- Search --}}
                         <div class="lg:col-span-2 relative">
-                            <input type="text"
-                                wire:model.live.debounce.300ms="search"
-                                placeholder="Cari nama atau username..."
-                                class="simdis-input pl-8"
+                            <input type="text" wire:model.live.debounce.300ms="search"
+                                placeholder="Cari nama atau username..." class="simdis-input pl-8"
                                 style="height:36px; font-size:12px;">
-                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2
+                            <i
+                                class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2
                                       text-[#9AAAC4] text-xs pointer-events-none"></i>
-                            @if($search)
+                            @if ($search)
                                 <button wire:click="$set('search','')"
                                     class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                                     <i class="fas fa-xmark text-xs"></i>
@@ -166,7 +216,8 @@
 
                         {{-- Filter Role --}}
                         <div>
-                            <select wire:model.live="filterRole" class="simdis-select" style="height:36px;font-size:12px;">
+                            <select wire:model.live="filterRole" class="simdis-select"
+                                style="height:36px;font-size:12px;">
                                 <option value="">Semua Role</option>
                                 @foreach ($roles as $r)
                                     <option value="{{ $r->id_role }}">{{ $r->nama_role }}</option>
@@ -176,12 +227,14 @@
 
                         {{-- Sort + Per page --}}
                         <div class="flex gap-2">
-                            <select wire:model.live="sortBy" class="simdis-select flex-1" style="height:36px;font-size:12px;">
+                            <select wire:model.live="sortBy" class="simdis-select flex-1"
+                                style="height:36px;font-size:12px;">
                                 <option value="terbaru">Terbaru</option>
                                 <option value="az">A → Z</option>
                                 <option value="za">Z → A</option>
                             </select>
-                            <select wire:model.live="perPage" class="simdis-select" style="height:36px;font-size:12px;width:70px;">
+                            <select wire:model.live="perPage" class="simdis-select"
+                                style="height:36px;font-size:12px;width:70px;">
                                 <option value="10">10</option>
                                 <option value="15">15</option>
                                 <option value="25">25</option>
@@ -193,7 +246,7 @@
                     </div>
                 @else
                     {{-- Trash: tombol kosongkan --}}
-                    @if($trashCount > 0)
+                    @if ($trashCount > 0)
                         <div class="flex justify-end mb-3">
                             <button wire:click="emptyTrash"
                                 wire:confirm="Hapus SEMUA data di tong sampah secara permanen? Tidak bisa dikembalikan."
@@ -223,11 +276,14 @@
                                 <tr wire:key="user-{{ $u->id_pengguna }}"
                                     style="{{ $isEditing ? 'background:rgba(245,184,0,0.07);outline:1.5px solid rgba(245,184,0,0.35);outline-offset:-1px;' : '' }}">
 
-                                    <td style="color:#4A5E8A;font-size:12px;">{{ $u->id_pengguna }}</td>
+                                    <td style="color:#4A5E8A;font-size:12px;">
+                                        {{ $startNo + $loop->index }}
+                                    </td>
 
                                     <td>
                                         <div class="flex items-center gap-2">
-                                            <div style="width:26px;height:26px;border-radius:50%;
+                                            <div
+                                                style="width:26px;height:26px;border-radius:50%;
                                                         background:linear-gradient(135deg,#0D2D6B,#163580);
                                                         color:#F5B800;font-size:11px;font-weight:700;
                                                         display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -235,8 +291,9 @@
                                             </div>
                                             <span style="font-weight:600;color:#0D2D6B;font-size:13px;">
                                                 {{ $u->name }}
-                                                @if($u->trashed())
-                                                    <span style="font-size:10px;color:#DC2626;font-weight:600;
+                                                @if ($u->trashed())
+                                                    <span
+                                                        style="font-size:10px;color:#DC2626;font-weight:600;
                                                                  background:rgba(229,62,62,0.08);padding:1px 6px;
                                                                  border-radius:20px;margin-left:4px;">Dihapus</span>
                                                 @endif
@@ -278,8 +335,10 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="text-center py-8" style="color:#9AAAC4;font-size:13px;">
-                                        <i class="fas fa-{{ $showTrash ? 'trash' : 'users-slash' }} block text-2xl mb-2 opacity-25"></i>
+                                    <td colspan="5" class="text-center py-8"
+                                        style="color:#9AAAC4;font-size:13px;">
+                                        <i
+                                            class="fas fa-{{ $showTrash ? 'trash' : 'users-slash' }} block text-2xl mb-2 opacity-25"></i>
                                         {{ $showTrash ? 'Tong sampah kosong.' : 'Tidak ada pengguna ditemukan.' }}
                                     </td>
                                 </tr>
@@ -308,10 +367,7 @@
                             @endif
 
                             {{-- Nomor halaman --}}
-                            @foreach ($users->getUrlRange(
-                                max(1, $users->currentPage() - 2),
-                                min($users->lastPage(), $users->currentPage() + 2)
-                            ) as $page => $url)
+                            @foreach ($users->getUrlRange(max(1, $users->currentPage() - 2), min($users->lastPage(), $users->currentPage() + 2)) as $page => $url)
                                 @if ($page == $users->currentPage())
                                     <span class="simdis-page-btn simdis-page-active">{{ $page }}</span>
                                 @else
