@@ -132,73 +132,86 @@
     
         const baseOptions = {
             chart: {
-                toolbar: { show: false },
+                toolbar: {
+                    show: false
+                },
                 fontFamily: 'inherit'
             },
+    
             grid: {
                 borderColor: gridColor,
                 strokeDashArray: 4
             },
+    
             tooltip: {
                 theme: 'light'
             },
+    
             dataLabels: {
                 enabled: false
             },
         };
     
+        // =========================================================
         // GLOBAL STORAGE
-        if (!window._simdisCharts) {
-            window._simdisCharts = [];
-        }
+        // =========================================================
+        window._simdisCharts = window._simdisCharts || [];
     
+        let chartsInitialized = false;
+    
+        // =========================================================
+        // DESTROY CHARTS
+        // =========================================================
         function destroyCharts() {
-            // destroy apex instances
+    
             window._simdisCharts.forEach(chart => {
+    
                 try {
                     chart.destroy();
                 } catch (e) {}
+    
             });
     
             window._simdisCharts = [];
     
-            // bersihkan container
             ['chartBulanan', 'chartJenis'].forEach(id => {
+    
                 const el = document.getElementById(id);
     
                 if (el) {
                     el.innerHTML = '';
+                    el.replaceChildren();
                 }
             });
         }
     
+        // =========================================================
+        // INIT CHARTS
+        // =========================================================
         function initCharts() {
     
-            // pastikan element ada
             const bulananEl = document.getElementById('chartBulanan');
-            const jenisEl   = document.getElementById('chartJenis');
+            const jenisEl = document.getElementById('chartJenis');
     
             if (!bulananEl || !jenisEl) {
                 return;
             }
     
-            destroyCharts();
-    
-            // delay kecil supaya layout/card selesai render
             setTimeout(() => {
     
-                // ======================
-                // CHART BULANAN
-                // ======================
+                // =====================================================
+                // DATA BULANAN
+                // =====================================================
     
                 const bulananData = @json($charts['bulanan']['data'] ?? []);
                 const bulananLabels = @json($charts['bulanan']['labels'] ?? []);
     
-                const maxBulanan = bulananData.length
-                    ? Math.max(...bulananData)
-                    : 1;
+                const maxBulanan = bulananData.length ?
+                    Math.max(...bulananData) :
+                    1;
     
                 const c1 = new ApexCharts(bulananEl, {
+    
                     ...baseOptions,
     
                     series: [{
@@ -247,12 +260,18 @@
                                 fontSize: '10px',
                                 colors: '#718096'
                             },
+    
                             rotate: -45,
                             hideOverlappingLabels: true
                         },
     
-                        axisBorder: { show: false },
-                        axisTicks: { show: false },
+                        axisBorder: {
+                            show: false
+                        },
+    
+                        axisTicks: {
+                            show: false
+                        },
                     },
     
                     yaxis: {
@@ -283,17 +302,17 @@
     
                 window._simdisCharts.push(c1);
     
-                // ======================
-                // CHART JENIS
-                // ======================
+                // =====================================================
+                // DATA JENIS
+                // =====================================================
     
                 const jenisLabels = @json($charts['jenis']['labels'] ?? []);
                 const jenisTingkat = @json($charts['jenis']['tingkat'] ?? []);
                 const jenisData = @json($charts['jenis']['data'] ?? []);
     
-                const maxJenis = jenisData.length
-                    ? Math.max(...jenisData)
-                    : 1;
+                const maxJenis = jenisData.length ?
+                    Math.max(...jenisData) :
+                    1;
     
                 const tingkatColors = jenisTingkat.map(t => {
     
@@ -311,6 +330,7 @@
                 });
     
                 const c2 = new ApexCharts(jenisEl, {
+    
                     ...baseOptions,
     
                     series: [{
@@ -325,7 +345,9 @@
                     },
     
                     colors: [
-                        function({ dataPointIndex }) {
+                        function({
+                            dataPointIndex
+                        }) {
                             return tingkatColors[dataPointIndex] || '#F5B800';
                         }
                     ],
@@ -368,13 +390,18 @@
                             },
     
                             formatter: v =>
-                                Number.isInteger(Number(v))
-                                    ? Math.floor(Number(v))
-                                    : ''
+                                Number.isInteger(Number(v)) ?
+                                Math.floor(Number(v)) :
+                                ''
                         },
     
-                        axisBorder: { show: false },
-                        axisTicks: { show: false },
+                        axisBorder: {
+                            show: false
+                        },
+    
+                        axisTicks: {
+                            show: false
+                        },
                     },
     
                     yaxis: {
@@ -388,9 +415,9 @@
                             },
     
                             formatter: v =>
-                                v && v.length > 24
-                                    ? v.substring(0, 24) + '…'
-                                    : v
+                                v && v.length > 24 ?
+                                v.substring(0, 24) + '…' :
+                                v
                         }
                     },
     
@@ -398,7 +425,9 @@
                         theme: 'light',
     
                         x: {
-                            formatter: (val, { dataPointIndex }) =>
+                            formatter: (val, {
+                                    dataPointIndex
+                                }) =>
                                 `<strong>${jenisLabels[dataPointIndex] ?? ''}</strong><br>Tingkat: ${jenisTingkat[dataPointIndex] ?? '-'}`
                         },
     
@@ -416,17 +445,53 @@
     
                 window._simdisCharts.push(c2);
     
-            }, 100);
+            }, 120);
         }
     
+        // =========================================================
+        // SAFE INIT
+        // =========================================================
+        function safeInitCharts() {
+    
+            if (chartsInitialized) {
+                return;
+            }
+    
+            chartsInitialized = true;
+    
+            initCharts();
+        }
+    
+        // =========================================================
+        // SAFE DESTROY
+        // =========================================================
+        function safeDestroyCharts() {
+    
+            destroyCharts();
+    
+            chartsInitialized = false;
+        }
+    
+        // =========================================================
         // FIRST LOAD
-        document.addEventListener('DOMContentLoaded', initCharts);
+        // =========================================================
+        window.addEventListener('load', () => {
+            safeInitCharts();
+        });
     
-        // LIVEWIRE NAVIGATE
-        document.addEventListener('livewire:navigated', initCharts);
+        // =========================================================
+        // LIVEWIRE NAVIGATION
+        // =========================================================
+        document.addEventListener('livewire:navigated', () => {
+            safeInitCharts();
+        });
     
-        // SEBELUM PINDAH HALAMAN
-        document.addEventListener('livewire:navigate', destroyCharts);
+        // =========================================================
+        // BEFORE NAVIGATE
+        // =========================================================
+        document.addEventListener('livewire:navigate', () => {
+            safeDestroyCharts();
+        });
     </script>
 
 </x-app-layout>

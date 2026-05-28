@@ -36,24 +36,24 @@
                 {{-- SISWA --}}
                 <div>
                     <label class="text-xs font-semibold text-[#0D2D6B]">Siswa</label>
-                    <select name="id_siswa" id="id_siswa"
-                        class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg
-               border border-gray-200 bg-gray-50 text-black
-               focus:bg-white focus:border-[#F5B800]
-               focus:ring-2 focus:ring-[#F5B800]/20">
+
+                    <select name="id_siswa" id="id_siswa" class="mt-0.5 w-full">
+
                         <option value="">-- Pilih Siswa --</option>
+
                         @foreach ($siswa as $s)
-                            <option value="{{ $s->id_siswa }}"
-                                data-kelas="{{ $s->kelas->nama_kelas ?? '' }}"
+                            <option value="{{ $s->id_siswa }}" data-kelas="{{ $s->kelas->nama_kelas ?? '' }}"
                                 data-wali="{{ $s->kelas?->waliKelas?->pengguna?->name ?? '-' }}"
                                 data-idwalikelas="{{ $s->kelas?->waliKelas?->id_walikelas ?? '' }}"
                                 {{ old('id_siswa') == $s->id_siswa ? 'selected' : '' }}>
+
                                 {{ $s->nama }} - {{ $s->nis }}
+
                             </option>
                         @endforeach
+
                     </select>
                 </div>
-
 
                 {{-- KELAS --}}
                 <div>
@@ -189,14 +189,16 @@
                         {{-- Jam --}}
                         <select id="wkt_jam"
                             class="w-[72px] h-10 px-2 text-sm text-center rounded-lg
-                                   border border-gray-200 bg-gray-50 text-black
-                                   focus:bg-white focus:border-[#F5B800]
-                                   focus:ring-2 focus:ring-[#F5B800]/20">
-                            @for ($h = 0; $h < 24; $h++)
+                            border border-gray-200 bg-gray-50 text-black
+                            focus:bg-white focus:border-[#F5B800]
+                            focus:ring-2 focus:ring-[#F5B800]/20">
+
+                            @for ($h = 6; $h <= 18; $h++)
                                 <option value="{{ str_pad($h, 2, '0', STR_PAD_LEFT) }}">
                                     {{ str_pad($h, 2, '0', STR_PAD_LEFT) }}
                                 </option>
                             @endfor
+
                         </select>
 
                         <span class="text-gray-500 font-bold text-base select-none">:</span>
@@ -204,14 +206,16 @@
                         {{-- Menit --}}
                         <select id="wkt_menit"
                             class="w-[72px] h-10 px-2 text-sm text-center rounded-lg
-                                   border border-gray-200 bg-gray-50 text-black
-                                   focus:bg-white focus:border-[#F5B800]
-                                   focus:ring-2 focus:ring-[#F5B800]/20">
+                            border border-gray-200 bg-gray-50 text-black
+                            focus:bg-white focus:border-[#F5B800]
+                            focus:ring-2 focus:ring-[#F5B800]/20">
+
                             @for ($m = 0; $m < 60; $m += 5)
                                 <option value="{{ str_pad($m, 2, '0', STR_PAD_LEFT) }}">
                                     {{ str_pad($m, 2, '0', STR_PAD_LEFT) }}
                                 </option>
                             @endfor
+
                         </select>
 
                     </div>
@@ -387,7 +391,8 @@
                         wktMenit.value = String(snap).padStart(2, '0');
                     }
                 } catch (e) {
-                    /* silent */ }
+                    /* silent */
+                }
             })();
         @endif
 
@@ -397,11 +402,17 @@
             }
         });
 
-
-        // ────────────────────────────────────────────────────────────
         // INIT
-        // ────────────────────────────────────────────────────────────
         window.addEventListener('load', updateDataSiswa);
+
+        // SEARCHABLE SELECT SISWA
+        new TomSelect("#id_siswa", {
+            create: false,
+            placeholder: "Cari nama siswa atau NIS...",
+            searchField: ['text'],
+            maxOptions: 200,
+        });
     </script>
+    
 
 </x-app-layout>
