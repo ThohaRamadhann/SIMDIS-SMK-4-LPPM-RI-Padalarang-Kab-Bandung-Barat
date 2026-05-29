@@ -5,39 +5,39 @@ namespace App\Livewire\JenisPelanggaran;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\JenisPelanggaran;
+use App\Models\LogAktivitas;
 use Illuminate\Validation\Rule;
 
 class Index extends Component
 {
     use WithPagination;
 
-    // ── Filter & Paginasi ──────────────────────────────────────
+    // ── Filter & Paginasi ──────────────────────────────────────────────
     public string $search        = '';
     public string $filterTingkat = '';
     public int    $perPage       = 10;
     public bool   $showTrash     = false;
 
-    // ── Form fields ────────────────────────────────────────────
+    // ── Form fields ────────────────────────────────────────────────────
     public string $nama_pelanggaran    = '';
     public string $tingkat_pelanggaran = '';
 
-    // ── State modal ────────────────────────────────────────────
+    // ── State modal ────────────────────────────────────────────────────
     public $editId             = null;
     public bool $showModal     = false;
     public bool $confirmDelete = false;
     public $deleteId           = null;
 
-    // ── State hapus permanen ───────────────────────────────────
+    // ── State hapus permanen ───────────────────────────────────────────
     public bool $confirmForceDelete = false;
     public $forceDeleteId           = null;
 
-    // Reset halaman saat filter berubah
     public function updatingSearch(): void        { $this->resetPage(); }
     public function updatingFilterTingkat(): void { $this->resetPage(); }
     public function updatingPerPage(): void       { $this->resetPage(); }
     public function updatingShowTrash(): void     { $this->resetPage(); }
 
-    // ── Validasi ───────────────────────────────────────────────
+    // ── Validasi ───────────────────────────────────────────────────────
     protected function rules(): array
     {
         return [
@@ -60,14 +60,14 @@ class Index extends Component
         'tingkat_pelanggaran.in'       => 'Tingkat tidak valid.',
     ];
 
-    // ── Toggle Trash ───────────────────────────────────────────
+    // ── Toggle Trash ───────────────────────────────────────────────────
     public function toggleTrash(): void
     {
         $this->showTrash = !$this->showTrash;
         $this->resetPage();
     }
 
-    // ── Open modal form ────────────────────────────────────────
+    // ── Open modal form ────────────────────────────────────────────────
     public function openCreate(): void
     {
         $this->reset(['nama_pelanggaran', 'tingkat_pelanggaran', 'editId']);
@@ -85,12 +85,14 @@ class Index extends Component
         $this->showModal = true;
     }
 
-    // ── Simpan (create / update) ───────────────────────────────
+    // ── Simpan (create / update) ───────────────────────────────────────
     public function save(): void
     {
         $this->validate();
 
-        JenisPelanggaran::updateOrCreate(
+        $isEdit = (bool) $this->editId;
+
+        $item = JenisPelanggaran::updateOrCreate(
             ['id_jenispelanggaran' => $this->editId],
             [
                 'nama_pelanggaran'    => $this->nama_pelanggaran,
@@ -98,14 +100,22 @@ class Index extends Component
             ]
         );
 
+        LogAktivitas::catat(
+            aksi: $isEdit ? 'edit_jenis_pelanggaran' : 'tambah_jenis_pelanggaran',
+            modul: 'jenis_pelanggaran',
+            keterangan: ($isEdit ? 'Mengubah' : 'Menambahkan') . ' jenis pelanggaran "'
+                . $this->nama_pelanggaran . '" (Tingkat: ' . $this->tingkat_pelanggaran . ')',
+            idReferensi: $item->id_jenispelanggaran
+        );
+
         $this->showModal = false;
-        session()->flash('success', $this->editId
+        session()->flash('success', $isEdit
             ? 'Jenis pelanggaran berhasil diperbarui.'
             : 'Jenis pelanggaran berhasil ditambahkan.'
         );
     }
 
-    // ── Soft Delete ────────────────────────────────────────────
+    // ── Soft Delete ────────────────────────────────────────────────────
     public function confirmDeleteItem(int $id): void
     {
         $this->deleteId      = $id;
@@ -114,20 +124,40 @@ class Index extends Component
 
     public function deleteItem(): void
     {
-        JenisPelanggaran::findOrFail($this->deleteId)->delete(); // soft delete
+        $item = JenisPelanggaran::findOrFail($this->deleteId);
+
+        LogAktivitas::catat(
+            aksi: 'hapus_jenis_pelanggaran',
+            modul: 'jenis_pelanggaran',
+            keterangan: 'Memindahkan jenis pelanggaran "' . $item->nama_pelanggaran
+                . '" (Tingkat: ' . $item->tingkat_pelanggaran . ') ke tong sampah',
+            idReferensi: $this->deleteId
+        );
+
+        $item->delete();
         $this->confirmDelete = false;
         $this->deleteId      = null;
         session()->flash('success', 'Jenis pelanggaran dipindahkan ke tong sampah.');
     }
 
-    // ── Restore dari trash ─────────────────────────────────────
+    // ── Restore dari trash ─────────────────────────────────────────────
     public function restoreItem(int $id): void
     {
-        JenisPelanggaran::withTrashed()->findOrFail($id)->restore();
+        $item = JenisPelanggaran::withTrashed()->findOrFail($id);
+
+        LogAktivitas::catat(
+            aksi: 'restore_jenis_pelanggaran',
+            modul: 'jenis_pelanggaran',
+            keterangan: 'Memulihkan jenis pelanggaran "' . $item->nama_pelanggaran
+                . '" (Tingkat: ' . $item->tingkat_pelanggaran . ') dari tong sampah',
+            idReferensi: $id
+        );
+
+        $item->restore();
         session()->flash('success', 'Jenis pelanggaran berhasil dipulihkan.');
     }
 
-    // ── Hapus permanen ─────────────────────────────────────────
+    // ── Hapus permanen ─────────────────────────────────────────────────
     public function confirmForceDeleteItem(int $id): void
     {
         $this->forceDeleteId      = $id;
@@ -136,13 +166,23 @@ class Index extends Component
 
     public function forceDeleteItem(): void
     {
-        JenisPelanggaran::withTrashed()->findOrFail($this->forceDeleteId)->forceDelete();
+        $item = JenisPelanggaran::withTrashed()->findOrFail($this->forceDeleteId);
+
+        LogAktivitas::catat(
+            aksi: 'hapus_permanen_jenis_pelanggaran',
+            modul: 'jenis_pelanggaran',
+            keterangan: 'Menghapus permanen jenis pelanggaran "' . $item->nama_pelanggaran
+                . '" (Tingkat: ' . $item->tingkat_pelanggaran . ')',
+            idReferensi: $this->forceDeleteId
+        );
+
+        $item->forceDelete();
         $this->confirmForceDelete = false;
         $this->forceDeleteId      = null;
         session()->flash('success', 'Jenis pelanggaran dihapus permanen.');
     }
 
-    // ── Tutup semua modal ──────────────────────────────────────
+    // ── Tutup semua modal ──────────────────────────────────────────────
     public function closeModal(): void
     {
         $this->showModal          = false;
@@ -151,7 +191,7 @@ class Index extends Component
         $this->resetErrorBag();
     }
 
-    // ── Render ─────────────────────────────────────────────────
+    // ── Render ─────────────────────────────────────────────────────────
     public function render()
     {
         $trashCount = JenisPelanggaran::onlyTrashed()->count();

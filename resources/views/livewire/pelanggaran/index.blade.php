@@ -246,11 +246,11 @@
                             <td class="px-3 py-3 text-gray-600">
                                 {{ $p->siswa?->kelas?->nama_kelas ?? '-' }}
                             </td>
-                            
+
                             <td class="px-3 py-3 text-gray-600">
                                 {{ $p->siswa?->kelas?->jurusan ?? '-' }}
                             </td>
-                            
+
                             <td class="px-3 py-3 text-gray-600">
                                 {{ $p->siswa?->kelas?->tahun_ajaran ?? '-' }}
                             </td>
@@ -318,6 +318,15 @@
                                                 class="text-emerald-600 text-xs font-semibold hover:underline mr-2">
                                                 Tindak
                                             </button>
+
+                                            @if (($p->jenisPelanggaran->tingkat_pelanggaran ?? '') === 'Berat')
+                                                <a href="{{ route('surat-panggilan.create', $p->id_pelanggaran) }}"
+                                                    wire:navigate
+                                                    class="text-purple-600 text-xs font-semibold hover:underline mr-2"
+                                                    title="Buat Surat Panggilan Orang Tua">
+                                                    📄 Surat
+                                                </a>
+                                            @endif
                                         @endif
                                         <button wire:click="hapus({{ $p->id_pelanggaran }})"
                                             wire:confirm="Hapus data ini?"
@@ -420,9 +429,9 @@
                                     </option>
                                 @endfor
                             </select>
-                    
+
                             <span class="text-gray-400 font-bold">:</span>
-                    
+
                             <select wire:model="modalJamMinute"
                                 class="flex-1 h-10 px-3 rounded-xl border border-gray-200 text-sm
                                        focus:border-[#F5B800] focus:ring-[#F5B800]">

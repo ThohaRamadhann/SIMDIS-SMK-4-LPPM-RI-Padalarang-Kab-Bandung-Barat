@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LogAktivitas;
 use App\Models\Pelanggaran;
 use App\Models\Siswa;
 use App\Models\WaliKelas;
@@ -19,7 +20,7 @@ class PelanggaranController extends Controller
         $this->ews = $ews;
     }
 
-    // ── Index — dialihkan ke Livewire ──────────────────────────────────────
+    // ── Index — dialihkan ke Livewire ─────────────────────────────────────
     public function index()
     {
         return view('pelanggaran.index');
@@ -46,7 +47,7 @@ class PelanggaranController extends Controller
             'deskripsi'           => 'required|string',
         ]);
 
-        // Anti-duplikat: siswa + jenis pelanggaran yang sama tidak boleh diinput di hari yang sama
+        // Anti-duplikat
         $waktu    = \Carbon\Carbon::parse($request->waktu_kejadian);
         $duplikat = Pelanggaran::where('id_siswa', $request->id_siswa)
             ->where('id_jenispelanggaran', $request->id_jenispelanggaran)
@@ -75,6 +76,15 @@ class PelanggaranController extends Controller
             'waliKelas.pengguna',
             'jenisPelanggaran',
         ]);
+
+        LogAktivitas::catat(
+            aksi: 'tambah_pelanggaran',
+            modul: 'pelanggaran',
+            keterangan: 'Mencatat pelanggaran siswa ' . $pelanggaran->siswa->nama
+                . ' - ' . $pelanggaran->jenisPelanggaran->nama_pelanggaran
+                . ' (Tingkat: ' . $pelanggaran->jenisPelanggaran->tingkat_pelanggaran . ')',
+            idReferensi: $pelanggaran->id_pelanggaran
+        );
 
         $this->ews->check($pelanggaran);
 
@@ -115,22 +125,15 @@ class PelanggaranController extends Controller
             'catatan_bk'            => 'nullable|string|max:2000',
         ]);
 
-        // Gabung tanggal + jam kejadian
         $waktuKejadian = $request->waktu_kejadian_date
             . ' ' . $request->waktu_kejadian_hour
             . ':' . $request->waktu_kejadian_minute
             . ':00';
 
-        // Gabung jam pembinaan
         $jamPembinaan = ($request->jam_pembinaan_hour && $request->jam_pembinaan_minute)
             ? $request->jam_pembinaan_hour . ':' . $request->jam_pembinaan_minute . ':00'
             : null;
 
-        /*
-    |--------------------------------------------------------------------------
-    | Cek apakah data inti pelanggaran berubah
-    |--------------------------------------------------------------------------
-    */
         $perluRecheck =
             $pelanggaran->id_siswa != $request->id_siswa ||
             $pelanggaran->id_walikelas != $request->id_walikelas ||
@@ -138,7 +141,6 @@ class PelanggaranController extends Controller
             $pelanggaran->waktu_kejadian != $waktuKejadian ||
             $pelanggaran->deskripsi != $request->deskripsi;
 
-        // Update data
         $pelanggaran->update([
             'id_siswa'            => $request->id_siswa,
             'id_walikelas'        => $request->id_walikelas,
@@ -151,35 +153,42 @@ class PelanggaranController extends Controller
             'catatan_bk'          => $request->catatan_bk ?: null,
         ]);
 
-        /*
-    |--------------------------------------------------------------------------
-    | Recheck hanya jika data inti berubah
-    |--------------------------------------------------------------------------
-    */
+        $pelanggaran->load(['siswa', 'jenisPelanggaran']);
+
+        LogAktivitas::catat(
+            aksi: 'edit_pelanggaran',
+            modul: 'pelanggaran',
+            keterangan: 'Mengubah data pelanggaran siswa ' . $pelanggaran->siswa->nama
+                . ' - ' . $pelanggaran->jenisPelanggaran->nama_pelanggaran
+                . ' | Status: ' . $request->status_pembinaan,
+            idReferensi: $pelanggaran->id_pelanggaran
+        );
+
         if ($perluRecheck) {
             $this->ews->recheck($pelanggaran);
 
             return redirect()->route('pelanggaran.index')
-                ->with(
-                    'success',
-                    'Pelanggaran berhasil diperbarui. Notifikasi pending telah dievaluasi ulang.'
-                );
+                ->with('success', 'Pelanggaran berhasil diperbarui. Notifikasi pending telah dievaluasi ulang.');
         }
 
         return redirect()->route('pelanggaran.index')
-            ->with(
-                'success',
-                'Data pembinaan berhasil diperbarui.'
-            );
+            ->with('success', 'Data pembinaan berhasil diperbarui.');
     }
 
     // ── Destroy (soft delete) ─────────────────────────────────────────────
     public function destroy(Pelanggaran $pelanggaran)
     {
-        // Batalkan notif pending sebelum hapus
-        // (job yang sudah di-queue akan lihat status 'dibatalkan' dan skip)
-        $this->ews->cancel($pelanggaran);
+        $pelanggaran->load(['siswa', 'jenisPelanggaran']);
 
+        LogAktivitas::catat(
+            aksi: 'hapus_pelanggaran',
+            modul: 'pelanggaran',
+            keterangan: 'Menghapus pelanggaran siswa ' . $pelanggaran->siswa->nama
+                . ' - ' . $pelanggaran->jenisPelanggaran->nama_pelanggaran,
+            idReferensi: $pelanggaran->id_pelanggaran
+        );
+
+        $this->ews->cancel($pelanggaran);
         $pelanggaran->delete();
 
         return redirect()->route('pelanggaran.index')

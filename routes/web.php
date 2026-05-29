@@ -4,12 +4,14 @@ use App\Http\Controllers\Admin\TemplateImportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\PelanggaranController;
+use App\Http\Controllers\SuratPanggilanController;
 use App\Http\Livewire\Admin\KelasCrud;
 use App\Http\Livewire\Admin\PenggunaCrud;
 use App\Http\Livewire\Admin\SiswaCrud;
 use App\Http\Livewire\Admin\WaliKelasCrud;
 use App\Http\Livewire\Admin\WaliMuridCrud;
 use Illuminate\Support\Facades\Route;
+use Livewire\Volt\Volt;
 
 Route::get('/', function () {
     return view('home');
@@ -71,6 +73,21 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/',              [NotifikasiController::class, 'index'])->name('index');
         Route::post('/{notifikasi}/read', [NotifikasiController::class, 'markAsRead'])->name('read');
         Route::post('/read-all',     [NotifikasiController::class, 'markAllRead'])->name('read-all');
+    });
+
+    // Log Aktivitas — semua role yang sudah login
+    Volt::route('/log-aktivitas', 'log.log-aktivitas')
+        ->middleware(['auth'])
+        ->name('log.aktivitas');
+
+    Route::middleware(['auth', 'role:guru_bk,wali_kelas'])->group(function () {
+
+        Volt::route('/pelanggaran/{id}/surat-panggilan', 'surat-panggilan.create')
+            ->name('surat-panggilan.create');
+
+        // Cetak PDF (Controller biasa)
+        Route::get('/surat-panggilan/{id}/cetak', [SuratPanggilanController::class, 'cetak'])
+            ->name('surat-panggilan.cetak');
     });
 });
 
