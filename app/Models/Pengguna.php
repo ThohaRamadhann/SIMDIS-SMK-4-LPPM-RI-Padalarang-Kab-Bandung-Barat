@@ -1,19 +1,19 @@
 <?php
+// app/Models/Pengguna.php
 
 namespace App\Models;
 
-use App\Models\Role;
-use App\Models\WaliKelas;
-use App\Models\WaliMurid;
-use App\Models\Notifikasi;
-
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\CanResetPassword;   // ← tambah
+use Illuminate\Auth\Passwords\CanResetPassword as CanResetPasswordTrait; // ← tambah
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
-class Pengguna extends Authenticatable
+class Pengguna extends Authenticatable implements CanResetPassword
 {
-    use SoftDeletes;
+    use SoftDeletes, Notifiable, CanResetPasswordTrait; // ← tambah Notifiable & trait
+
     protected $table = 'pengguna';
     protected $primaryKey = 'id_pengguna';
 
@@ -31,11 +31,16 @@ class Pengguna extends Authenticatable
         'remember_token',
     ];
 
+    // Tambah casts agar password_reset_tokens bisa match
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
+
     public function role()
     {
         return $this->belongsTo(Role::class, 'id_role');
     }
-
 
     public function waliMurid()
     {

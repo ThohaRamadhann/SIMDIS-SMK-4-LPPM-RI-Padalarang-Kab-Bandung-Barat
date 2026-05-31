@@ -1,6 +1,8 @@
 <?php
 
+use App\Providers\RouteServiceProvider;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Session;
@@ -18,35 +20,25 @@ new #[Layout('layouts.guest')] class extends Component
     public string $password = '';
     public string $password_confirmation = '';
 
-    /**
-     * Mount the component.
-     */
     public function mount(string $token): void
     {
         $this->token = $token;
-
         $this->email = request()->string('email');
     }
 
-    /**
-     * Reset the password for the given user.
-     */
     public function resetPassword(): void
     {
         $this->validate([
-            'token' => ['required'],
-            'email' => ['required', 'string', 'email'],
+            'token'    => ['required'],
+            'email'    => ['required', 'string', 'email'],
             'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // Here we will attempt to reset the user's password. If it is successful we
-        // will update the password on an actual user model and persist it to the
-        // database. Otherwise we will parse the error and return the response.
         $status = Password::reset(
             $this->only('email', 'password', 'password_confirmation', 'token'),
             function ($user) {
                 $user->forceFill([
-                    'password' => Hash::make($this->password),
+                    'password'       => Hash::make($this->password),
                     'remember_token' => Str::random(60),
                 ])->save();
 
@@ -54,52 +46,203 @@ new #[Layout('layouts.guest')] class extends Component
             }
         );
 
-        // If the password was successfully reset, we will redirect the user back to
-        // the application's home authenticated view. If there is an error we can
-        // redirect them back to where they came from with their error message.
         if ($status != Password::PASSWORD_RESET) {
             $this->addError('email', __($status));
-
             return;
         }
 
+        // Logout dan hapus session agar tidak redirect ke dashboard
+        Auth::logout();
+        Session::invalidate();
+        Session::regenerateToken();
+
         Session::flash('status', __($status));
 
-        $this->redirectRoute('login', navigate: true);
+        // Paksa redirect ke login
+        $this->redirect(route('login'), navigate: true);
     }
 }; ?>
 
 <div>
-    <form wire:submit="resetPassword">
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input wire:model="email" id="email" class="block mt-1 w-full" type="email" name="email" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
+    <style>
+        .reset-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+            padding: 32px;
+            border-radius: 28px;
+            background: #ffffff;
+        }
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-            <x-text-input wire:model="password" id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
+        .reset-wrap h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0D2D6B;
+            margin: 0 0 4px;
+        }
 
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
+        .reset-wrap p.reset-sub {
+            font-size: 13px;
+            color: #6B7280;
+            margin: 0 0 16px;
+            text-align: center;
+        }
 
-            <x-text-input wire:model="password_confirmation" id="password_confirmation" class="block mt-1 w-full"
-                          type="password"
-                          name="password_confirmation" required autocomplete="new-password" />
+        .reset-field {
+            width: 100%;
+            margin-bottom: 14px;
+        }
 
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
+        .reset-field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #0D2D6B;
+            margin-bottom: 5px;
+        }
 
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('Reset Password') }}
-            </x-primary-button>
-        </div>
-    </form>
+        .reset-field input {
+            width: 100%;
+            height: 46px;
+            padding: 0 14px;
+            border: 1.5px solid #D1D5DB;
+            border-radius: 14px;
+            font-size: 14px;
+            color: #111827;
+            background: #F9FAFB;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .reset-field input:focus {
+            border-color: #F5B800;
+            box-shadow: 0 0 0 3px rgba(245, 184, 0, .15);
+            background: #fff;
+        }
+
+        .reset-error {
+            font-size: 12px;
+            color: #DC2626;
+            margin-top: 4px;
+        }
+
+        .reset-btn {
+            width: 100%;
+            height: 46px;
+            background: #0D2D6B;
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background .2s, transform .15s;
+            margin-top: 6px;
+        }
+
+        .reset-btn:hover {
+            background: #163580;
+            transform: translateY(-1px);
+        }
+
+        .reset-btn:active {
+            transform: scale(.98);
+        }
+
+        .reset-back {
+            font-size: 13px;
+            color: #0D2D6B;
+            text-decoration: none;
+            font-weight: 500;
+            margin-top: 16px;
+        }
+
+        .reset-back:hover {
+            color: #F5B800;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 640px) {
+            .reset-wrap {
+                padding: 22px 18px;
+                border-radius: 24px;
+            }
+        }
+    </style>
+
+    <div class="reset-wrap">
+
+        <h1>Reset Password</h1>
+        <p class="reset-sub">Masukkan password baru Anda.</p>
+
+        <x-auth-session-status class="mb-4" :status="session('status')" />
+
+        <form wire:submit.prevent="resetPassword" style="width:100%">
+
+            {{-- Email --}}
+            <div class="reset-field">
+                <label for="email">Email</label>
+                <input
+                    wire:model="email"
+                    id="email"
+                    type="email"
+                    name="email"
+                    required
+                    autofocus
+                    autocomplete="username"
+                    placeholder="Masukkan email"
+                >
+                @error('email')
+                    <p class="reset-error">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Password Baru --}}
+            <div class="reset-field">
+                <label for="password">Password Baru</label>
+                <input
+                    wire:model="password"
+                    id="password"
+                    type="password"
+                    name="password"
+                    required
+                    autocomplete="new-password"
+                    placeholder="••••••••"
+                >
+                @error('password')
+                    <p class="reset-error">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Konfirmasi Password --}}
+            <div class="reset-field">
+                <label for="password_confirmation">Konfirmasi Password Baru</label>
+                <input
+                    wire:model="password_confirmation"
+                    id="password_confirmation"
+                    type="password"
+                    name="password_confirmation"
+                    required
+                    autocomplete="new-password"
+                    placeholder="••••••••"
+                >
+                @error('password_confirmation')
+                    <p class="reset-error">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <button type="submit" class="reset-btn">
+                Simpan Password Baru
+            </button>
+
+        </form>
+
+        <a href="{{ route('login') }}" wire:navigate class="reset-back">
+            ← Kembali ke halaman login
+        </a>
+
+    </div>
 </div>

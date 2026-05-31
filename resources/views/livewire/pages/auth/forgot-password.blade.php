@@ -8,9 +8,6 @@ new #[Layout('layouts.guest')] class extends Component
 {
     public string $email = '';
 
-    /**
-     * Send a password reset link to the provided email address.
-     */
     public function sendPasswordResetLink(): void
     {
         $this->validate([
@@ -22,109 +19,177 @@ new #[Layout('layouts.guest')] class extends Component
         );
 
         if ($status != Password::RESET_LINK_SENT) {
-
             $this->addError('email', __($status));
-
             return;
         }
 
         $this->reset('email');
-
         session()->flash('status', __($status));
     }
 }; ?>
 
-<style>
-    :root{
-        --navy: #0D2D6B;
-        --yellow: #F5B800;
-    }
-
-    .input-custom{
-        border: 2px solid #d1d5db;
-        transition: 0.3s;
-    }
-
-    .input-custom:focus{
-        border-color: var(--yellow) !important;
-        box-shadow: 0 0 0 3px rgba(245,184,0,0.25) !important;
-    }
-
-    .btn-navy{
-        background: var(--navy);
-        transition: 0.3s;
-    }
-
-    .btn-navy:hover{
-        background: #133b8a;
-    }
-</style>
-
 <div>
+    <style>
+        .forgot-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+            padding: 32px;
+            border-radius: 28px;
+            background: #ffffff;
+        }
 
-    {{-- Heading --}}
-    <div class="text-center mb-8">
+        .forgot-wrap h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0D2D6B;
+            margin: 0 0 4px;
+        }
 
-        <h1 class="text-3xl font-bold mb-2" style="color: #0D2D6B;">
-            Reset Password
-        </h1>
+        .forgot-wrap p.forgot-sub {
+            font-size: 13px;
+            color: #6B7280;
+            margin: 0 0 16px;
+            text-align: center;
+        }
 
-        <p class="text-gray-500 text-sm leading-relaxed">
-            Masukkan email Anda untuk menerima link reset password.
-        </p>
+        .forgot-field {
+            width: 100%;
+            margin-bottom: 14px;
+        }
 
-    </div>
+        .forgot-field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #0D2D6B;
+            margin-bottom: 5px;
+        }
 
-    {{-- Session Status --}}
-    <x-auth-session-status
-        class="mb-4"
-        :status="session('status')"
-    />
+        .forgot-field input {
+            width: 100%;
+            height: 46px;
+            padding: 0 14px;
+            border: 1.5px solid #D1D5DB;
+            border-radius: 14px;
+            font-size: 14px;
+            color: #111827;
+            background: #F9FAFB;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color .2s, box-shadow .2s;
+        }
 
-    {{-- Form --}}
-    <form wire:submit="sendPasswordResetLink">
+        .forgot-field input:focus {
+            border-color: #F5B800;
+            box-shadow: 0 0 0 3px rgba(245, 184, 0, .15);
+            background: #fff;
+        }
 
-        {{-- Email --}}
-        <div>
+        .forgot-error {
+            font-size: 12px;
+            color: #DC2626;
+            margin-top: 4px;
+        }
 
-            <label
-                for="email"
-                class="block font-semibold mb-2"
-                style="color: #0D2D6B;"
-            >
-                Email
-            </label>
+        .forgot-success {
+            width: 100%;
+            padding: 10px 14px;
+            background: #ECFDF5;
+            border: 1px solid #6EE7B7;
+            border-radius: 12px;
+            font-size: 13px;
+            color: #065F46;
+            margin-bottom: 12px;
+            text-align: center;
+        }
 
-            <x-text-input
-                wire:model="email"
-                id="email"
-                class="block mt-1 w-full rounded-xl input-custom"
-                type="email"
-                name="email"
-                required
-                autofocus
-                placeholder="Masukkan email"
-            />
+        .forgot-btn {
+            width: 100%;
+            height: 46px;
+            background: #0D2D6B;
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background .2s, transform .15s;
+            margin-top: 6px;
+        }
 
-            <x-input-error
-                :messages="$errors->get('email')"
-                class="mt-2"
-            />
+        .forgot-btn:hover {
+            background: #163580;
+            transform: translateY(-1px);
+        }
 
-        </div>
+        .forgot-btn:active {
+            transform: scale(.98);
+        }
 
-        {{-- Button --}}
-        <div class="mt-6">
+        .forgot-back {
+            font-size: 13px;
+            color: #0D2D6B;
+            text-decoration: none;
+            font-weight: 500;
+            margin-top: 16px;
+        }
 
-            <button
-                type="submit"
-                class="w-full text-white font-semibold py-3 rounded-xl shadow-lg btn-navy"
-            >
+        .forgot-back:hover {
+            color: #F5B800;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 640px) {
+            .forgot-wrap {
+                padding: 22px 18px;
+                border-radius: 24px;
+            }
+        }
+    </style>
+
+    <div class="forgot-wrap">
+
+        <h1>Lupa Password</h1>
+        <p class="forgot-sub">Masukkan email Anda untuk menerima link reset password.</p>
+
+        {{-- Notif sukses --}}
+        @if (session('status'))
+            <div class="forgot-success">
+                ✅ {{ __('passwords.sent') }}
+            </div>
+        @endif
+
+        <form wire:submit.prevent="sendPasswordResetLink" style="width:100%">
+
+            <div class="forgot-field">
+                <label for="email">Email</label>
+                <input
+                    wire:model="email"
+                    id="email"
+                    type="email"
+                    name="email"
+                    placeholder="Masukkan email Anda"
+                    required
+                    autofocus
+                    autocomplete="email"
+                >
+                @error('email')
+                    <p class="forgot-error">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <button type="submit" class="forgot-btn">
                 Kirim Link Reset Password
             </button>
 
-        </div>
+        </form>
 
-    </form>
+        <a href="{{ route('login') }}" wire:navigate class="forgot-back">
+            ← Kembali ke halaman login
+        </a>
 
+    </div>
 </div>
