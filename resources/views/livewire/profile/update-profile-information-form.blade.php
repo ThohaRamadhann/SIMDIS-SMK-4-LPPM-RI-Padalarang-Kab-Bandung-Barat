@@ -1,116 +1,160 @@
 <?php
 
-use App\Models\User;
+use App\Models\Pengguna;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
 use Livewire\Volt\Component;
 
-new class extends Component
-{
+new class extends Component {
     public string $name = '';
     public string $email = '';
 
-    /**
-     * Mount the component.
-     */
     public function mount(): void
     {
         $this->name = Auth::user()->name;
         $this->email = Auth::user()->email;
     }
 
-    /**
-     * Update the profile information for the currently authenticated user.
-     */
     public function updateProfileInformation(): void
     {
         $user = Auth::user();
 
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)->ignore($user->id)],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(Pengguna::class)->ignore($user->id_pengguna, 'id_pengguna')],
         ]);
 
         $user->fill($validated);
-
-        if ($user->isDirty('email')) {
-            $user->email_verified_at = null;
-        }
 
         $user->save();
 
         $this->dispatch('profile-updated', name: $user->name);
     }
-
-    /**
-     * Send an email verification notification to the current user.
-     */
-    public function sendVerification(): void
-    {
-        $user = Auth::user();
-
-        if ($user->hasVerifiedEmail()) {
-            $this->redirectIntended(default: RouteServiceProvider::HOME);
-
-            return;
-        }
-
-        $user->sendEmailVerificationNotification();
-
-        Session::flash('status', 'verification-link-sent');
-    }
 }; ?>
 
 <section>
-    <header>
-        <h2 class="text-lg font-medium text-gray-900">
-            {{ __('Profile Information') }}
-        </h2>
+    <style>
+        .profile-section header h2 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0D2D6B;
+            margin: 0 0 4px;
+        }
 
-        <p class="mt-1 text-sm text-gray-600">
-            {{ __("Update your account's profile information and email address.") }}
-        </p>
-    </header>
+        .profile-section header p {
+            font-size: 13px;
+            color: #4A5E8A;
+            margin: 0 0 20px;
+        }
 
-    <form wire:submit="updateProfileInformation" class="mt-6 space-y-6">
-        <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input wire:model="name" id="name" name="name" type="text" class="mt-1 block w-full" required autofocus autocomplete="name" />
-            <x-input-error class="mt-2" :messages="$errors->get('name')" />
-        </div>
+        .profile-field {
+            margin-bottom: 16px;
+        }
 
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input wire:model="email" id="email" name="email" type="email" class="mt-1 block w-full" required autocomplete="username" />
-            <x-input-error class="mt-2" :messages="$errors->get('email')" />
+        .profile-field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #0D2D6B;
+            margin-bottom: 5px;
+        }
 
-            @if (auth()->user() instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! auth()->user()->hasVerifiedEmail())
-                <div>
-                    <p class="text-sm mt-2 text-gray-800">
-                        {{ __('Your email address is unverified.') }}
+        .profile-field input {
+            width: 100%;
+            height: 44px;
+            padding: 0 14px;
+            border: 1.5px solid #D1D5DB;
+            border-radius: 12px;
+            font-size: 14px;
+            color: #111827;
+            background: #F9FAFB;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color .2s, box-shadow .2s;
+        }
 
-                        <button wire:click.prevent="sendVerification" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {{ __('Click here to re-send the verification email.') }}
-                        </button>
-                    </p>
+        .profile-field input:focus {
+            border-color: #F5B800;
+            box-shadow: 0 0 0 3px rgba(245, 184, 0, .15);
+            background: #fff;
+        }
 
-                    @if (session('status') === 'verification-link-sent')
-                        <p class="mt-2 font-medium text-sm text-green-600">
-                            {{ __('A new verification link has been sent to your email address.') }}
-                        </p>
-                    @endif
-                </div>
-            @endif
-        </div>
+        .profile-error {
+            font-size: 12px;
+            color: #DC2626;
+            margin-top: 4px;
+        }
 
-        <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Save') }}</x-primary-button>
+        .profile-btn {
+            height: 40px;
+            padding: 0 24px;
+            background: #0D2D6B;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background .2s, transform .15s;
+        }
 
-            <x-action-message class="me-3" on="profile-updated">
-                {{ __('Saved.') }}
-            </x-action-message>
-        </div>
-    </form>
+        .profile-btn:hover {
+            background: #163580;
+            transform: translateY(-1px);
+        }
+
+        .profile-btn:active {
+            transform: scale(.98);
+        }
+
+        .profile-saved {
+            font-size: 13px;
+            color: #065F46;
+            font-weight: 500;
+        }
+    </style>
+
+    <div class="profile-section">
+        <header>
+            <h2>Informasi Profil</h2>
+            <p>Perbarui informasi profil dan alamat email akun Anda.</p>
+        </header>
+
+        <form wire:submit="updateProfileInformation">
+
+            <div class="profile-field">
+                <label for="name">Nama Lengkap</label>
+                <input wire:model="name" id="name" type="text" name="name" required autofocus autocomplete="name"
+                    placeholder="Masukkan nama lengkap">
+                @error('name')
+                    <p class="profile-error">⚠ {{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="profile-field">
+                <label for="email">Email</label>
+                <input wire:model="email" id="email" type="email" name="email" required autocomplete="username"
+                    placeholder="Masukkan email">
+                @error('email')
+                    <p class="profile-error">⚠ {{ $message }}</p>
+                @enderror
+            </div>
+
+            <div style="display:flex; align-items:center; gap:16px; margin-top:8px;">
+                <button type="submit" class="profile-btn" wire:loading.attr="disabled">
+                    <span wire:loading.remove>Simpan Perubahan</span>
+                    <span wire:loading style="display:none">Menyimpan...</span>
+                </button>
+
+                <span x-data="{ show: false }"
+                    x-on:profile-updated.window="show = true; setTimeout(() => show = false, 3000)" x-show="show"
+                    x-transition class="profile-saved">
+                    ✅ Berhasil disimpan
+                </span>
+            </div>
+
+        </form>
+    </div>
 </section>

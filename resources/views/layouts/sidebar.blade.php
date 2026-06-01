@@ -399,17 +399,6 @@
         </a>
 
     </nav>
-
-    {{-- ── Footer / Logout ── --}}
-    {{-- <div class="simdis-footer">
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit" class="simdis-logout">
-                <i class="fas fa-sign-out-alt"></i>
-                Keluar
-            </button>
-        </form>
-    </div> --}}
 </aside>
 
 {{-- Ripple effect on nav links --}}

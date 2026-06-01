@@ -12,19 +12,15 @@ new class extends Component
     public string $password = '';
     public string $password_confirmation = '';
 
-    /**
-     * Update the password for the currently authenticated user.
-     */
     public function updatePassword(): void
     {
         try {
             $validated = $this->validate([
                 'current_password' => ['required', 'string', 'current_password'],
-                'password' => ['required', 'string', Password::defaults(), 'confirmed'],
+                'password'         => ['required', 'string', Password::defaults(), 'confirmed'],
             ]);
         } catch (ValidationException $e) {
             $this->reset('current_password', 'password', 'password_confirmation');
-
             throw $e;
         }
 
@@ -39,41 +35,161 @@ new class extends Component
 }; ?>
 
 <section>
-    <header>
-        <h2 class="text-lg font-medium text-gray-900">
-            {{ __('Update Password') }}
-        </h2>
+    <style>
+        .password-section header h2 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0D2D6B;
+            margin: 0 0 4px;
+        }
 
-        <p class="mt-1 text-sm text-gray-600">
-            {{ __('Ensure your account is using a long, random password to stay secure.') }}
-        </p>
-    </header>
+        .password-section header p {
+            font-size: 13px;
+            color: #4A5E8A;
+            margin: 0 0 20px;
+        }
 
-    <form wire:submit="updatePassword" class="mt-6 space-y-6">
-        <div>
-            <x-input-label for="update_password_current_password" :value="__('Current Password')" />
-            <x-text-input wire:model="current_password" id="update_password_current_password" name="current_password" type="password" class="mt-1 block w-full" autocomplete="current-password" />
-            <x-input-error :messages="$errors->get('current_password')" class="mt-2" />
-        </div>
+        .password-field {
+            margin-bottom: 16px;
+        }
 
-        <div>
-            <x-input-label for="update_password_password" :value="__('New Password')" />
-            <x-text-input wire:model="password" id="update_password_password" name="password" type="password" class="mt-1 block w-full" autocomplete="new-password" />
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
+        .password-field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #0D2D6B;
+            margin-bottom: 5px;
+        }
 
-        <div>
-            <x-input-label for="update_password_password_confirmation" :value="__('Confirm Password')" />
-            <x-text-input wire:model="password_confirmation" id="update_password_password_confirmation" name="password_confirmation" type="password" class="mt-1 block w-full" autocomplete="new-password" />
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
+        .password-field input {
+            width: 100%;
+            height: 44px;
+            padding: 0 14px;
+            border: 1.5px solid #D1D5DB;
+            border-radius: 12px;
+            font-size: 14px;
+            color: #111827;
+            background: #F9FAFB;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color .2s, box-shadow .2s;
+        }
 
-        <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Save') }}</x-primary-button>
+        .password-field input:focus {
+            border-color: #F5B800;
+            box-shadow: 0 0 0 3px rgba(245, 184, 0, .15);
+            background: #fff;
+        }
 
-            <x-action-message class="me-3" on="password-updated">
-                {{ __('Saved.') }}
-            </x-action-message>
-        </div>
-    </form>
+        .password-error {
+            font-size: 12px;
+            color: #DC2626;
+            margin-top: 4px;
+        }
+
+        .password-btn {
+            height: 40px;
+            padding: 0 24px;
+            background: #0D2D6B;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background .2s, transform .15s;
+        }
+
+        .password-btn:hover {
+            background: #163580;
+            transform: translateY(-1px);
+        }
+
+        .password-btn:active {
+            transform: scale(.98);
+        }
+
+        .password-saved {
+            font-size: 13px;
+            color: #065F46;
+            font-weight: 500;
+        }
+    </style>
+
+    <div class="password-section">
+        <header>
+            <h2>Ubah Password</h2>
+            <p>Gunakan password yang panjang dan acak agar akun Anda tetap aman.</p>
+        </header>
+
+        <form wire:submit="updatePassword">
+
+            <div class="password-field">
+                <label for="current_password">Password Saat Ini</label>
+                <input
+                    wire:model="current_password"
+                    id="current_password"
+                    type="password"
+                    name="current_password"
+                    autocomplete="current-password"
+                    placeholder="••••••••"
+                >
+                @error('current_password')
+                    <p class="password-error">⚠ {{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="password-field">
+                <label for="update_password">Password Baru</label>
+                <input
+                    wire:model="password"
+                    id="update_password"
+                    type="password"
+                    name="password"
+                    autocomplete="new-password"
+                    placeholder="••••••••"
+                >
+                @error('password')
+                    <p class="password-error">⚠ {{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="password-field">
+                <label for="update_password_confirmation">Konfirmasi Password Baru</label>
+                <input
+                    wire:model="password_confirmation"
+                    id="update_password_confirmation"
+                    type="password"
+                    name="password_confirmation"
+                    autocomplete="new-password"
+                    placeholder="••••••••"
+                >
+                @error('password_confirmation')
+                    <p class="password-error">⚠ {{ $message }}</p>
+                @enderror
+            </div>
+
+            <div style="display:flex; align-items:center; gap:16px; margin-top:8px;">
+                <button
+                    type="submit"
+                    class="password-btn"
+                    wire:loading.attr="disabled"
+                >
+                    <span wire:loading.remove>Simpan Password</span>
+                    <span wire:loading style="display:none">Menyimpan...</span>
+                </button>
+
+                <span
+                    x-data="{ show: false }"
+                    x-on:password-updated.window="show = true; setTimeout(() => show = false, 3000)"
+                    x-show="show"
+                    x-transition
+                    class="password-saved"
+                >
+                    ✅ Password berhasil diperbarui
+                </span>
+            </div>
+
+        </form>
+    </div>
 </section>

@@ -99,8 +99,8 @@
                             <div class="chart-subtitle">12 bulan terakhir</div>
                         </div>
                         @php
-                            $d    = $charts['bulanan']['data'];
-                            $last = end($d);
+                            $d    = $charts['bulanan']['data'] ?? [];
+                            $last = !empty($d) ? end($d) : 0;
                             $prev = count($d) >= 2 ? $d[count($d) - 2] : 0;
                             $diff = $last - $prev;
                         @endphp
@@ -126,372 +126,153 @@
     </div>
 
     <script>
+    (function () {
+
+        // ── Namespace unik per role ──────────────────────────────────────────
+        const CHART_KEY = '_charts_dashboard_guru';
+        const CHART_IDS = ['chartBulanan', 'chartJenis'];
+
+        // ── Data di-embed saat render ────────────────────────────────────────
+        const _bulananData   = @json($charts['bulanan']['data'] ?? []);
+        const _bulananLabels = @json($charts['bulanan']['labels'] ?? []);
+        const _jenisLabels   = @json($charts['jenis']['labels'] ?? []);
+        const _jenisTingkat  = @json($charts['jenis']['tingkat'] ?? []);
+        const _jenisData     = @json($charts['jenis']['data'] ?? []);
+
         const navyColor = '#0D2D6B';
-        const goldColor = '#F5B800';
         const gridColor = '#f0f4fb';
-    
-        const baseOptions = {
-            chart: {
-                toolbar: {
-                    show: false
-                },
-                fontFamily: 'inherit'
-            },
-    
-            grid: {
-                borderColor: gridColor,
-                strokeDashArray: 4
-            },
-    
-            tooltip: {
-                theme: 'light'
-            },
-    
-            dataLabels: {
-                enabled: false
-            },
+        const baseOpts  = {
+            chart:      { toolbar: { show: false }, fontFamily: 'inherit' },
+            grid:       { borderColor: gridColor, strokeDashArray: 4 },
+            tooltip:    { theme: 'light' },
+            dataLabels: { enabled: false },
         };
-    
-        // =========================================================
-        // GLOBAL STORAGE
-        // =========================================================
-        window._simdisCharts = window._simdisCharts || [];
-    
-        let chartsInitialized = false;
-    
-        // =========================================================
-        // DESTROY CHARTS
-        // =========================================================
+
+        // ── Retry counter ────────────────────────────────────────────────────
+        let _retryCount = 0;
+        const MAX_RETRY = 20;
+
+        if (!window[CHART_KEY]) window[CHART_KEY] = [];
+
+        // ── Destroy ──────────────────────────────────────────────────────────
         function destroyCharts() {
-    
-            window._simdisCharts.forEach(chart => {
-    
-                try {
-                    chart.destroy();
-                } catch (e) {}
-    
-            });
-    
-            window._simdisCharts = [];
-    
-            ['chartBulanan', 'chartJenis'].forEach(id => {
-    
+            (window[CHART_KEY] || []).forEach(c => { try { c.destroy(); } catch (e) {} });
+            window[CHART_KEY] = [];
+            CHART_IDS.forEach(id => {
                 const el = document.getElementById(id);
-    
-                if (el) {
-                    el.innerHTML = '';
-                    el.replaceChildren();
-                }
+                if (el) el.innerHTML = '';
             });
         }
-    
-        // =========================================================
-        // INIT CHARTS
-        // =========================================================
+
+        // ── Init ─────────────────────────────────────────────────────────────
         function initCharts() {
-    
             const bulananEl = document.getElementById('chartBulanan');
-            const jenisEl = document.getElementById('chartJenis');
-    
+            const jenisEl   = document.getElementById('chartJenis');
+
             if (!bulananEl || !jenisEl) {
+                if (_retryCount < MAX_RETRY) {
+                    _retryCount++;
+                    setTimeout(initCharts, 100);
+                }
                 return;
             }
-    
-            setTimeout(() => {
-    
-                // =====================================================
-                // DATA BULANAN
-                // =====================================================
-    
-                const bulananData = @json($charts['bulanan']['data'] ?? []);
-                const bulananLabels = @json($charts['bulanan']['labels'] ?? []);
-    
-                const maxBulanan = bulananData.length ?
-                    Math.max(...bulananData) :
-                    1;
-    
-                const c1 = new ApexCharts(bulananEl, {
-    
-                    ...baseOptions,
-    
-                    series: [{
-                        name: 'Pelanggaran',
-                        data: bulananData
-                    }],
-    
-                    chart: {
-                        ...baseOptions.chart,
-                        type: 'area',
-                        height: 280
-                    },
-    
-                    colors: [navyColor],
-    
-                    fill: {
-                        type: 'gradient',
-                        gradient: {
-                            shadeIntensity: 1,
-                            opacityFrom: 0.45,
-                            opacityTo: 0.02,
-                            stops: [0, 90, 100]
-                        }
-                    },
-    
-                    stroke: {
-                        curve: 'smooth',
-                        width: 2.5
-                    },
-    
-                    markers: {
-                        size: 5,
-                        colors: ['#fff'],
-                        strokeColors: [navyColor],
-                        strokeWidth: 2.5,
-                        hover: {
-                            size: 7
-                        }
-                    },
-    
-                    xaxis: {
-                        categories: bulananLabels,
-    
-                        labels: {
-                            style: {
-                                fontSize: '10px',
-                                colors: '#718096'
-                            },
-    
-                            rotate: -45,
-                            hideOverlappingLabels: true
-                        },
-    
-                        axisBorder: {
-                            show: false
-                        },
-    
-                        axisTicks: {
-                            show: false
-                        },
-                    },
-    
-                    yaxis: {
-                        min: 0,
-                        tickAmount: maxBulanan,
-    
-                        labels: {
-                            style: {
-                                fontSize: '11px',
-                                colors: '#718096'
-                            },
-    
-                            formatter: v =>
-                                Number.isInteger(v) ? v : ''
-                        }
-                    },
-    
-                    tooltip: {
-                        theme: 'light',
-    
-                        y: {
-                            formatter: v => v + ' pelanggaran'
-                        }
-                    }
-                });
-    
-                c1.render();
-    
-                window._simdisCharts.push(c1);
-    
-                // =====================================================
-                // DATA JENIS
-                // =====================================================
-    
-                const jenisLabels = @json($charts['jenis']['labels'] ?? []);
-                const jenisTingkat = @json($charts['jenis']['tingkat'] ?? []);
-                const jenisData = @json($charts['jenis']['data'] ?? []);
-    
-                const maxJenis = jenisData.length ?
-                    Math.max(...jenisData) :
-                    1;
-    
-                const tingkatColors = jenisTingkat.map(t => {
-    
-                    const val = t ? t.toLowerCase() : '';
-    
-                    if (val === 'berat') {
-                        return '#ef4444';
-                    }
-    
-                    if (val === 'sedang') {
-                        return '#f97316';
-                    }
-    
-                    return '#F5B800';
-                });
-    
-                const c2 = new ApexCharts(jenisEl, {
-    
-                    ...baseOptions,
-    
-                    series: [{
-                        name: 'Jumlah Kejadian',
-                        data: jenisData
-                    }],
-    
-                    chart: {
-                        ...baseOptions.chart,
-                        type: 'bar',
-                        height: Math.max(200, jenisLabels.length * 70)
-                    },
-    
-                    colors: [
-                        function({
-                            dataPointIndex
-                        }) {
-                            return tingkatColors[dataPointIndex] || '#F5B800';
-                        }
-                    ],
-    
-                    plotOptions: {
-                        bar: {
-                            borderRadius: 5,
-                            horizontal: true,
-                            distributed: true,
-                            barHeight: '55%',
-                        }
-                    },
-    
-                    dataLabels: {
-                        enabled: true,
-                        offsetX: 6,
-    
-                        style: {
-                            fontSize: '11px',
-                            fontWeight: 700,
-                            colors: ['#1e3a6e']
-                        },
-    
-                        formatter: v => v > 0 ? v + 'x' : ''
-                    },
-    
-                    legend: {
-                        show: false
-                    },
-    
-                    xaxis: {
-                        categories: jenisLabels,
-                        min: 0,
-                        tickAmount: maxJenis,
-    
-                        labels: {
-                            style: {
-                                fontSize: '11px',
-                                colors: '#718096'
-                            },
-    
-                            formatter: v =>
-                                Number.isInteger(Number(v)) ?
-                                Math.floor(Number(v)) :
-                                ''
-                        },
-    
-                        axisBorder: {
-                            show: false
-                        },
-    
-                        axisTicks: {
-                            show: false
-                        },
-                    },
-    
-                    yaxis: {
-                        labels: {
-                            maxWidth: 160,
-    
-                            style: {
-                                fontSize: '11px',
-                                colors: '#1e3a6e',
-                                fontWeight: 600
-                            },
-    
-                            formatter: v =>
-                                v && v.length > 24 ?
-                                v.substring(0, 24) + '…' :
-                                v
-                        }
-                    },
-    
-                    tooltip: {
-                        theme: 'light',
-    
-                        x: {
-                            formatter: (val, {
-                                    dataPointIndex
-                                }) =>
-                                `<strong>${jenisLabels[dataPointIndex] ?? ''}</strong><br>Tingkat: ${jenisTingkat[dataPointIndex] ?? '-'}`
-                        },
-    
-                        y: {
-                            title: {
-                                formatter: () => ''
-                            },
-    
-                            formatter: v => v + ' kejadian'
-                        }
-                    }
-                });
-    
-                c2.render();
-    
-                window._simdisCharts.push(c2);
-    
-            }, 120);
-        }
-    
-        // =========================================================
-        // SAFE INIT
-        // =========================================================
-        function safeInitCharts() {
-    
-            if (chartsInitialized) {
-                return;
-            }
-    
-            chartsInitialized = true;
-    
-            initCharts();
-        }
-    
-        // =========================================================
-        // SAFE DESTROY
-        // =========================================================
-        function safeDestroyCharts() {
-    
+
+            _retryCount = 0;
             destroyCharts();
-    
-            chartsInitialized = false;
+
+            // ── Chart 1: Tren Bulanan ───────────────────────────────────────
+            const maxBulanan = Math.max(1, ...(_bulananData.length ? _bulananData : [1]));
+
+            const c1 = new ApexCharts(bulananEl, {
+                ...baseOpts,
+                series: [{ name: 'Pelanggaran', data: _bulananData }],
+                chart:  { ...baseOpts.chart, type: 'area', height: 280 },
+                colors: [navyColor],
+                fill: {
+                    type: 'gradient',
+                    gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.02, stops: [0, 90, 100] },
+                },
+                stroke:  { curve: 'smooth', width: 2.5 },
+                markers: { size: 5, colors: ['#fff'], strokeColors: [navyColor], strokeWidth: 2.5, hover: { size: 7 } },
+                xaxis: {
+                    categories: _bulananLabels,
+                    labels: { style: { fontSize: '10px', colors: '#718096' }, rotate: -45, hideOverlappingLabels: true },
+                    axisBorder: { show: false }, axisTicks: { show: false },
+                },
+                yaxis: {
+                    min: 0, tickAmount: maxBulanan,
+                    labels: { style: { fontSize: '11px', colors: '#718096' }, formatter: v => Number.isInteger(v) ? v : '' },
+                },
+                tooltip: { theme: 'light', y: { formatter: v => v + ' pelanggaran' } },
+            });
+            c1.render();
+            window[CHART_KEY].push(c1);
+
+            // ── Chart 2: Jenis Pelanggaran ──────────────────────────────────
+            const maxJenis = Math.max(1, ...(_jenisData.length ? _jenisData : [1]));
+            const tingkatColors = _jenisTingkat.map(t => {
+                const val = t ? t.toLowerCase() : '';
+                if (val === 'berat')  return '#ef4444';
+                if (val === 'sedang') return '#f97316';
+                return '#F5B800';
+            });
+
+            const c2 = new ApexCharts(jenisEl, {
+                ...baseOpts,
+                series: [{ name: 'Jumlah Kejadian', data: _jenisData }],
+                chart:  { ...baseOpts.chart, type: 'bar', height: Math.max(200, _jenisLabels.length * 70) },
+                colors: [function ({ dataPointIndex }) { return tingkatColors[dataPointIndex] || '#F5B800'; }],
+                plotOptions: { bar: { borderRadius: 5, horizontal: true, distributed: true, barHeight: '55%' } },
+                dataLabels: {
+                    enabled: true, offsetX: 6,
+                    style: { fontSize: '11px', fontWeight: 700, colors: ['#1e3a6e'] },
+                    formatter: v => v > 0 ? v + 'x' : '',
+                },
+                legend: { show: false },
+                xaxis: {
+                    categories: _jenisLabels, min: 0, tickAmount: maxJenis,
+                    labels: {
+                        style: { fontSize: '11px', colors: '#718096' },
+                        formatter: v => Number.isInteger(Number(v)) ? Math.floor(Number(v)) : '',
+                    },
+                    axisBorder: { show: false }, axisTicks: { show: false },
+                },
+                yaxis: {
+                    labels: {
+                        maxWidth: 160,
+                        style: { fontSize: '11px', colors: '#1e3a6e', fontWeight: 600 },
+                        formatter: v => v && v.length > 24 ? v.substring(0, 24) + '…' : v,
+                    },
+                },
+                tooltip: {
+                    theme: 'light',
+                    x: { formatter: (val, { dataPointIndex }) => `<strong>${_jenisLabels[dataPointIndex] ?? ''}</strong><br>Tingkat: ${_jenisTingkat[dataPointIndex] ?? '-'}` },
+                    y: { title: { formatter: () => '' }, formatter: v => v + ' kejadian' },
+                },
+            });
+            c2.render();
+            window[CHART_KEY].push(c2);
         }
-    
-        // =========================================================
-        // FIRST LOAD
-        // =========================================================
-        window.addEventListener('load', () => {
-            safeInitCharts();
+
+        // ── Bootstrap ────────────────────────────────────────────────────────
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => setTimeout(initCharts, 80));
+        } else {
+            setTimeout(initCharts, 80);
+        }
+
+        // ── Livewire SPA navigation ──────────────────────────────────────────
+        document.addEventListener('livewire:navigate', function () {
+            destroyCharts();
+            _retryCount = 0;
         });
-    
-        // =========================================================
-        // LIVEWIRE NAVIGATION
-        // =========================================================
-        document.addEventListener('livewire:navigated', () => {
-            safeInitCharts();
+
+        document.addEventListener('livewire:navigated', function () {
+            _retryCount = 0;
+            setTimeout(initCharts, 80);
         });
-    
-        // =========================================================
-        // BEFORE NAVIGATE
-        // =========================================================
-        document.addEventListener('livewire:navigate', () => {
-            safeDestroyCharts();
-        });
+
+    })();
     </script>
 
 </x-app-layout>

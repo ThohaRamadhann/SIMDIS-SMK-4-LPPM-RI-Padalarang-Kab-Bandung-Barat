@@ -8,7 +8,7 @@
                 Tambah Pelanggaran
             </h1>
             <p class="text-xs text-gray-500 mt-1">
-                Kelola data pelanggaran siswa SIMDIS
+                Kelola data pelanggaran siswa
             </p>
         </div>
 
@@ -221,13 +221,20 @@
 
                 {{-- BUTTON --}}
                 <div class="flex items-center gap-2 pt-2">
-                    <button type="submit"
-                        class="bg-[#0D2D6B] text-white px-4 py-2 text-sm
-                               rounded-lg hover:bg-[#163580] transition">
-                        Simpan
+                    <button
+                        type="submit"
+                        id="btn-simpan"
+                        class="inline-flex items-center gap-2 bg-[#0D2D6B] text-white px-4 py-2 text-sm
+                               rounded-lg hover:bg-[#163580] transition disabled:opacity-75 disabled:cursor-not-allowed">
+                        <span id="btn-simpan-text">Simpan</span>
+                        <span id="btn-simpan-loading" style="display:none; align-items:center; gap:6px;">
+                            <span class="simdis-btn-spinner"></span>
+                            Menyimpan...
+                        </span>
                     </button>
+
                     <a href="{{ route('pelanggaran.index') }}"
-                        class="bg-white border border-gray-300 text-gray-600
+                        class="inline-flex items-center gap-2 bg-white border border-gray-300 text-gray-600
                                px-4 py-2 text-sm rounded-lg hover:bg-gray-50 transition">
                         Batal
                     </a>
@@ -238,6 +245,17 @@
     </div>
 
     <script>
+        // ── FORM SUBMIT LOADING ──────────────────────────────────────────
+        document.getElementById('form_pelanggaran').addEventListener('submit', function () {
+            const btn     = document.getElementById('btn-simpan');
+            const text    = document.getElementById('btn-simpan-text');
+            const loading = document.getElementById('btn-simpan-loading');
+
+            btn.disabled           = true;
+            text.style.display     = 'none';
+            loading.style.display  = 'inline-flex';
+        });
+
         // ── SISWA → KELAS & WALI KELAS ───────────────────────────────────
         const siswaSelect  = document.getElementById('id_siswa');
         const namaWali     = document.getElementById('nama_walikelas');
@@ -302,7 +320,6 @@
             if (!dropWrap.contains(e.target)) closeDropdown();
         });
 
-        // Search filter
         searchInput.addEventListener('input', function () {
             const keyword = this.value.toLowerCase().trim();
             const items   = document.querySelectorAll('#dropdown_scroll .dropdown-item');
@@ -356,7 +373,6 @@
             });
         });
 
-        // Restore nilai old() jika ada
         (function () {
             const oldVal = hiddenJenis.value;
             if (!oldVal) return;

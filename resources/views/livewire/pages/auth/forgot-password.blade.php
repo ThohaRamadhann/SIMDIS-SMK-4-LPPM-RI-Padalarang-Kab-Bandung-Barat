@@ -19,14 +19,19 @@ new #[Layout('layouts.guest')] class extends Component
         );
 
         if ($status != Password::RESET_LINK_SENT) {
-            $this->addError('email', __($status));
+            $this->addError('email',
+                $status === Password::INVALID_USER
+                    ? 'Email tidak terdaftar dalam sistem.'
+                    : 'Terlalu banyak permintaan. Silakan tunggu beberapa saat.'
+            );
             return;
         }
 
         $this->reset('email');
-        session()->flash('status', __($status));
+        session()->flash('status', 'sent');
     }
-}; ?>
+};
+?>
 
 <div>
     <style>
@@ -36,9 +41,23 @@ new #[Layout('layouts.guest')] class extends Component
             align-items: center;
             gap: 6px;
             width: 100%;
-            padding: 32px;
+            padding: 28px 24px 24px;
             border-radius: 28px;
             background: #ffffff;
+            box-sizing: border-box;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+        }
+
+        .forgot-logo {
+            margin-bottom: 4px;
+        }
+
+        .forgot-logo img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
         }
 
         .forgot-wrap h1 {
@@ -96,14 +115,37 @@ new #[Layout('layouts.guest')] class extends Component
 
         .forgot-success {
             width: 100%;
-            padding: 10px 14px;
+            padding: 14px 16px;
             background: #ECFDF5;
             border: 1px solid #6EE7B7;
-            border-radius: 12px;
+            border-radius: 14px;
             font-size: 13px;
             color: #065F46;
             margin-bottom: 12px;
-            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .forgot-success .fs-title {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .forgot-success .fs-list {
+            margin: 8px 0 0 0;
+            padding: 0 0 0 18px;
+            line-height: 1.8;
+        }
+
+        .forgot-success .fs-note {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #047857;
+            border-top: 1px solid #A7F3D0;
+            padding-top: 8px;
         }
 
         .forgot-btn {
@@ -129,6 +171,28 @@ new #[Layout('layouts.guest')] class extends Component
             transform: scale(.98);
         }
 
+        .forgot-btn--loading {
+            opacity: 0.75;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .forgot-spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+            vertical-align: middle;
+            margin-right: 4px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         .forgot-back {
             font-size: 13px;
             color: #0D2D6B;
@@ -144,7 +208,7 @@ new #[Layout('layouts.guest')] class extends Component
 
         @media (max-width: 640px) {
             .forgot-wrap {
-                padding: 22px 18px;
+                padding: 24px 20px;
                 border-radius: 24px;
             }
         }
@@ -152,40 +216,70 @@ new #[Layout('layouts.guest')] class extends Component
 
     <div class="forgot-wrap">
 
+        {{-- Logo --}}
+        <div class="forgot-logo">
+            <a href="/" wire:navigate>
+                <img src="{{ asset('images/logo_simdis.png') }}" alt="Logo SIMDIS">
+            </a>
+        </div>
+
         <h1>Lupa Password</h1>
         <p class="forgot-sub">Masukkan email Anda untuk menerima link reset password.</p>
 
         {{-- Notif sukses --}}
-        @if (session('status'))
+        @if (session('status') === 'sent')
             <div class="forgot-success">
-                ✅ {{ __('passwords.sent') }}
+                <div class="fs-title">
+                    ✅ Link reset password telah dikirim!
+                </div>
+                <div>Silakan ikuti langkah berikut:</div>
+                <ul class="fs-list">
+                    <li>Buka aplikasi email Anda</li>
+                    <li>Cari email dari <strong>{{ config('app.name') }}</strong></li>
+                    <li>Klik tombol <strong>"Reset Password"</strong> di dalam email</li>
+                    <li>Buat password baru Anda</li>
+                </ul>
+                <div class="fs-note">
+                    ⏱ Link berlaku selama <strong>60 menit</strong>. Periksa folder <strong>Spam</strong> jika email tidak masuk ke inbox.
+                </div>
             </div>
         @endif
 
-        <form wire:submit.prevent="sendPasswordResetLink" style="width:100%">
+        {{-- Sembunyikan form setelah sukses --}}
+        @if (session('status') !== 'sent')
+            <form wire:submit.prevent="sendPasswordResetLink" style="width:100%">
 
-            <div class="forgot-field">
-                <label for="email">Email</label>
-                <input
-                    wire:model="email"
-                    id="email"
-                    type="email"
-                    name="email"
-                    placeholder="Masukkan email Anda"
-                    required
-                    autofocus
-                    autocomplete="email"
+                <div class="forgot-field">
+                    <label for="email">Email</label>
+                    <input
+                        wire:model="email"
+                        id="email"
+                        type="email"
+                        name="email"
+                        placeholder="Masukkan email Anda"
+                        required
+                        autofocus
+                        autocomplete="email"
+                    >
+                    @error('email')
+                        <p class="forgot-error">⚠ {{ $message }}</p>
+                    @enderror
+                </div>
+
+                <button
+                    type="submit"
+                    class="forgot-btn"
+                    wire:loading.attr="disabled"
+                    wire:loading.class="forgot-btn--loading"
                 >
-                @error('email')
-                    <p class="forgot-error">{{ $message }}</p>
-                @enderror
-            </div>
+                    <span wire:loading.remove>Kirim Link Reset Password</span>
+                    <span wire:loading style="display:none">
+                        <span class="forgot-spinner"></span> Mengirim...
+                    </span>
+                </button>
 
-            <button type="submit" class="forgot-btn">
-                Kirim Link Reset Password
-            </button>
-
-        </form>
+            </form>
+        @endif
 
         <a href="{{ route('login') }}" wire:navigate class="forgot-back">
             ← Kembali ke halaman login

@@ -19,15 +19,14 @@ class Index extends Component
     protected $paginationTheme = 'tailwind';
 
     // ── MODAL UPDATE STATUS ──────────────────────────────────────────────
-    public $showModalStatus = false;
-    public $modalId         = null;
-    public $modalSiswa      = '';
-    public $modalStatus     = 'Belum Ditindak';
-    public $modalTanggal    = '';
-    public $modalJam        = '';
-    public $modalJamHour    = '';
-    public $modalJamMinute  = '';
-    public $modalCatatan    = '';
+    public bool   $showModalStatus = false;
+    public        $modalId         = null;
+    public string $modalSiswa      = '';
+    public string $modalStatus     = 'Belum Ditindak';
+    public string $modalTanggal    = '';
+    public string $modalJamHour    = '';
+    public string $modalJamMinute  = '';
+    public string $modalCatatan    = '';
 
     // ── FILTER ──────────────────────────────────────────────────────────
     public $search          = '';
@@ -48,14 +47,14 @@ class Index extends Component
         'sortBy' => ['except' => 'terbaru'],
     ];
 
-    public function updatingSearch()        { $this->resetPage(); }
-    public function updatingFilterJenis()   { $this->resetPage(); }
-    public function updatingFilterTingkat() { $this->resetPage(); }
-    public function updatingFilterStatus()  { $this->resetPage(); }
+    public function updatingSearch()          { $this->resetPage(); }
+    public function updatingFilterJenis()     { $this->resetPage(); }
+    public function updatingFilterTingkat()   { $this->resetPage(); }
+    public function updatingFilterStatus()    { $this->resetPage(); }
     public function updatingFilterWaliKelas() { $this->resetPage(); }
-    public function updatingSortBy()        { $this->resetPage(); }
-    public function updatingPerPage()       { $this->resetPage(); }
-    public function updatingShowTrash()     { $this->resetPage(); }
+    public function updatingSortBy()          { $this->resetPage(); }
+    public function updatingPerPage()         { $this->resetPage(); }
+    public function updatingShowTrash()       { $this->resetPage(); }
 
     // ── HAPUS (SOFT DELETE) ──────────────────────────────────────────────
     public function hapus($id): void
@@ -136,13 +135,16 @@ class Index extends Component
 
         $data = Pelanggaran::with('siswa')->findOrFail($id);
 
-        $this->modalId      = $data->id_pelanggaran;
-        $this->modalSiswa   = optional($data->siswa)->nama ?? '-';
-        $this->modalStatus  = $data->status_pembinaan;
+        $this->modalId     = $data->id_pelanggaran;
+        $this->modalSiswa  = optional($data->siswa)->nama ?? '-';
+        $this->modalStatus = $data->status_pembinaan ?? 'Belum Ditindak';
+
+        // Tanggal
         $this->modalTanggal = $data->tanggal_pembinaan
             ? \Carbon\Carbon::parse($data->tanggal_pembinaan)->format('Y-m-d')
             : '';
 
+        // Jam — baca dari kolom jam_pembinaan (format H:i atau H:i:s)
         $jamRaw = $data->getRawOriginal('jam_pembinaan');
         if ($jamRaw) {
             [$this->modalJamHour, $this->modalJamMinute] = explode(':', substr($jamRaw, 0, 5));
@@ -151,9 +153,9 @@ class Index extends Component
             $this->modalJamMinute = '';
         }
 
-        $this->modalJam        = '';
         $this->modalCatatan    = $data->catatan_bk ?? '';
         $this->showModalStatus = true;
+        $this->resetErrorBag();
     }
 
     // ── TUTUP MODAL ──────────────────────────────────────────────────────
@@ -164,7 +166,6 @@ class Index extends Component
         $this->modalSiswa      = '';
         $this->modalStatus     = 'Belum Ditindak';
         $this->modalTanggal    = '';
-        $this->modalJam        = '';
         $this->modalJamHour    = '';
         $this->modalJamMinute  = '';
         $this->modalCatatan    = '';
@@ -176,31 +177,62 @@ class Index extends Component
     {
         $this->cekAkses(['guru_bk', 'wali_kelas']);
 
-        $this->modalJam = ($this->modalJamHour && $this->modalJamMinute)
-            ? $this->modalJamHour . ':' . $this->modalJamMinute
-            : null;
-
-        $this->validate([
-            'modalStatus'  => 'required|in:Belum Ditindak,Dalam Proses,Selesai',
-            'modalTanggal' => 'nullable|date',
-            'modalJam'     => 'nullable|date_format:H:i',
-            'modalCatatan' => 'nullable|string|max:1000',
-        ], [
+        // ── Validasi dasar (selalu dijalankan) ─────────────────────────
+        $rules    = ['modalStatus' => 'required|in:Belum Ditindak,Dalam Proses,Selesai'];
+        $messages = [
             'modalStatus.required' => 'Status pembinaan wajib dipilih.',
-            'modalStatus.in'       => 'Status tidak valid.',
-            'modalTanggal.date'    => 'Format tanggal tidak valid.',
-            'modalJam.date_format' => 'Format jam tidak valid.',
-        ]);
+            'modalStatus.in'       => 'Status pembinaan tidak valid.',
+        ];
 
-        $pelanggaran = Pelanggaran::with(['siswa'])->findOrFail($this->modalId);
+        // ── Validasi kondisional: Dalam Proses ─────────────────────────
+        // Tanggal wajib, jam & catatan opsional
+        if ($this->modalStatus === 'Dalam Proses') {
+            $rules['modalTanggal']   = 'required|date';
+            $rules['modalJamHour']   = 'nullable';
+            $rules['modalJamMinute'] = 'nullable';
+            $rules['modalCatatan']   = 'nullable|string|max:1000';
+
+            $messages['modalTanggal.required'] = 'Tanggal pembinaan wajib diisi saat status Dalam Proses.';
+            $messages['modalTanggal.date']     = 'Format tanggal tidak valid.';
+            $messages['modalCatatan.max']      = 'Catatan maksimal 1000 karakter.';
+        }
+
+        // ── Validasi kondisional: Selesai ──────────────────────────────
+        // Tanggal, jam, dan catatan semuanya wajib
+        if ($this->modalStatus === 'Selesai') {
+            $rules['modalTanggal']   = 'required|date';
+            $rules['modalJamHour']   = 'required';
+            $rules['modalJamMinute'] = 'required';
+            $rules['modalCatatan']   = 'required|string|min:10|max:1000';
+
+            $messages['modalTanggal.required']   = 'Tanggal pembinaan wajib diisi untuk status Selesai.';
+            $messages['modalTanggal.date']       = 'Format tanggal tidak valid.';
+            $messages['modalJamHour.required']   = 'Jam pembinaan wajib dipilih untuk status Selesai.';
+            $messages['modalJamMinute.required'] = 'Menit pembinaan wajib dipilih untuk status Selesai.';
+            $messages['modalCatatan.required']   = 'Catatan BK wajib diisi untuk status Selesai.';
+            $messages['modalCatatan.min']        = 'Catatan terlalu singkat, minimal 10 karakter.';
+            $messages['modalCatatan.max']        = 'Catatan maksimal 1000 karakter.';
+        }
+
+        $this->validate($rules, $messages);
+
+        // ── Gabungkan jam dari hour + minute ───────────────────────────
+        $jamFinal = null;
+        if ($this->modalJamHour !== '' && $this->modalJamMinute !== '') {
+            $jamFinal = $this->modalJamHour . ':' . $this->modalJamMinute;
+        }
+
+        // ── Simpan ke database ─────────────────────────────────────────
+        $pelanggaran = Pelanggaran::with('siswa')->findOrFail($this->modalId);
 
         $pelanggaran->update([
             'status_pembinaan'  => $this->modalStatus,
             'tanggal_pembinaan' => $this->modalTanggal ?: null,
-            'jam_pembinaan'     => $this->modalJam ?: null,
+            'jam_pembinaan'     => $jamFinal,
             'catatan_bk'        => $this->modalCatatan ?: null,
         ]);
 
+        // ── Log aktivitas ──────────────────────────────────────────────
         LogAktivitas::catat(
             aksi: 'update_status_pembinaan',
             modul: 'pelanggaran',
@@ -235,6 +267,7 @@ class Index extends Component
             'jenisPelanggaran',
         ]);
 
+        // Scope berdasarkan role
         if ($role === 'wali_kelas') {
             $query->where('id_walikelas', optional($user->waliKelas)->id_walikelas);
         } elseif ($role === 'orang_tua') {
@@ -243,14 +276,16 @@ class Index extends Component
             });
         }
 
+        // Mode trash
         if ($this->showTrash) {
             $query->onlyTrashed();
         }
 
+        // Filter pencarian
         if ($this->search) {
             $query->whereHas('siswa', function ($s) {
                 $s->where('nama', 'like', '%' . $this->search . '%')
-                    ->orWhere('nis', 'like', '%' . $this->search . '%');
+                  ->orWhere('nis',  'like', '%' . $this->search . '%');
             });
         }
 
@@ -272,14 +307,15 @@ class Index extends Component
             $query->where('id_walikelas', $this->filterWaliKelas);
         }
 
+        // Sorting
         match ($this->sortBy) {
             'terlama' => $query->orderBy('created_at', 'asc'),
             'az'      => $query->join('siswa', 'pelanggaran.id_siswa', '=', 'siswa.id_siswa')
-                ->orderBy('siswa.nama', 'asc')
-                ->select('pelanggaran.*'),
+                               ->orderBy('siswa.nama', 'asc')
+                               ->select('pelanggaran.*'),
             'za'      => $query->join('siswa', 'pelanggaran.id_siswa', '=', 'siswa.id_siswa')
-                ->orderBy('siswa.nama', 'desc')
-                ->select('pelanggaran.*'),
+                               ->orderBy('siswa.nama', 'desc')
+                               ->select('pelanggaran.*'),
             default   => $query->orderBy('created_at', 'desc'),
         };
 

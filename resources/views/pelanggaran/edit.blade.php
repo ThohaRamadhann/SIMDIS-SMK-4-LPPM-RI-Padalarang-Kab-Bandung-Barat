@@ -24,6 +24,7 @@
 
             <form action="{{ route('pelanggaran.update', $pelanggaran->id_pelanggaran) }}"
                   method="POST"
+                  id="form_pelanggaran"
                   class="space-y-4">
 
                 @csrf
@@ -129,7 +130,7 @@
                                   focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20">
                 </div>
 
-                {{-- ── JAM PEMBINAAN (dropdown 24 jam) ── --}}
+                {{-- ── JAM PEMBINAAN ── --}}
                 @php
                     $jamRaw    = $pelanggaran->getRawOriginal('jam_pembinaan');
                     $jamParts  = $jamRaw ? explode(':', substr($jamRaw, 0, 5)) : ['', ''];
@@ -139,8 +140,6 @@
                 <div>
                     <label class="text-xs font-semibold text-[#0D2D6B]">Jam Pembinaan</label>
                     <div class="flex items-center gap-2 mt-1">
-
-                        {{-- Jam --}}
                         <select name="jam_pembinaan_hour"
                                 class="flex-1 h-11 px-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-black
                                        focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20">
@@ -155,7 +154,6 @@
 
                         <span class="text-gray-400 font-bold text-lg">:</span>
 
-                        {{-- Menit --}}
                         <select name="jam_pembinaan_minute"
                                 class="flex-1 h-11 px-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-black
                                        focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20">
@@ -166,25 +164,21 @@
                                 </option>
                             @endforeach
                         </select>
-
                     </div>
                     <p class="text-[10px] text-gray-400 mt-1">Kosongkan jika jam pembinaan belum diketahui</p>
                 </div>
 
-                {{-- ── WAKTU KEJADIAN (dropdown tanggal + jam + menit) ── --}}
+                {{-- ── WAKTU KEJADIAN ── --}}
                 @php
                     $wk      = \Carbon\Carbon::parse($pelanggaran->waktu_kejadian);
                     $wkTgl   = old('waktu_kejadian_date', $wk->format('Y-m-d'));
                     $wkH     = old('waktu_kejadian_hour', $wk->format('H'));
                     $wkM     = old('waktu_kejadian_minute', $wk->format('i'));
-                    // Bulatkan menit ke kelipatan 5 terdekat
                     $wkM     = str_pad((int)(round((int)$wkM / 5) * 5), 2, '0', STR_PAD_LEFT);
                     $wkH     = str_pad((int)$wkH, 2, '0', STR_PAD_LEFT);
                 @endphp
                 <div>
                     <label class="text-xs font-semibold text-[#0D2D6B]">Waktu Kejadian</label>
-
-                    {{-- Tanggal kejadian --}}
                     <input type="date"
                            name="waktu_kejadian_date"
                            value="{{ $wkTgl }}"
@@ -192,7 +186,6 @@
                                   border border-gray-200 bg-gray-50 text-black
                                   focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20">
 
-                    {{-- Jam & menit kejadian --}}
                     <div class="flex items-center gap-2 mt-2">
                         <select name="waktu_kejadian_hour"
                                 class="flex-1 h-11 px-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-black
@@ -242,15 +235,35 @@
 
                 {{-- ── BUTTON ── --}}
                 <div class="flex items-center gap-2 pt-2">
-                    <button type="submit"
-                            class="bg-[#0D2D6B] text-white px-5 py-2.5 text-sm
-                                   rounded-xl hover:bg-[#163580] transition">
-                        Update
+                    <button
+                        type="submit"
+                        id="btn-simpan"
+                        class="inline-flex items-center gap-2 bg-[#0D2D6B] text-white px-5 py-2.5 text-sm
+                               rounded-xl hover:bg-[#163580] transition disabled:opacity-75 disabled:cursor-not-allowed">
+                        <span id="btn-simpan-text">Update</span>
+                        <span id="btn-simpan-loading" style="display:none; align-items:center; gap:6px;">
+                            <span class="simdis-btn-spinner"></span>
+                            Menyimpan...
+                        </span>
                     </button>
+
+                    {{-- ++ TAMBAHAN: onclick showBatalLoading() pada tombol Batal ++ --}}
                     <a href="{{ route('pelanggaran.index') }}"
-                       class="bg-white border border-gray-300 text-gray-600
-                              px-5 py-2.5 text-sm rounded-xl hover:bg-gray-50 transition">
-                        Batal
+                        id="btn-batal"
+                        onclick="showBatalLoading(event)"
+                        class="inline-flex items-center gap-2 bg-white border border-gray-300 text-gray-600
+                               px-5 py-2.5 text-sm rounded-xl hover:bg-gray-50 transition">
+                        <span id="batal-text">Batal</span>
+                        <span id="batal-loading" style="display:none; align-items:center; gap:6px;">
+                            <span style="
+                                display:inline-block; width:13px; height:13px;
+                                border:2px solid #d1d5db;
+                                border-top-color:#6b7280;
+                                border-radius:50%;
+                                animation:simdis-spin .7s linear infinite;">
+                            </span>
+                            Kembali...
+                        </span>
                     </a>
                 </div>
 
@@ -259,7 +272,18 @@
     </div>
 
     <script>
-        // ── Auto-fill wali kelas saat siswa dipilih ──
+        // ── FORM SUBMIT LOADING ──────────────────────────────────────────
+        document.getElementById('form_pelanggaran').addEventListener('submit', function () {
+            const btn     = document.getElementById('btn-simpan');
+            const text    = document.getElementById('btn-simpan-text');
+            const loading = document.getElementById('btn-simpan-loading');
+
+            btn.disabled           = true;
+            text.style.display     = 'none';
+            loading.style.display  = 'inline-flex';
+        });
+
+        // ── AUTO-FILL WALI KELAS ─────────────────────────────────────────
         const siswaSelect    = document.getElementById('id_siswa');
         const waliKelasInput = document.getElementById('id_walikelas');
         const namaWaliKelas  = document.getElementById('nama_walikelas');
@@ -270,7 +294,7 @@
             namaWaliKelas.value  = selected.getAttribute('data-namawalikelas') || '-';
         });
 
-        // ── Update info status secara dinamis ──
+        // ── UPDATE INFO STATUS ───────────────────────────────────────────
         function updateInfoStatus(nilai) {
             const map = {
                 'Belum Ditindak': `
@@ -288,6 +312,23 @@
             };
             document.getElementById('infoStatus').innerHTML = map[nilai] || '';
         }
+
+        // ++ TAMBAHAN: Loading saat klik tombol Batal ++ ──────────────────
+        function showBatalLoading(e) {
+            var batalText    = document.getElementById('batal-text');
+            var batalLoading = document.getElementById('batal-loading');
+            var btnBatal     = document.getElementById('btn-batal');
+
+            batalText.style.display    = 'none';
+            batalLoading.style.display = 'inline-flex';
+            btnBatal.style.pointerEvents = 'none';
+            btnBatal.style.opacity       = '0.75';
+            // Navigasi default tetap berjalan (tidak ada e.preventDefault())
+        }
     </script>
+
+    <style>
+        @keyframes simdis-spin { to { transform: rotate(360deg); } }
+    </style>
 
 </x-app-layout>

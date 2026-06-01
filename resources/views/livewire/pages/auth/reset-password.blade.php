@@ -47,21 +47,28 @@ new #[Layout('layouts.guest')] class extends Component
         );
 
         if ($status != Password::PASSWORD_RESET) {
-            $this->addError('email', __($status));
+            // Pesan error custom bahasa Indonesia
+            $pesanError = match($status) {
+                Password::INVALID_TOKEN => 'Link reset password tidak valid atau sudah kadaluarsa. Silakan minta link baru.',
+                Password::INVALID_USER  => 'Email tidak terdaftar dalam sistem.',
+                default                 => 'Terjadi kesalahan. Silakan coba lagi.',
+            };
+
+            $this->addError('email', $pesanError);
             return;
         }
 
-        // Logout dan hapus session agar tidak redirect ke dashboard
         Auth::logout();
         Session::invalidate();
         Session::regenerateToken();
 
-        Session::flash('status', __($status));
+        // Hardcode pesan sukses bahasa Indonesia
+        Session::flash('status', 'password-reset-success');
 
-        // Paksa redirect ke login
         $this->redirect(route('login'), navigate: true);
     }
-}; ?>
+};
+?>
 
 <div>
     <style>
@@ -71,9 +78,23 @@ new #[Layout('layouts.guest')] class extends Component
             align-items: center;
             gap: 6px;
             width: 100%;
-            padding: 32px;
+            padding: 28px 24px 24px;
             border-radius: 28px;
             background: #ffffff;
+            box-sizing: border-box;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+        }
+
+        .reset-logo {
+            margin-bottom: 4px;
+        }
+
+        .reset-logo img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
         }
 
         .reset-wrap h1 {
@@ -152,6 +173,28 @@ new #[Layout('layouts.guest')] class extends Component
             transform: scale(.98);
         }
 
+        .reset-btn--loading {
+            opacity: 0.75;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .reset-spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+            vertical-align: middle;
+            margin-right: 4px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         .reset-back {
             font-size: 13px;
             color: #0D2D6B;
@@ -167,7 +210,7 @@ new #[Layout('layouts.guest')] class extends Component
 
         @media (max-width: 640px) {
             .reset-wrap {
-                padding: 22px 18px;
+                padding: 24px 20px;
                 border-radius: 24px;
             }
         }
@@ -175,10 +218,15 @@ new #[Layout('layouts.guest')] class extends Component
 
     <div class="reset-wrap">
 
+        {{-- Logo --}}
+        <div class="reset-logo">
+            <a href="/" wire:navigate>
+                <img src="{{ asset('images/logo_simdis.png') }}" alt="Logo SIMDIS">
+            </a>
+        </div>
+
         <h1>Reset Password</h1>
         <p class="reset-sub">Masukkan password baru Anda.</p>
-
-        <x-auth-session-status class="mb-4" :status="session('status')" />
 
         <form wire:submit.prevent="resetPassword" style="width:100%">
 
@@ -196,7 +244,7 @@ new #[Layout('layouts.guest')] class extends Component
                     placeholder="Masukkan email"
                 >
                 @error('email')
-                    <p class="reset-error">{{ $message }}</p>
+                    <p class="reset-error">⚠ {{ $message }}</p>
                 @enderror
             </div>
 
@@ -213,7 +261,7 @@ new #[Layout('layouts.guest')] class extends Component
                     placeholder="••••••••"
                 >
                 @error('password')
-                    <p class="reset-error">{{ $message }}</p>
+                    <p class="reset-error">⚠ {{ $message }}</p>
                 @enderror
             </div>
 
@@ -230,12 +278,20 @@ new #[Layout('layouts.guest')] class extends Component
                     placeholder="••••••••"
                 >
                 @error('password_confirmation')
-                    <p class="reset-error">{{ $message }}</p>
+                    <p class="reset-error">⚠ {{ $message }}</p>
                 @enderror
             </div>
 
-            <button type="submit" class="reset-btn">
-                Simpan Password Baru
+            <button
+                type="submit"
+                class="reset-btn"
+                wire:loading.attr="disabled"
+                wire:loading.class="reset-btn--loading"
+            >
+                <span wire:loading.remove>Simpan Password Baru</span>
+                <span wire:loading style="display:none">
+                    <span class="reset-spinner"></span> Menyimpan...
+                </span>
             </button>
 
         </form>

@@ -33,7 +33,6 @@ class Pengguna extends Authenticatable implements CanResetPassword
 
     // Tambah casts agar password_reset_tokens bisa match
     protected $casts = [
-        'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
 

@@ -7,8 +7,7 @@ use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
-new #[Layout('layouts.guest')] class extends Component
-{
+new #[Layout('layouts.guest')] class extends Component {
     public LoginForm $form;
 
     public function login(): void
@@ -19,11 +18,7 @@ new #[Layout('layouts.guest')] class extends Component
 
         Session::regenerate();
 
-        LogAktivitas::catat(
-            aksi: 'login',
-            modul: 'auth',
-            keterangan: 'User login ke sistem',
-        );
+        LogAktivitas::catat(aksi: 'login', modul: 'auth', keterangan: 'User login ke sistem');
 
         $this->redirectIntended(default: RouteServiceProvider::HOME, navigate: true);
     }
@@ -38,9 +33,23 @@ new #[Layout('layouts.guest')] class extends Component
             align-items: center;
             gap: 6px;
             width: 100%;
-            padding: 24px;
+            padding: 28px 24px 24px;
             border-radius: 28px;
             background: #ffffff;
+            box-sizing: border-box;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+        }
+
+        .simdis-logo {
+            margin-bottom: 4px;
+        }
+
+        .simdis-logo img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
         }
 
         .simdis-wrap h1 {
@@ -79,12 +88,13 @@ new #[Layout('layouts.guest')] class extends Component
             outline: none;
             transition: border-color .2s, box-shadow .2s;
             margin-bottom: 4px;
+            box-sizing: border-box;
         }
 
         .simdis-wrap input[type="email"]:focus,
         .simdis-wrap input[type="password"]:focus {
             border-color: #F5B800;
-            box-shadow: 0 0 0 3px rgba(245,184,0,.15);
+            box-shadow: 0 0 0 3px rgba(245, 184, 0, .15);
             background: #fff;
         }
 
@@ -161,9 +171,7 @@ new #[Layout('layouts.guest')] class extends Component
 
         @media (max-width: 640px) {
             .simdis-wrap {
-                padding: 22px 18px;
-                margin-left: 14px;
-                margin-right: 14px;
+                padding: 24px 20px;
                 border-radius: 24px;
             }
 
@@ -176,31 +184,73 @@ new #[Layout('layouts.guest')] class extends Component
                 margin-top: 4px;
             }
         }
+
+        .simdis-btn--loading {
+            opacity: 0.75;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .simdis-spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+            vertical-align: middle;
+            margin-right: 4px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 
     <div class="simdis-wrap">
 
-        <h1>Login</h1>
+        {{-- Logo --}}
+        <div class="simdis-logo">
+            <a href="/" wire:navigate>
+                <img src="{{ asset('images/logo_simdis.png') }}" alt="Logo SIMDIS">
+            </a>
+        </div>
 
+        <h1>Login</h1>
         <p class="simdis-sub">Masuk ke Sistem</p>
 
         <x-auth-session-status class="mb-4" :status="session('status')" />
+        {{-- Notif setelah berhasil reset password --}}
+        @if (session('status') === 'password-reset-success')
+            <div
+                style="
+    width: 100%;
+    padding: 14px 16px;
+    background: #ECFDF5;
+    border: 1px solid #6EE7B7;
+    border-radius: 14px;
+    font-size: 13px;
+    color: #065F46;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+">
+                <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">
+                    ✅ Password berhasil direset!
+                </div>
+                Silakan login menggunakan password baru Anda.
+            </div>
+        @endif
 
         <form wire:submit="login" style="width:100%">
 
             {{-- Email --}}
             <div class="simdis-field">
                 <label for="email">Email</label>
-                <input
-                    wire:model="form.email"
-                    id="email"
-                    type="email"
-                    name="email"
-                    placeholder="masukkan email dengan benar!"
-                    required
-                    autofocus
-                    autocomplete="username"
-                >
+                <input wire:model="form.email" id="email" type="email" name="email"
+                    placeholder="masukkan email dengan benar!" required autofocus autocomplete="username">
                 @error('form.email')
                     <p class="simdis-error">{{ $message }}</p>
                 @enderror
@@ -209,15 +259,8 @@ new #[Layout('layouts.guest')] class extends Component
             {{-- Password --}}
             <div class="simdis-field">
                 <label for="password">Password</label>
-                <input
-                    wire:model="form.password"
-                    id="password"
-                    type="password"
-                    name="password"
-                    placeholder="••••••••"
-                    required
-                    autocomplete="current-password"
-                >
+                <input wire:model="form.password" id="password" type="password" name="password" placeholder="••••••••"
+                    required autocomplete="current-password">
                 @error('form.password')
                     <p class="simdis-error">{{ $message }}</p>
                 @enderror
@@ -226,19 +269,18 @@ new #[Layout('layouts.guest')] class extends Component
             {{-- Ingat saya --}}
             <div class="simdis-row">
                 <label class="simdis-remember">
-                    <input
-                        wire:model="form.remember"
-                        id="remember"
-                        type="checkbox"
-                        name="remember"
-                    >
+                    <input wire:model="form.remember" id="remember" type="checkbox" name="remember">
                     Ingatkan saya
                 </label>
             </div>
 
             {{-- Tombol Masuk --}}
-            <button type="submit" class="simdis-btn">
-                Masuk
+            <button type="submit" class="simdis-btn" wire:loading.attr="disabled"
+                wire:loading.class="simdis-btn--loading">
+                <span wire:loading.remove>Masuk</span>
+                <span wire:loading style="display:none">
+                    <span class="simdis-spinner"></span> Memproses...
+                </span>
             </button>
 
             {{-- Lupa Password --}}

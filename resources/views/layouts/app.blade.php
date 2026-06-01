@@ -17,9 +17,73 @@
     @livewireStyles
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    <style>
+        @keyframes loadingSlide {
+            0%   { width: 0%;   opacity: 1; }
+            80%  { width: 90%;  opacity: 1; }
+            100% { width: 100%; opacity: 0; }
+        }
+
+        @keyframes loadingPulse {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.5; }
+        }
+
+        .simdis-loading-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            width: 0%;
+            background: linear-gradient(90deg, #F5B800, #FFD84D, #F5B800);
+            z-index: 99999;
+            animation: loadingSlide 1.8s ease-in-out forwards;
+            box-shadow: 0 0 8px rgba(245, 184, 0, 0.6);
+        }
+
+        .simdis-loading-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 99998;
+            background: rgba(240, 244, 251, 0.4);
+            backdrop-filter: blur(1px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .simdis-loading-spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid rgba(13, 45, 107, 0.15);
+            border-top-color: #0D2D6B;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 
 <body class="font-sans antialiased" style="background: #F0F4FB;">
+
+    {{-- ── Global Loading Indicator ── --}}
+    <div
+        x-data="{ loading: false }"
+        x-on:livewire:navigate.window="loading = true"
+        x-on:livewire:navigated.window="loading = false"
+    >
+        {{-- Loading bar atas --}}
+        <div x-show="loading" x-cloak class="simdis-loading-bar"></div>
+
+        {{-- Overlay + spinner tengah --}}
+        <div x-show="loading" x-cloak class="simdis-loading-overlay">
+            <div class="simdis-loading-spinner"></div>
+        </div>
+    </div>
 
     <div x-data="{ sidebarOpen: false }" @toggle-sidebar.window="sidebarOpen = !sidebarOpen"
         class="flex flex-col h-screen overflow-hidden">

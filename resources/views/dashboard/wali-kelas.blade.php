@@ -99,8 +99,8 @@
                             <div class="chart-subtitle">12 bulan terakhir</div>
                         </div>
                         @php
-                            $d    = $charts['bulanan']['data'];
-                            $last = end($d);
+                            $d    = $charts['bulanan']['data'] ?? [];
+                            $last = !empty($d) ? end($d) : 0;
                             $prev = count($d) >= 2 ? $d[count($d) - 2] : 0;
                             $diff = $last - $prev;
                         @endphp
@@ -126,11 +126,18 @@
     </div>
 
     <script>
-        const _bulananData  = @json($charts['bulanan']['data']);
-        const _bulananLabel = @json($charts['bulanan']['labels']);
-        const _jenisLabel   = @json($charts['jenis']['labels']);
-        const _jenisTingkat = @json($charts['jenis']['tingkat']);
-        const _jenisData    = @json($charts['jenis']['data']);
+    (function () {
+
+        // ── Namespace unik per role ──────────────────────────────────────────
+        const CHART_KEY = '_charts_dashboard_walikelas';
+        const CHART_IDS = ['chartBulanan', 'chartJenis'];
+
+        // ── Data di-embed saat render ────────────────────────────────────────
+        const _bulananData   = @json($charts['bulanan']['data'] ?? []);
+        const _bulananLabels = @json($charts['bulanan']['labels'] ?? []);
+        const _jenisLabels   = @json($charts['jenis']['labels'] ?? []);
+        const _jenisTingkat  = @json($charts['jenis']['tingkat'] ?? []);
+        const _jenisData     = @json($charts['jenis']['data'] ?? []);
 
         const navyColor = '#0D2D6B';
         const gridColor = '#f0f4fb';
@@ -141,80 +148,131 @@
             dataLabels: { enabled: false },
         };
 
-        if (!window._simdisCharts) window._simdisCharts = [];
+        // ── Retry counter ────────────────────────────────────────────────────
+        let _retryCount = 0;
+        const MAX_RETRY = 20;
 
+        if (!window[CHART_KEY]) window[CHART_KEY] = [];
+
+        // ── Destroy ──────────────────────────────────────────────────────────
         function destroyCharts() {
-            window._simdisCharts.forEach(c => { try { c.destroy(); } catch(e){} });
-            window._simdisCharts = [];
-            ['chartBulanan','chartJenis'].forEach(id => {
+            (window[CHART_KEY] || []).forEach(c => { try { c.destroy(); } catch (e) {} });
+            window[CHART_KEY] = [];
+            CHART_IDS.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.innerHTML = '';
             });
         }
 
+        // ── Init ─────────────────────────────────────────────────────────────
         function initCharts() {
-            const container = document.getElementById('chartBulanan');
-            if (!container) { setTimeout(initCharts, 100); return; }
+            const bulananEl = document.getElementById('chartBulanan');
+            const jenisEl   = document.getElementById('chartJenis');
 
+            if (!bulananEl || !jenisEl) {
+                if (_retryCount < MAX_RETRY) {
+                    _retryCount++;
+                    setTimeout(initCharts, 100);
+                }
+                return;
+            }
+
+            _retryCount = 0;
             destroyCharts();
 
-            const maxBulanan = Math.max(1, Math.max(..._bulananData));
-            const c1 = new ApexCharts(document.querySelector('#chartBulanan'), {
+            // ── Chart 1: Tren Bulanan ───────────────────────────────────────
+            const maxBulanan = Math.max(1, ...(_bulananData.length ? _bulananData : [1]));
+
+            const c1 = new ApexCharts(bulananEl, {
                 ...baseOpts,
                 series: [{ name: 'Pelanggaran', data: _bulananData }],
                 chart:  { ...baseOpts.chart, type: 'area', height: 280 },
                 colors: [navyColor],
-                fill: { type:'gradient', gradient:{ shadeIntensity:1, opacityFrom:0.45, opacityTo:0.02, stops:[0,90,100] } },
-                stroke: { curve: 'smooth', width: 2.5 },
-                markers: { size:5, colors:['#fff'], strokeColors:[navyColor], strokeWidth:2.5, hover:{size:7} },
-                xaxis: {
-                    categories: _bulananLabel,
-                    labels: { style:{fontSize:'10px',colors:'#718096'}, rotate:-45, hideOverlappingLabels:true },
-                    axisBorder:{show:false}, axisTicks:{show:false},
+                fill: {
+                    type: 'gradient',
+                    gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.02, stops: [0, 90, 100] },
                 },
-                yaxis: { min:0, tickAmount:maxBulanan, labels:{style:{fontSize:'11px',colors:'#718096'}, formatter:v=>Number.isInteger(v)?v:''} },
-                tooltip: { theme:'light', y:{ formatter:v=>v+' pelanggaran' } },
+                stroke:  { curve: 'smooth', width: 2.5 },
+                markers: { size: 5, colors: ['#fff'], strokeColors: [navyColor], strokeWidth: 2.5, hover: { size: 7 } },
+                xaxis: {
+                    categories: _bulananLabels,
+                    labels: { style: { fontSize: '10px', colors: '#718096' }, rotate: -45, hideOverlappingLabels: true },
+                    axisBorder: { show: false }, axisTicks: { show: false },
+                },
+                yaxis: {
+                    min: 0, tickAmount: maxBulanan,
+                    labels: { style: { fontSize: '11px', colors: '#718096' }, formatter: v => Number.isInteger(v) ? v : '' },
+                },
+                tooltip: { theme: 'light', y: { formatter: v => v + ' pelanggaran' } },
             });
             c1.render();
-            window._simdisCharts.push(c1);
+            window[CHART_KEY].push(c1);
 
-            const maxJenis = Math.max(1, Math.max(...(_jenisData.length ? _jenisData : [1])));
+            // ── Chart 2: Jenis Pelanggaran ──────────────────────────────────
+            const maxJenis = Math.max(1, ...(_jenisData.length ? _jenisData : [1]));
             const tingkatColors = _jenisTingkat.map(t => {
-                const v = t ? t.toLowerCase() : '';
-                if (v === 'berat')  return '#ef4444';
-                if (v === 'sedang') return '#f97316';
+                const val = t ? t.toLowerCase() : '';
+                if (val === 'berat')  return '#ef4444';
+                if (val === 'sedang') return '#f97316';
                 return '#F5B800';
             });
-            const c2 = new ApexCharts(document.querySelector('#chartJenis'), {
+
+            const c2 = new ApexCharts(jenisEl, {
                 ...baseOpts,
                 series: [{ name: 'Jumlah Kejadian', data: _jenisData }],
-                chart:  { ...baseOpts.chart, type: 'bar', height: Math.max(200, _jenisLabel.length * 70) },
-                colors: [function({ dataPointIndex }) { return tingkatColors[dataPointIndex] || '#F5B800'; }],
-                plotOptions: { bar:{ borderRadius:5, horizontal:true, barHeight:'55%', distributed:true, dataLabels:{position:'right'} } },
-                dataLabels: { enabled:true, offsetX:6, style:{fontSize:'11px',fontWeight:700,colors:['#1e3a6e']}, formatter:v=>v>0?v+'x':'' },
+                chart:  { ...baseOpts.chart, type: 'bar', height: Math.max(200, _jenisLabels.length * 70) },
+                colors: [function ({ dataPointIndex }) { return tingkatColors[dataPointIndex] || '#F5B800'; }],
+                plotOptions: { bar: { borderRadius: 5, horizontal: true, distributed: true, barHeight: '55%' } },
+                dataLabels: {
+                    enabled: true, offsetX: 6,
+                    style: { fontSize: '11px', fontWeight: 700, colors: ['#1e3a6e'] },
+                    formatter: v => v > 0 ? v + 'x' : '',
+                },
                 legend: { show: false },
                 xaxis: {
-                    categories: _jenisLabel, min:0, tickAmount:maxJenis,
-                    labels: { style:{fontSize:'11px',colors:'#718096'}, formatter:v=>Number.isInteger(Number(v))?Math.floor(Number(v)):'' },
-                    axisBorder:{show:false}, axisTicks:{show:false},
+                    categories: _jenisLabels, min: 0, tickAmount: maxJenis,
+                    labels: {
+                        style: { fontSize: '11px', colors: '#718096' },
+                        formatter: v => Number.isInteger(Number(v)) ? Math.floor(Number(v)) : '',
+                    },
+                    axisBorder: { show: false }, axisTicks: { show: false },
                 },
-                yaxis: { labels:{ maxWidth:160, style:{fontSize:'11px',colors:'#1e3a6e',fontWeight:600}, formatter:v=>v&&v.length>24?v.substring(0,24)+'…':v } },
+                yaxis: {
+                    labels: {
+                        maxWidth: 160,
+                        style: { fontSize: '11px', colors: '#1e3a6e', fontWeight: 600 },
+                        formatter: v => v && v.length > 24 ? v.substring(0, 24) + '…' : v,
+                    },
+                },
                 tooltip: {
                     theme: 'light',
-                    x: { formatter:(val,{dataPointIndex})=>`<strong>${_jenisLabel[dataPointIndex]??''}</strong><br>Tingkat: ${_jenisTingkat[dataPointIndex]??'-'}` },
-                    y: { title:{formatter:()=>''}, formatter:v=>v+' kejadian' },
+                    x: { formatter: (val, { dataPointIndex }) => `<strong>${_jenisLabels[dataPointIndex] ?? ''}</strong><br>Tingkat: ${_jenisTingkat[dataPointIndex] ?? '-'}` },
+                    y: { title: { formatter: () => '' }, formatter: v => v + ' kejadian' },
                 },
             });
             c2.render();
-            window._simdisCharts.push(c2);
+            window[CHART_KEY].push(c2);
         }
 
-        document.addEventListener('livewire:navigate',  destroyCharts);
-        document.addEventListener('livewire:navigated', () => setTimeout(initCharts, 80));
-        document.addEventListener('DOMContentLoaded',   () => setTimeout(initCharts, 80));
-        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        // ── Bootstrap ────────────────────────────────────────────────────────
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => setTimeout(initCharts, 80));
+        } else {
             setTimeout(initCharts, 80);
         }
+
+        // ── Livewire SPA navigation ──────────────────────────────────────────
+        document.addEventListener('livewire:navigate', function () {
+            destroyCharts();
+            _retryCount = 0;
+        });
+
+        document.addEventListener('livewire:navigated', function () {
+            _retryCount = 0;
+            setTimeout(initCharts, 80);
+        });
+
+    })();
     </script>
 
 </x-app-layout>
