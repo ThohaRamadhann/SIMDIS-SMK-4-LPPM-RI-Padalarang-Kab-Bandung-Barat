@@ -239,150 +239,136 @@
     </div>
 
     <script>
-    (function () {
-
-        // ── Namespace unik per halaman ──────────────────────────────────────
-        const CHART_KEY   = '_charts_dashboard_admin';
-        const CHART_IDS   = ['chartPenggunaBulanan', 'chartSiswaKelas'];
-
-        // ── Data di-embed saat render (tidak berubah) ───────────────────────
-        const _penggunaData  = @json($charts['pengguna_bulanan']['data']);
-        const _penggunaLabel = @json($charts['pengguna_bulanan']['labels']);
-        const _kelasData     = @json($charts['siswa_per_kelas']['data']);
-        const _kelasLabel    = @json($charts['siswa_per_kelas']['labels']);
-
-        const navyColor = '#0D2D6B';
-        const goldColor = '#F5B800';
-        const gridColor = '#f0f4fb';
-        const baseOpts  = {
-            chart:      { toolbar: { show: false }, fontFamily: 'inherit' },
-            grid:       { borderColor: gridColor, strokeDashArray: 4 },
-            tooltip:    { theme: 'light' },
-            dataLabels: { enabled: false },
-        };
-
-        // ── Retry counter — mencegah loop tanpa batas ───────────────────────
-        let _retryCount = 0;
-        const MAX_RETRY = 20; // max ~2 detik (20 × 100 ms)
-
-        // ── Pastikan namespace tersedia ─────────────────────────────────────
-        if (!window[CHART_KEY]) window[CHART_KEY] = [];
-
-        // ── Destroy semua instance di namespace ini ─────────────────────────
-        function destroyCharts() {
-            (window[CHART_KEY] || []).forEach(c => { try { c.destroy(); } catch (e) {} });
-            window[CHART_KEY] = [];
-            CHART_IDS.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.innerHTML = '';
-            });
-        }
-
-        // ── Inisialisasi chart ──────────────────────────────────────────────
-        function initCharts() {
-            const container = document.getElementById('chartPenggunaBulanan');
-
-            if (!container) {
-                // Elemen belum ada — retry dengan batas maksimum
-                if (_retryCount < MAX_RETRY) {
-                    _retryCount++;
-                    setTimeout(initCharts, 100);
-                }
-                // Setelah MAX_RETRY berhenti total (user mungkin sudah navigasi pergi)
-                return;
+        (function () {
+        
+            const CHART_KEY = '_charts_dashboard_admin';
+            const CHART_IDS = ['chartPenggunaBulanan', 'chartSiswaKelas'];
+        
+            const _penggunaData  = @json($charts['pengguna_bulanan']['data']);
+            const _penggunaLabel = @json($charts['pengguna_bulanan']['labels']);
+            const _kelasData     = @json($charts['siswa_per_kelas']['data']);
+            const _kelasLabel    = @json($charts['siswa_per_kelas']['labels']);
+        
+            const navyColor = '#0D2D6B';
+            const goldColor = '#F5B800';
+            const gridColor = '#f0f4fb';
+            const baseOpts  = {
+                chart:      { toolbar: { show: false }, fontFamily: 'inherit' },
+                grid:       { borderColor: gridColor, strokeDashArray: 4 },
+                tooltip:    { theme: 'light' },
+                dataLabels: { enabled: false },
+            };
+        
+            let _retryCount = 0;
+            const MAX_RETRY = 30;
+        
+            if (!window[CHART_KEY]) window[CHART_KEY] = [];
+        
+            function destroyCharts() {
+                (window[CHART_KEY] || []).forEach(c => { try { c.destroy(); } catch (e) {} });
+                window[CHART_KEY] = [];
+                CHART_IDS.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerHTML = '';
+                });
             }
-
-            // Reset counter setelah berhasil menemukan elemen
-            _retryCount = 0;
-
-            // Destroy instance lama sebelum membuat yang baru
-            destroyCharts();
-
-            // ── Chart 1: Pertumbuhan Pengguna ───────────────────────────────
-            const maxPengguna = Math.max(1, ..._penggunaData);
-            const c1 = new ApexCharts(document.getElementById('chartPenggunaBulanan'), {
-                ...baseOpts,
-                series: [{ name: 'Pengguna Baru', data: _penggunaData }],
-                chart:  { ...baseOpts.chart, type: 'bar', height: 260 },
-                colors: [navyColor],
-                plotOptions: {
-                    bar: { borderRadius: 6, columnWidth: '50%', dataLabels: { position: 'top' } },
-                },
-                dataLabels: {
-                    enabled: true, offsetY: -18,
-                    style: { fontSize: '11px', fontWeight: 700, colors: [navyColor] },
-                    formatter: v => v > 0 ? v : '',
-                },
-                xaxis: {
-                    categories: _penggunaLabel,
-                    labels: { style: { fontSize: '11px', colors: '#718096' } },
-                    axisBorder: { show: false }, axisTicks: { show: false },
-                },
-                yaxis: {
-                    min: 0, tickAmount: maxPengguna,
-                    labels: {
-                        style: { fontSize: '11px', colors: '#718096' },
-                        formatter: v => Number.isInteger(v) ? v : '',
+        
+            function initCharts() {
+                // 1. Pastikan library sudah load
+                if (typeof ApexCharts === 'undefined') {
+                    if (_retryCount < MAX_RETRY) { _retryCount++; setTimeout(initCharts, 100); }
+                    return;
+                }
+        
+                // 2. Pastikan kedua elemen DOM sudah ada
+                const container1 = document.getElementById('chartPenggunaBulanan');
+                const container2 = document.getElementById('chartSiswaKelas');
+                if (!container1 || !container2) {
+                    if (_retryCount < MAX_RETRY) { _retryCount++; setTimeout(initCharts, 100); }
+                    return;
+                }
+        
+                _retryCount = 0;
+                destroyCharts();
+        
+                // ── Chart 1: Pertumbuhan Pengguna ──
+                const maxPengguna = Math.max(1, ..._penggunaData);
+                const c1 = new ApexCharts(document.getElementById('chartPenggunaBulanan'), {
+                    ...baseOpts,
+                    series: [{ name: 'Pengguna Baru', data: _penggunaData }],
+                    chart:  { ...baseOpts.chart, type: 'bar', height: 260 },
+                    colors: [navyColor],
+                    plotOptions: {
+                        bar: { borderRadius: 6, columnWidth: '50%', dataLabels: { position: 'top' } },
                     },
-                },
-                tooltip: { theme: 'light', y: { formatter: v => v + ' pengguna' } },
+                    dataLabels: {
+                        enabled: true, offsetY: -18,
+                        style: { fontSize: '11px', fontWeight: 700, colors: [navyColor] },
+                        formatter: v => v > 0 ? v : '',
+                    },
+                    xaxis: {
+                        categories: _penggunaLabel,
+                        labels: { style: { fontSize: '11px', colors: '#718096' } },
+                        axisBorder: { show: false }, axisTicks: { show: false },
+                    },
+                    yaxis: {
+                        min: 0, tickAmount: maxPengguna,
+                        labels: {
+                            style: { fontSize: '11px', colors: '#718096' },
+                            formatter: v => Number.isInteger(v) ? v : '',
+                        },
+                    },
+                    tooltip: { theme: 'light', y: { formatter: v => v + ' pengguna' } },
+                });
+                c1.render();
+                window[CHART_KEY].push(c1);
+        
+                // ── Chart 2: Distribusi Siswa per Kelas ──
+                const c2 = new ApexCharts(document.getElementById('chartSiswaKelas'), {
+                    ...baseOpts,
+                    series: [{ name: 'Jumlah Siswa', data: _kelasData }],
+                    chart:  { ...baseOpts.chart, type: 'bar', height: 260 },
+                    colors: [goldColor],
+                    plotOptions: { bar: { borderRadius: 6, horizontal: true, barHeight: '55%' } },
+                    dataLabels: {
+                        enabled: true,
+                        style: { fontSize: '11px', fontWeight: 700, colors: [navyColor] },
+                        formatter: v => v > 0 ? v + ' siswa' : '',
+                    },
+                    xaxis: {
+                        categories: _kelasLabel,
+                        labels: { style: { fontSize: '11px', colors: '#718096' } },
+                        axisBorder: { show: false }, axisTicks: { show: false },
+                    },
+                    yaxis: { labels: { style: { fontSize: '11px', colors: '#718096' } } },
+                    tooltip: { theme: 'light', y: { formatter: v => v + ' siswa' } },
+                });
+                c2.render();
+                window[CHART_KEY].push(c2);
+            }
+        
+            window.toggleKelengkapan = function (i) {
+                const card = document.getElementById('card-' + i);
+                if (card) card.classList.toggle('open');
+            };
+        
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => setTimeout(initCharts, 150));
+            } else {
+                setTimeout(initCharts, 150);
+            }
+        
+            document.addEventListener('livewire:navigate', function () {
+                destroyCharts();
+                _retryCount = 0;
             });
-            c1.render();
-            window[CHART_KEY].push(c1);
-
-            // ── Chart 2: Distribusi Siswa per Kelas ────────────────────────
-            const c2 = new ApexCharts(document.getElementById('chartSiswaKelas'), {
-                ...baseOpts,
-                series: [{ name: 'Jumlah Siswa', data: _kelasData }],
-                chart:  { ...baseOpts.chart, type: 'bar', height: 260 },
-                colors: [goldColor],
-                plotOptions: { bar: { borderRadius: 6, horizontal: true, barHeight: '55%' } },
-                dataLabels: {
-                    enabled: true,
-                    style: { fontSize: '11px', fontWeight: 700, colors: [navyColor] },
-                    formatter: v => v > 0 ? v + ' siswa' : '',
-                },
-                xaxis: {
-                    categories: _kelasLabel,
-                    labels: { style: { fontSize: '11px', colors: '#718096' } },
-                    axisBorder: { show: false }, axisTicks: { show: false },
-                },
-                yaxis: { labels: { style: { fontSize: '11px', colors: '#718096' } } },
-                tooltip: { theme: 'light', y: { formatter: v => v + ' siswa' } },
+        
+            document.addEventListener('livewire:navigated', function () {
+                _retryCount = 0;
+                setTimeout(initCharts, 200);
             });
-            c2.render();
-            window[CHART_KEY].push(c2);
-        }
-
-        // ── Toggle accordion kelengkapan data ───────────────────────────────
-        window.toggleKelengkapan = function (i) {
-            const card = document.getElementById('card-' + i);
-            if (card) card.classList.toggle('open');
-        };
-
-        // ── Bootstrap: pilih salah satu jalur, tidak keduanya ───────────────
-        if (document.readyState === 'loading') {
-            // DOM belum selesai — tunggu event
-            document.addEventListener('DOMContentLoaded', () => setTimeout(initCharts, 80));
-        } else {
-            // DOM sudah siap (navigasi Livewire SPA atau script defer)
-            setTimeout(initCharts, 80);
-        }
-
-        // ── Livewire SPA navigation ──────────────────────────────────────────
-        // 'livewire:navigate'  = sebelum pindah halaman  → destroy dulu
-        // 'livewire:navigated' = setelah halaman baru muncul → init ulang
-        document.addEventListener('livewire:navigate',  function onNavigate() {
-            destroyCharts();
-            _retryCount = 0;
-        });
-
-        document.addEventListener('livewire:navigated', function onNavigated() {
-            _retryCount = 0;
-            setTimeout(initCharts, 80);
-        });
-
-    })();
-    </script>
+        
+        })();
+        </script>
 
 </x-app-layout>

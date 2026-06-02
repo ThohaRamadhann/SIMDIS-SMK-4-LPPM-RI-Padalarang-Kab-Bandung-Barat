@@ -22,15 +22,14 @@ class Users extends Component
     public $nuptk, $jabatan, $hubungan;
 
     // ── Search, filter, sort, pagination ──
-    public $search       = '';
-    public $filterRole   = '';
-    public $sortBy       = 'terbaru';   // terbaru | az | za
-    public $perPage      = 10;
+    public $search     = '';
+    public $filterRole = '';
+    public $sortBy     = 'terbaru';
+    public $perPage    = 10;
 
     // ── Trash / soft delete ──
     public $showTrash = false;
 
-    // Reset pagination ketika filter/search berubah
     protected $queryString = [
         'search'     => ['except' => ''],
         'filterRole' => ['except' => ''],
@@ -38,26 +37,11 @@ class Users extends Component
         'perPage'    => ['except' => 10],
     ];
 
-    public function updatingSearch()
-    {
-        $this->resetPage();
-    }
-    public function updatingFilterRole()
-    {
-        $this->resetPage();
-    }
-    public function updatingSortBy()
-    {
-        $this->resetPage();
-    }
-    public function updatingPerPage()
-    {
-        $this->resetPage();
-    }
-    public function updatingShowTrash()
-    {
-        $this->resetPage();
-    }
+    public function updatingSearch()     { $this->resetPage(); }
+    public function updatingFilterRole() { $this->resetPage(); }
+    public function updatingSortBy()     { $this->resetPage(); }
+    public function updatingPerPage()    { $this->resetPage(); }
+    public function updatingShowTrash()  { $this->resetPage(); }
 
     // ── Computed: nama role yang dipilih ──
     public function getSelectedRoleNameProperty()
@@ -91,7 +75,9 @@ class Users extends Component
 
         $roleName = $this->selectedRoleName;
 
-        if (in_array($roleName, ['guru_bk', 'wali_kelas'])) {
+        // Hanya wali_kelas yang butuh NUPTK & jabatan
+        // guru_bk cukup data pengguna saja (seperti admin)
+        if ($roleName === 'wali_kelas') {
             $waliKelasId = null;
             if ($this->editingId) {
                 $pengguna    = Pengguna::with('waliKelas')->find($this->editingId);
@@ -101,7 +87,7 @@ class Users extends Component
                 'required',
                 'string',
                 'max:50',
-                Rule::unique('wali_kelas', 'nuptk')->ignore($waliKelasId, 'id_walikelas')
+                Rule::unique('wali_kelas', 'nuptk')->ignore($waliKelasId, 'id_walikelas'),
             ];
             $rules['jabatan'] = 'required|string|max:100';
         }
@@ -139,14 +125,13 @@ class Users extends Component
             default => $query->orderBy('id_pengguna', 'desc'),
         };
 
-        // Di render(), ganti startNo jadi selalu firstItem
         $users = $query->paginate($this->perPage);
 
         return view('livewire.admin.users', [
             'users'      => $users,
             'roles'      => Role::all(),
             'trashCount' => Pengguna::onlyTrashed()->count(),
-            'startNo'    => $users->firstItem(), // ← selalu mulai dari firstItem
+            'startNo'    => $users->firstItem(),
         ]);
     }
 
@@ -195,7 +180,9 @@ class Users extends Component
             $message  = 'Pengguna berhasil ditambahkan!';
         }
 
-        if (in_array($roleName, ['guru_bk', 'wali_kelas'])) {
+        // Hanya wali_kelas yang masuk tabel wali_kelas
+        // guru_bk, admin, dll → hanya di tabel pengguna
+        if ($roleName === 'wali_kelas') {
             WaliKelas::updateOrCreate(
                 ['id_pengguna' => $pengguna->id_pengguna],
                 ['nuptk' => $this->nuptk, 'jabatan' => $this->jabatan]
@@ -208,6 +195,8 @@ class Users extends Component
             );
             $pengguna->waliKelas()->delete();
         } else {
+            // admin, guru_bk, dan role lain:
+            // bersihkan relasi jika sebelumnya pernah punya
             $pengguna->waliKelas()->delete();
             $pengguna->waliMurid()->delete();
         }
@@ -246,7 +235,7 @@ class Users extends Component
         $user = Pengguna::findOrFail($id);
         $user->waliKelas()->delete();
         $user->waliMurid()->delete();
-        $user->delete(); // soft delete
+        $user->delete();
         $this->resetForm();
         session()->flash('success', 'Pengguna dipindahkan ke tong sampah.');
     }

@@ -76,10 +76,10 @@ new #[Layout('layouts.guest')] class extends Component {
         }
 
         .simdis-wrap input[type="email"],
-        .simdis-wrap input[type="password"] {
+        .simdis-wrap #password {
             width: 100%;
             height: 46px;
-            padding: 0 14px;
+            padding: 0 44px 0 14px;
             border: 1.5px solid #D1D5DB;
             border-radius: 14px;
             font-size: 14px;
@@ -91,8 +91,12 @@ new #[Layout('layouts.guest')] class extends Component {
             box-sizing: border-box;
         }
 
+        .simdis-wrap input[type="email"] {
+            padding: 0 14px;
+        }
+
         .simdis-wrap input[type="email"]:focus,
-        .simdis-wrap input[type="password"]:focus {
+        .simdis-wrap #password:focus {
             border-color: #F5B800;
             box-shadow: 0 0 0 3px rgba(245, 184, 0, .15);
             background: #fff;
@@ -223,23 +227,12 @@ new #[Layout('layouts.guest')] class extends Component {
         <p class="simdis-sub">Masuk ke Sistem</p>
 
         <x-auth-session-status class="mb-4" :status="session('status')" />
+
         {{-- Notif setelah berhasil reset password --}}
         @if (session('status') === 'password-reset-success')
-            <div
-                style="
-    width: 100%;
-    padding: 14px 16px;
-    background: #ECFDF5;
-    border: 1px solid #6EE7B7;
-    border-radius: 14px;
-    font-size: 13px;
-    color: #065F46;
-    margin-bottom: 12px;
-    box-sizing: border-box;
-">
-                <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">
-                    ✅ Password berhasil direset!
-                </div>
+            <div style="width:100%;padding:14px 16px;background:#ECFDF5;border:1px solid #6EE7B7;
+                        border-radius:14px;font-size:13px;color:#065F46;margin-bottom:12px;box-sizing:border-box;">
+                <div style="font-weight:700;font-size:14px;margin-bottom:4px;">✅ Password berhasil direset!</div>
                 Silakan login menggunakan password baru Anda.
             </div>
         @endif
@@ -257,25 +250,31 @@ new #[Layout('layouts.guest')] class extends Component {
             </div>
 
             {{-- Password --}}
-            <div class="simdis-field">
+            <div class="simdis-field"
+                 x-data
+                 x-init="if(typeof Alpine.store('showPass') === 'undefined') Alpine.store('showPass', false)">
                 <label for="password">Password</label>
-                <input wire:model="form.password" id="password" type="password" name="password" placeholder="••••••••"
-                    required autocomplete="current-password">
+                <div style="position:relative;">
+                    <input wire:model="form.password" id="password" name="password"
+                        placeholder="••••••••" required autocomplete="current-password"
+                        :type="$store.showPass ? 'text' : 'password'">
+                    <button type="button"
+                        @click="$store.showPass = !$store.showPass"
+                        style="position:absolute;right:14px;top:50%;transform:translateY(-50%);
+                               background:none;border:none;cursor:pointer;padding:0;
+                               color:#9CA3AF;line-height:1;"
+                        :title="$store.showPass ? 'Sembunyikan password' : 'Tampilkan password'">
+                        <i class="fas text-sm" :class="$store.showPass ? 'fa-eye-slash' : 'fa-eye'"></i>
+                    </button>
+                </div>
                 @error('form.password')
                     <p class="simdis-error">{{ $message }}</p>
                 @enderror
             </div>
 
-            {{-- Ingat saya --}}
-            <div class="simdis-row">
-                <label class="simdis-remember">
-                    <input wire:model="form.remember" id="remember" type="checkbox" name="remember">
-                    Ingatkan saya
-                </label>
-            </div>
-
             {{-- Tombol Masuk --}}
-            <button type="submit" class="simdis-btn" wire:loading.attr="disabled"
+            <button type="submit" class="simdis-btn"
+                wire:loading.attr="disabled"
                 wire:loading.class="simdis-btn--loading">
                 <span wire:loading.remove>Masuk</span>
                 <span wire:loading style="display:none">
@@ -284,7 +283,7 @@ new #[Layout('layouts.guest')] class extends Component {
             </button>
 
             {{-- Lupa Password --}}
-            <div style="width:100%; text-align:center; margin-top:16px;">
+            <div style="width:100%;text-align:center;margin-top:16px;">
                 @if (Route::has('password.request'))
                     <a class="simdis-forgot" href="{{ route('password.request') }}" wire:navigate>
                         Lupa kata sandi?
@@ -293,6 +292,11 @@ new #[Layout('layouts.guest')] class extends Component {
             </div>
 
         </form>
-
     </div>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('showPass', false)
+        })
+    </script>
 </div>
