@@ -5,7 +5,6 @@ namespace App\Livewire\Pelanggaran;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Pelanggaran;
-use App\Models\Siswa;
 use App\Models\WaliKelas;
 use App\Models\JenisPelanggaran;
 use App\Models\LogAktivitas;
@@ -47,14 +46,38 @@ class Index extends Component
         'sortBy' => ['except' => 'terbaru'],
     ];
 
-    public function updatingSearch()          { $this->resetPage(); }
-    public function updatingFilterJenis()     { $this->resetPage(); }
-    public function updatingFilterTingkat()   { $this->resetPage(); }
-    public function updatingFilterStatus()    { $this->resetPage(); }
-    public function updatingFilterWaliKelas() { $this->resetPage(); }
-    public function updatingSortBy()          { $this->resetPage(); }
-    public function updatingPerPage()         { $this->resetPage(); }
-    public function updatingShowTrash()       { $this->resetPage(); }
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+    public function updatingFilterJenis()
+    {
+        $this->resetPage();
+    }
+    public function updatingFilterTingkat()
+    {
+        $this->resetPage();
+    }
+    public function updatingFilterStatus()
+    {
+        $this->resetPage();
+    }
+    public function updatingFilterWaliKelas()
+    {
+        $this->resetPage();
+    }
+    public function updatingSortBy()
+    {
+        $this->resetPage();
+    }
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
+    public function updatingShowTrash()
+    {
+        $this->resetPage();
+    }
 
     // ── HAPUS (SOFT DELETE) ──────────────────────────────────────────────
     public function hapus($id): void
@@ -139,12 +162,10 @@ class Index extends Component
         $this->modalSiswa  = optional($data->siswa)->nama ?? '-';
         $this->modalStatus = $data->status_pembinaan ?? 'Belum Ditindak';
 
-        // Tanggal
         $this->modalTanggal = $data->tanggal_pembinaan
             ? \Carbon\Carbon::parse($data->tanggal_pembinaan)->format('Y-m-d')
             : '';
 
-        // Jam — baca dari kolom jam_pembinaan (format H:i atau H:i:s)
         $jamRaw = $data->getRawOriginal('jam_pembinaan');
         if ($jamRaw) {
             [$this->modalJamHour, $this->modalJamMinute] = explode(':', substr($jamRaw, 0, 5));
@@ -177,15 +198,12 @@ class Index extends Component
     {
         $this->cekAkses(['guru_bk', 'wali_kelas']);
 
-        // ── Validasi dasar (selalu dijalankan) ─────────────────────────
         $rules    = ['modalStatus' => 'required|in:Belum Ditindak,Dalam Proses,Selesai'];
         $messages = [
             'modalStatus.required' => 'Status pembinaan wajib dipilih.',
             'modalStatus.in'       => 'Status pembinaan tidak valid.',
         ];
 
-        // ── Validasi kondisional: Dalam Proses ─────────────────────────
-        // Tanggal wajib, jam & catatan opsional
         if ($this->modalStatus === 'Dalam Proses') {
             $rules['modalTanggal']   = 'required|date';
             $rules['modalJamHour']   = 'nullable';
@@ -197,8 +215,6 @@ class Index extends Component
             $messages['modalCatatan.max']      = 'Catatan maksimal 1000 karakter.';
         }
 
-        // ── Validasi kondisional: Selesai ──────────────────────────────
-        // Tanggal, jam, dan catatan semuanya wajib
         if ($this->modalStatus === 'Selesai') {
             $rules['modalTanggal']   = 'required|date';
             $rules['modalJamHour']   = 'required';
@@ -216,13 +232,11 @@ class Index extends Component
 
         $this->validate($rules, $messages);
 
-        // ── Gabungkan jam dari hour + minute ───────────────────────────
         $jamFinal = null;
         if ($this->modalJamHour !== '' && $this->modalJamMinute !== '') {
             $jamFinal = $this->modalJamHour . ':' . $this->modalJamMinute;
         }
 
-        // ── Simpan ke database ─────────────────────────────────────────
         $pelanggaran = Pelanggaran::with('siswa')->findOrFail($this->modalId);
 
         $pelanggaran->update([
@@ -232,7 +246,6 @@ class Index extends Component
             'catatan_bk'        => $this->modalCatatan ?: null,
         ]);
 
-        // ── Log aktivitas ──────────────────────────────────────────────
         LogAktivitas::catat(
             aksi: 'update_status_pembinaan',
             modul: 'pelanggaran',
@@ -244,6 +257,28 @@ class Index extends Component
 
         session()->flash('success', 'Status pembinaan berhasil diperbarui.');
         $this->tutupModalStatus();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    private function perluPanggilOrtu(string $tingkat, int $total): bool
+    {
+        return match ($tingkat) {
+            'Berat'  => true,
+            'Sedang' => $total >= 2 && $total % 2 === 0,
+            'Ringan' => $total > 5  && $total % 3 === 0,
+            default  => false,
+        };
+    }
+
+    // ── HELPER: label tooltip untuk tombol surat ─────────────────────────
+    private function labelSurat(string $tingkat, int $total): string
+    {
+        return match ($tingkat) {
+            'Berat'  => 'Pelanggaran berat — buat surat panggilan ortu',
+            'Sedang' => "Akumulasi {$total}x pelanggaran sedang — buat surat panggilan ortu",
+            'Ringan' => "Akumulasi {$total}x pelanggaran ringan — buat surat panggilan ortu",
+            default  => 'Buat surat panggilan ortu',
+        };
     }
 
     // ── HELPER: cek akses role ────────────────────────────────────────────
@@ -276,16 +311,14 @@ class Index extends Component
             });
         }
 
-        // Mode trash
         if ($this->showTrash) {
             $query->onlyTrashed();
         }
 
-        // Filter pencarian
         if ($this->search) {
             $query->whereHas('siswa', function ($s) {
                 $s->where('nama', 'like', '%' . $this->search . '%')
-                  ->orWhere('nis',  'like', '%' . $this->search . '%');
+                    ->orWhere('nis',  'like', '%' . $this->search . '%');
             });
         }
 
@@ -307,24 +340,73 @@ class Index extends Component
             $query->where('id_walikelas', $this->filterWaliKelas);
         }
 
-        // Sorting
         match ($this->sortBy) {
             'terlama' => $query->orderBy('created_at', 'asc'),
             'az'      => $query->join('siswa', 'pelanggaran.id_siswa', '=', 'siswa.id_siswa')
-                               ->orderBy('siswa.nama', 'asc')
-                               ->select('pelanggaran.*'),
+                ->orderBy('siswa.nama', 'asc')
+                ->select('pelanggaran.*'),
             'za'      => $query->join('siswa', 'pelanggaran.id_siswa', '=', 'siswa.id_siswa')
-                               ->orderBy('siswa.nama', 'desc')
-                               ->select('pelanggaran.*'),
+                ->orderBy('siswa.nama', 'desc')
+                ->select('pelanggaran.*'),
             default   => $query->orderBy('created_at', 'desc'),
         };
 
+        $pelanggarans = $query->paginate($this->perPage);
+
+        // ── Hitung akumulasi per siswa per tingkat (hanya halaman ini) ────
+        //
+        // Kenapa tidak pakai getCollection()->groupBy()?
+        // → Karena paginate() hanya membawa data halaman aktif.
+        //   Akumulasi harus dari SEMUA pelanggaran siswa tersebut,
+        //   bukan hanya yang tampil di halaman ini.
+        //   Maka kita query ulang dengan filter id_siswa saja.
+        //
+        $siswaIds = $pelanggarans->getCollection()
+            ->pluck('id_siswa')
+            ->unique()
+            ->values()
+            ->all();
+
+        // Satu query agregat — jauh lebih efisien daripada N+1
+        $rawCounts = Pelanggaran::whereIn('id_siswa', $siswaIds)
+            ->join(
+                'jenis_pelanggaran',
+                'pelanggaran.id_jenispelanggaran',
+                '=',
+                'jenis_pelanggaran.id_jenispelanggaran'
+            )
+            ->selectRaw('pelanggaran.id_siswa, jenis_pelanggaran.tingkat_pelanggaran, COUNT(*) as total')
+            ->groupBy('pelanggaran.id_siswa', 'jenis_pelanggaran.tingkat_pelanggaran')
+            ->get();
+
+        // [id_siswa][tingkat] = total  (misal: [5]['Sedang'] = 4)
+        $akumulasi = [];
+        foreach ($rawCounts as $row) {
+            $akumulasi[$row->id_siswa][$row->tingkat_pelanggaran] = (int) $row->total;
+        }
+
+        // ── Flag surat per baris ──────────────────────────────────────────
+        // [id_pelanggaran] => ['perlu' => bool, 'label' => string, 'total' => int]
+        $flagSurat = [];
+        foreach ($pelanggarans->getCollection() as $p) {
+            $tingkat = $p->jenisPelanggaran->tingkat_pelanggaran ?? '';
+            $total   = $akumulasi[$p->id_siswa][$tingkat] ?? 0;
+
+            $flagSurat[$p->id_pelanggaran] = [
+                'perlu' => $this->perluPanggilOrtu($tingkat, $total),
+                'label' => $this->labelSurat($tingkat, $total),
+                'total' => $total,
+            ];
+        }
+
         return view('livewire.pelanggaran.index', [
-            'pelanggarans'  => $query->paginate($this->perPage),
+            'pelanggarans'  => $pelanggarans,
             'waliKelasList' => WaliKelas::with('pengguna')->get(),
             'jenisList'     => JenisPelanggaran::orderBy('nama_pelanggaran')->get(),
             'trashCount'    => Pelanggaran::onlyTrashed()->count(),
             'role'          => $role,
+            'akumulasi'     => $akumulasi,   // [id_siswa][tingkat] = total
+            'flagSurat'     => $flagSurat,   // [id_pelanggaran] = ['perlu','label','total']
         ]);
     }
 }

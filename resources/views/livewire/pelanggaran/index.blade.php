@@ -6,15 +6,31 @@
             <h1 class="text-[22px] font-bold text-[#0D2D6B]">Data Pelanggaran</h1>
             <p class="text-sm text-gray-500">Manajemen pelanggaran siswa SIMDIS</p>
         </div>
-        
-        {{-- Tambah hanya untuk admin & guru_bk --}}
+
         @if ($role === 'guru_bk')
-            <a href="{{ route('pelanggaran.create') }}" wire:navigate
-                class="inline-flex items-center justify-center gap-2 bg-[#0D2D6B] text-white
-       px-4 py-2 rounded-xl text-sm hover:bg-[#163580] transition-all">
-                <i class="fas fa-plus text-xs"></i>
-                Tambah Pelanggaran
-            </a>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('pelanggaran.export', [
+                    'search' => $search,
+                    'jenis' => $filterJenis,
+                    'tingkat' => $filterTingkat,
+                    'status' => $filterStatus,
+                    'wali_kelas' => $filterWaliKelas,
+                    'sort' => $sortBy,
+                ]) }}"
+                    target="_blank"
+                    class="inline-flex items-center justify-center gap-2 bg-white border border-[#0D2D6B]
+                       text-[#0D2D6B] px-4 py-2 rounded-xl text-sm hover:bg-[#f0f4ff] transition-all">
+                    <i class="fas fa-file-pdf text-xs"></i>
+                    Export PDF
+                </a>
+
+                <a href="{{ route('pelanggaran.create') }}" wire:navigate
+                    class="inline-flex items-center justify-center gap-2 bg-[#0D2D6B] text-white
+                       px-4 py-2 rounded-xl text-sm hover:bg-[#163580] transition-all">
+                    <i class="fas fa-plus text-xs"></i>
+                    Tambah Pelanggaran
+                </a>
+            </div>
         @endif
     </div>
 
@@ -25,43 +41,34 @@
         </div>
     @endif
 
-    {{-- RINGKASAN STATUS (hanya guru_bk & wali_kelas) --}}
+    {{-- RINGKASAN STATUS --}}
     @if (in_array($role, ['guru_bk', 'wali_kelas']))
         <div class="grid grid-cols-3 gap-2 sm:gap-3">
 
-            {{-- SEMUA --}}
             <button wire:click="$set('filterStatus', '')"
-                class="flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-3
-                   bg-white border rounded-xl px-2 sm:px-4 py-3 text-center sm:text-left
-                   hover:shadow-md transition-shadow
-                   {{ $filterStatus === '' ? 'border-[#0D2D6B] ring-2 ring-[#0D2D6B]/10' : 'border-gray-100' }}">
+                class="flex flex-col sm:flex-row items-center gap-1 sm:gap-3
+                       bg-white border rounded-xl px-2 sm:px-4 py-3 text-center sm:text-left
+                       hover:shadow-md transition-shadow
+                       {{ $filterStatus === '' ? 'border-[#0D2D6B] ring-2 ring-[#0D2D6B]/10' : 'border-gray-100' }}">
                 <div
-                    class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-gray-100
-                    flex items-center justify-center text-sm sm:text-base flex-shrink-0">
-                    📋
-                </div>
+                    class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-gray-100 flex items-center justify-center text-sm flex-shrink-0">
+                    📋</div>
                 <div>
                     <div
                         class="text-[9px] sm:text-[11px] font-semibold text-gray-500 uppercase tracking-wide leading-tight">
-                        Semua
-                    </div>
-                    <div class="text-lg sm:text-xl font-bold text-[#0D2D6B]">
-                        {{ $pelanggarans->total() }}
-                    </div>
+                        Semua</div>
+                    <div class="text-lg sm:text-xl font-bold text-[#0D2D6B]">{{ $pelanggarans->total() }}</div>
                 </div>
             </button>
 
-            {{-- BELUM DITINDAK --}}
             <button wire:click="$set('filterStatus', 'Belum Ditindak')"
-                class="flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-3
-                   bg-white border rounded-xl px-2 sm:px-4 py-3 text-center sm:text-left
-                   hover:shadow-md transition-shadow
-                   {{ $filterStatus === 'Belum Ditindak' ? 'border-red-400 ring-2 ring-red-100' : 'border-gray-100' }}">
+                class="flex flex-col sm:flex-row items-center gap-1 sm:gap-3
+                       bg-white border rounded-xl px-2 sm:px-4 py-3 text-center sm:text-left
+                       hover:shadow-md transition-shadow
+                       {{ $filterStatus === 'Belum Ditindak' ? 'border-red-400 ring-2 ring-red-100' : 'border-gray-100' }}">
                 <div
-                    class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-red-100
-                    flex items-center justify-center text-sm sm:text-base flex-shrink-0">
-                    ⏳
-                </div>
+                    class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-red-100 flex items-center justify-center text-sm flex-shrink-0">
+                    ⏳</div>
                 <div>
                     <div
                         class="text-[9px] sm:text-[11px] font-semibold text-gray-500 uppercase tracking-wide leading-tight">
@@ -74,17 +81,14 @@
                 </div>
             </button>
 
-            {{-- DALAM PROSES --}}
             <button wire:click="$set('filterStatus', 'Dalam Proses')"
-                class="flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-3
-                   bg-white border rounded-xl px-2 sm:px-4 py-3 text-center sm:text-left
-                   hover:shadow-md transition-shadow
-                   {{ $filterStatus === 'Dalam Proses' ? 'border-yellow-400 ring-2 ring-yellow-100' : 'border-gray-100' }}">
+                class="flex flex-col sm:flex-row items-center gap-1 sm:gap-3
+                       bg-white border rounded-xl px-2 sm:px-4 py-3 text-center sm:text-left
+                       hover:shadow-md transition-shadow
+                       {{ $filterStatus === 'Dalam Proses' ? 'border-yellow-400 ring-2 ring-yellow-100' : 'border-gray-100' }}">
                 <div
-                    class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-yellow-100
-                    flex items-center justify-center text-sm sm:text-base flex-shrink-0">
-                    🔄
-                </div>
+                    class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-yellow-100 flex items-center justify-center text-sm flex-shrink-0">
+                    🔄</div>
                 <div>
                     <div
                         class="text-[9px] sm:text-[11px] font-semibold text-gray-500 uppercase tracking-wide leading-tight">
@@ -104,16 +108,14 @@
     <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-4">
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
 
-            {{-- SEARCH — sembunyikan untuk orang_tua --}}
             @if ($role !== 'orang_tua')
                 <div class="xl:col-span-2">
                     <input type="text" wire:model.live="search" placeholder="Cari nama siswa / NIS..."
                         class="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm
-                                  focus:border-[#F5B800] focus:ring-[#F5B800]">
+                               focus:border-[#F5B800] focus:ring-[#F5B800]">
                 </div>
             @endif
 
-            {{-- FILTER JENIS --}}
             <div>
                 <select wire:model.live="filterJenis"
                     class="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm">
@@ -124,18 +126,16 @@
                 </select>
             </div>
 
-            {{-- FILTER TINGKAT --}}
             <div>
                 <select wire:model.live="filterTingkat"
                     class="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm">
                     <option value="">Semua Tingkat</option>
-                    <option value="ringan">Ringan</option>
-                    <option value="sedang">Sedang</option>
-                    <option value="berat">Berat</option>
+                    <option value="Ringan">Ringan</option>
+                    <option value="Sedang">Sedang</option>
+                    <option value="Berat">Berat</option>
                 </select>
             </div>
 
-            {{-- FILTER STATUS --}}
             <div>
                 <select wire:model.live="filterStatus"
                     class="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm">
@@ -146,7 +146,6 @@
                 </select>
             </div>
 
-            {{-- SORT --}}
             <div>
                 <select wire:model.live="sortBy" class="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm">
                     <option value="terbaru">Terbaru</option>
@@ -158,10 +157,8 @@
 
         </div>
 
-        {{-- SECOND ROW FILTER --}}
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
 
-            {{-- Filter wali kelas hanya admin & guru_bk --}}
             @if (in_array($role, ['admin', 'guru_bk']))
                 <div>
                     <select wire:model.live="filterWaliKelas"
@@ -183,24 +180,22 @@
                 </select>
             </div>
 
-            {{-- Trash hanya admin & guru_bk --}}
             @if (in_array($role, ['admin', 'guru_bk']))
                 <div class="flex items-center gap-2">
                     <button wire:click="$toggle('showTrash')"
                         class="px-4 h-11 rounded-xl text-sm
-                                   {{ $showTrash ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700' }}">
+                               {{ $showTrash ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700' }}">
                         Trash ({{ $trashCount }})
                     </button>
                     @if ($showTrash && $trashCount > 0)
-                        {{-- ++ TAMBAHAN: Kosongkan pakai custom modal ++ --}}
                         <button
                             onclick="simdisConfirm({
-                                    title: 'Kosongkan Semua Sampah?',
-                                    message: 'Seluruh data yang ada di trash akan dihapus secara permanen dan tidak dapat dipulihkan kembali.',
-                                    confirmText: 'Ya, Kosongkan',
-                                    type: 'danger',
-                                    onConfirm: () => @this.emptyTrash()
-                                })"
+                                title: 'Kosongkan Semua Sampah?',
+                                message: 'Seluruh data yang ada di trash akan dihapus secara permanen dan tidak dapat dipulihkan kembali.',
+                                confirmText: 'Ya, Kosongkan',
+                                type: 'danger',
+                                onConfirm: () => @this.emptyTrash()
+                            })"
                             class="px-4 h-11 rounded-xl bg-red-600 text-white text-sm">
                             Kosongkan
                         </button>
@@ -223,7 +218,6 @@
                         <th class="px-3 py-3">Kelas</th>
                         <th class="px-3 py-3">Jurusan</th>
                         <th class="px-3 py-3">Tahun Ajaran</th>
-                        {{-- Kolom Wali Kelas hanya untuk admin & guru_bk --}}
                         @if (in_array($role, ['admin', 'guru_bk']))
                             <th class="px-3 py-3">Wali Kelas</th>
                         @endif
@@ -231,7 +225,6 @@
                         <th class="px-3 py-3">Tingkat</th>
                         <th class="px-3 py-3">Status Pembinaan</th>
                         <th class="px-3 py-3">Waktu Kejadian</th>
-                        {{-- Kolom Aksi hanya untuk admin & guru_bk --}}
                         @if (in_array($role, ['admin', 'guru_bk']))
                             <th class="px-3 py-3 text-center">Aksi</th>
                         @endif
@@ -240,14 +233,57 @@
 
                 <tbody class="divide-y divide-gray-100">
                     @forelse($pelanggarans as $p)
-                        <tr class="hover:bg-gray-50">
+                        @php
+                            $tingkat = $p->jenisPelanggaran->tingkat_pelanggaran ?? '';
+                            $statusFlag = $flagSurat[$p->id_pelanggaran] ?? [
+                                'perlu' => false,
+                                'label' => '',
+                                'total' => 0,
+                            ];
+                            $perlu = $statusFlag['perlu'];
+                            $labelSurat = $statusFlag['label'];
+                            $totalAkum = $statusFlag['total'];
+                        @endphp
+                        <tr
+                            class="hover:bg-gray-50 {{ $perlu && !$showTrash ? 'border-l-2 border-l-purple-300' : '' }}">
 
                             <td class="px-3 py-3 text-center text-gray-500">
                                 {{ $pelanggarans->firstItem() + $loop->index }}
                             </td>
 
                             <td class="px-3 py-3">
-                                <div class="font-semibold text-[#0D2D6B]">{{ $p->siswa->nama ?? '-' }}</div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="font-semibold text-[#0D2D6B]">{{ $p->siswa->nama ?? '-' }}</span>
+
+                                    @if ($perlu && !$showTrash)
+                                        @php
+                                            $tooltipText =
+                                                $tingkat === 'Berat'
+                                                    ? 'Pelanggaran berat perlu panggil orang tua'
+                                                    : 'Akumulasi ' .
+                                                        $totalAkum .
+                                                        '× pelanggaran ' .
+                                                        strtolower($tingkat) .
+                                                        ' perlu panggil orang tua';
+
+                                            $badgeLabel =
+                                                $tingkat === 'Berat'
+                                                    ? 'Berat'
+                                                    : ucfirst(strtolower($tingkat)) . ' ×' . $totalAkum;
+                                        @endphp
+
+                                        {{-- Badge: data-tip langsung di span utama --}}
+                                        <span
+                                            class="inline-flex items-center gap-1 text-[10px] font-semibold
+                                                     px-1.5 py-0.5 rounded-md cursor-default whitespace-nowrap
+                                                     bg-red-50 text-red-700 border border-red-200"
+                                            tabindex="0" data-tip="{{ $tooltipText }}">
+                                            <i class="ti ti-bell-ringing" aria-hidden="true"
+                                                style="font-size:11px"></i>
+                                            {{ $badgeLabel }}
+                                        </span>
+                                    @endif
+                                </div>
                             </td>
 
                             <td class="px-3 py-3 text-gray-600">{{ $p->siswa->nis ?? '-' }}</td>
@@ -264,7 +300,6 @@
                                 {{ $p->siswa?->kelas?->tahun_ajaran ?? '-' }}
                             </td>
 
-                            {{-- Wali Kelas hanya admin & guru_bk --}}
                             @if (in_array($role, ['admin', 'guru_bk']))
                                 <td class="px-3 py-3 text-gray-600">
                                     {{ $p->waliKelas?->pengguna?->name ?? '-' }}
@@ -276,27 +311,25 @@
                             </td>
 
                             <td class="px-3 py-3">
-                                @php $tingkat = $p->jenisPelanggaran->tingkat_pelanggaran ?? '-'; @endphp
                                 <span
                                     class="px-2 py-1 rounded-lg text-xs font-semibold
-                                    {{ $tingkat === 'ringan' ? 'bg-green-100 text-green-700' : '' }}
-                                    {{ $tingkat === 'sedang' ? 'bg-yellow-100 text-yellow-700' : '' }}
-                                    {{ $tingkat === 'berat' ? 'bg-red-100 text-red-700' : '' }}">
-                                    {{ ucfirst($tingkat) }}
+                                    {{ $tingkat === 'Ringan' ? 'bg-green-100 text-green-700' : '' }}
+                                    {{ $tingkat === 'Sedang' ? 'bg-yellow-100 text-yellow-700' : '' }}
+                                    {{ $tingkat === 'Berat' ? 'bg-red-100 text-red-700' : '' }}">
+                                    {{ ucfirst(strtolower($tingkat)) ?: '-' }}
                                 </span>
                             </td>
 
                             <td class="px-3 py-3">
                                 @php $status = $p->status_pembinaan; @endphp
-                                {{-- Badge klik hanya untuk guru_bk --}}
                                 @if (!$showTrash && $role === 'guru_bk')
                                     <button wire:click="bukaModalStatus({{ $p->id_pelanggaran }})"
                                         title="Klik untuk update status"
                                         class="px-2 py-1 rounded-lg text-xs font-semibold cursor-pointer
-                                                   hover:opacity-80 transition-opacity
-                                                   {{ $status === 'Belum Ditindak' ? 'bg-red-100 text-red-700' : '' }}
-                                                   {{ $status === 'Dalam Proses' ? 'bg-yellow-100 text-yellow-700' : '' }}
-                                                   {{ $status === 'Selesai' ? 'bg-green-100 text-green-700' : '' }}">
+                                               hover:opacity-80 transition-opacity
+                                               {{ $status === 'Belum Ditindak' ? 'bg-red-100 text-red-700' : '' }}
+                                               {{ $status === 'Dalam Proses' ? 'bg-yellow-100 text-yellow-700' : '' }}
+                                               {{ $status === 'Selesai' ? 'bg-green-100 text-green-700' : '' }}">
                                         {{ $status ?? '-' }} <span class="ml-1 opacity-60">✏️</span>
                                     </button>
                                 @else
@@ -314,33 +347,40 @@
                                 {{ \Carbon\Carbon::parse($p->waktu_kejadian)->format('d-m-Y H:i') }}
                             </td>
 
-                            {{-- Aksi hanya admin & guru_bk --}}
+                            {{-- KOLOM AKSI --}}
                             @if (in_array($role, ['admin', 'guru_bk']))
                                 <td class="px-3 py-3 text-center whitespace-nowrap">
                                     @if (!$showTrash)
-                                        {{-- ++ TAMBAHAN: onclick showPageLoading() pada link Edit ++ --}}
+
                                         <a href="{{ route('pelanggaran.edit', $p->id_pelanggaran) }}"
                                             onclick="showPageLoading()"
                                             class="text-[#0D2D6B] text-xs font-semibold hover:underline mr-2">
                                             Edit
                                         </a>
+
                                         @if ($role === 'guru_bk')
                                             <button wire:click="bukaModalStatus({{ $p->id_pelanggaran }})"
                                                 class="text-emerald-600 text-xs font-semibold hover:underline mr-2">
                                                 Tindak
                                             </button>
 
-                                            @if (($p->jenisPelanggaran->tingkat_pelanggaran ?? '') === 'Berat')
+                                            @if ($perlu)
                                                 <a href="{{ route('surat-panggilan.create', $p->id_pelanggaran) }}"
                                                     wire:navigate
-                                                    class="text-purple-600 text-xs font-semibold hover:underline mr-2"
-                                                    title="Buat Surat Panggilan Orang Tua">
-                                                    📄 Surat
+                                                    class="inline-flex items-center gap-1 text-xs font-semibold
+                                                           text-yellow-700 hover:text-yellow-900
+                                                           bg-purple-50 hover:bg-purple-100
+                                                           px-2 py-0.5 rounded-lg transition-colors mr-2">
+                                                    📄
+                                                    @if ($tingkat === 'Berat')
+                                                        Surat
+                                                    @else
+                                                        Surat <span class="opacity-70">({{ $totalAkum }}x)</span>
+                                                    @endif
                                                 </a>
                                             @endif
                                         @endif
 
-                                        {{-- ++ TAMBAHAN: Hapus pakai custom modal, ganti wire:confirm ++ --}}
                                         <button
                                             onclick="simdisConfirm({
                                                 title: 'Hapus Data Pelanggaran?',
@@ -358,7 +398,6 @@
                                             Restore
                                         </button>
 
-                                        {{-- ++ TAMBAHAN: Hapus Permanen pakai custom modal ++ --}}
                                         <button
                                             onclick="simdisConfirm({
                                                 title: 'Hapus Permanen?',
@@ -370,6 +409,7 @@
                                             class="text-red-600 text-xs font-semibold hover:underline">
                                             Hapus Permanen
                                         </button>
+
                                     @endif
                                 </td>
                             @endif
@@ -377,7 +417,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ in_array($role, ['admin', 'guru_bk']) ? 10 : 8 }}"
+                            <td colspan="{{ in_array($role, ['admin', 'guru_bk']) ? 12 : 9 }}"
                                 class="text-center py-10 text-gray-400">
                                 Tidak ada data pelanggaran
                             </td>
@@ -394,15 +434,9 @@
     @if ($showModalStatus)
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background: rgba(0,0,0,0.45)">
 
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md" x-data="{
-                status: '{{ $modalStatus }}',
-                syncFromLivewire() {
-                    this.status = this.$wire.modalStatus;
-                }
-            }"
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md" x-data="{ status: '{{ $modalStatus }}' }"
                 x-init="$watch('$wire.modalStatus', val => status = val)" @click.outside="$wire.tutupModalStatus()">
 
-                {{-- ── HEADER ─────────────────────────────────────────────────── --}}
                 <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
                     <div>
                         <h3 class="font-bold text-[#0D2D6B] text-base">Update Status Pembinaan</h3>
@@ -414,50 +448,39 @@
                         class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
                 </div>
 
-                {{-- ── BODY ────────────────────────────────────────────────────── --}}
                 <div class="px-5 py-4 space-y-4">
 
-                    {{-- Status Pembinaan --}}
+                    {{-- Status --}}
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1.5">
                             Status Pembinaan <span class="text-red-500">*</span>
                         </label>
                         <div class="grid grid-cols-3 gap-2">
-
                             <button type="button" wire:click="$set('modalStatus', 'Belum Ditindak')"
                                 @click="status = 'Belum Ditindak'"
                                 class="py-2 px-3 rounded-xl text-xs font-semibold border-2 transition-all
-                                   {{ $modalStatus === 'Belum Ditindak'
-                                       ? 'border-red-400 bg-red-50 text-red-700'
-                                       : 'border-gray-200 text-gray-500 hover:border-red-200' }}">
+                                           {{ $modalStatus === 'Belum Ditindak' ? 'border-red-400 bg-red-50 text-red-700' : 'border-gray-200 text-gray-500 hover:border-red-200' }}">
                                 ⏳ Belum Ditindak
                             </button>
-
                             <button type="button" wire:click="$set('modalStatus', 'Dalam Proses')"
                                 @click="status = 'Dalam Proses'"
                                 class="py-2 px-3 rounded-xl text-xs font-semibold border-2 transition-all
-                                   {{ $modalStatus === 'Dalam Proses'
-                                       ? 'border-yellow-400 bg-yellow-50 text-yellow-700'
-                                       : 'border-gray-200 text-gray-500 hover:border-yellow-200' }}">
+                                           {{ $modalStatus === 'Dalam Proses' ? 'border-yellow-400 bg-yellow-50 text-yellow-700' : 'border-gray-200 text-gray-500 hover:border-yellow-200' }}">
                                 🔄 Dalam Proses
                             </button>
-
                             <button type="button" wire:click="$set('modalStatus', 'Selesai')"
                                 @click="status = 'Selesai'"
                                 class="py-2 px-3 rounded-xl text-xs font-semibold border-2 transition-all
-                                   {{ $modalStatus === 'Selesai'
-                                       ? 'border-green-400 bg-green-50 text-green-700'
-                                       : 'border-gray-200 text-gray-500 hover:border-green-200' }}">
+                                           {{ $modalStatus === 'Selesai' ? 'border-green-400 bg-green-50 text-green-700' : 'border-gray-200 text-gray-500 hover:border-green-200' }}">
                                 ✅ Selesai
                             </button>
-
                         </div>
                         @error('modalStatus')
                             <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    {{-- Info hint berdasarkan status yang dipilih --}}
+                    {{-- Info hint --}}
                     <div x-show="status !== ''" x-transition>
                         <template x-if="status === 'Belum Ditindak'">
                             <p class="text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2">
@@ -476,7 +499,7 @@
                         </template>
                     </div>
 
-                    {{-- Tanggal Pembinaan — tampil jika Dalam Proses atau Selesai --}}
+                    {{-- Tanggal — Dalam Proses atau Selesai --}}
                     <div x-show="status === 'Dalam Proses' || status === 'Selesai'"
                         x-transition:enter="transition ease-out duration-200"
                         x-transition:enter-start="opacity-0 -translate-y-1"
@@ -489,14 +512,14 @@
                         </label>
                         <input type="date" wire:model="modalTanggal"
                             class="w-full h-10 px-3 rounded-xl border text-sm transition-colors
-                              @error('modalTanggal') border-red-400 bg-red-50 @else border-gray-200 @enderror
-                              focus:outline-none focus:border-[#F5B800] focus:ring-1 focus:ring-[#F5B800]">
+                                   @error('modalTanggal') border-red-400 bg-red-50 @else border-gray-200 @enderror
+                                   focus:outline-none focus:border-[#F5B800] focus:ring-1 focus:ring-[#F5B800]">
                         @error('modalTanggal')
                             <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    {{-- Jam Pembinaan — tampil hanya jika Selesai --}}
+                    {{-- Jam — hanya Selesai --}}
                     <div x-show="status === 'Selesai'" x-transition:enter="transition ease-out duration-200"
                         x-transition:enter-start="opacity-0 -translate-y-1"
                         x-transition:enter-end="opacity-100 translate-y-0"
@@ -507,11 +530,10 @@
                             Jam Pembinaan <span class="text-red-500">*</span>
                         </label>
                         <div class="flex items-center gap-2">
-
                             <select wire:model="modalJamHour"
                                 class="flex-1 h-10 px-3 rounded-xl border text-sm transition-colors
-                                   @error('modalJamHour') border-red-400 bg-red-50 @else border-gray-200 @enderror
-                                   focus:outline-none focus:border-[#F5B800] focus:ring-1 focus:ring-[#F5B800]">
+                                       @error('modalJamHour') border-red-400 bg-red-50 @else border-gray-200 @enderror
+                                       focus:outline-none focus:border-[#F5B800] focus:ring-1 focus:ring-[#F5B800]">
                                 <option value="">Jam</option>
                                 @for ($h = 6; $h <= 18; $h++)
                                     <option value="{{ str_pad($h, 2, '0', STR_PAD_LEFT) }}">
@@ -519,21 +541,17 @@
                                     </option>
                                 @endfor
                             </select>
-
                             <span class="text-gray-400 font-bold text-lg">:</span>
-
                             <select wire:model="modalJamMinute"
                                 class="flex-1 h-10 px-3 rounded-xl border text-sm transition-colors
-                                   @error('modalJamMinute') border-red-400 bg-red-50 @else border-gray-200 @enderror
-                                   focus:outline-none focus:border-[#F5B800] focus:ring-1 focus:ring-[#F5B800]">
+                                       @error('modalJamMinute') border-red-400 bg-red-50 @else border-gray-200 @enderror
+                                       focus:outline-none focus:border-[#F5B800] focus:ring-1 focus:ring-[#F5B800]">
                                 <option value="">Menit</option>
                                 @foreach (['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'] as $m)
                                     <option value="{{ $m }}">{{ $m }}</option>
                                 @endforeach
                             </select>
-
                         </div>
-                        {{-- Tampilkan salah satu error jam --}}
                         @error('modalJamHour')
                             <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                         @enderror
@@ -542,7 +560,7 @@
                         @enderror
                     </div>
 
-                    {{-- Catatan BK — tampil hanya jika Selesai --}}
+                    {{-- Catatan — hanya Selesai --}}
                     <div x-show="status === 'Selesai'" x-transition:enter="transition ease-out duration-200"
                         x-transition:enter-start="opacity-0 -translate-y-1"
                         x-transition:enter-end="opacity-100 translate-y-0"
@@ -555,8 +573,8 @@
                         </label>
                         <textarea wire:model="modalCatatan" rows="3" placeholder="Tuliskan catatan hasil pembinaan..."
                             class="w-full px-3 py-2 rounded-xl border text-sm resize-none transition-colors
-                                 @error('modalCatatan') border-red-400 bg-red-50 @else border-gray-200 @enderror
-                                 focus:outline-none focus:border-[#F5B800] focus:ring-1 focus:ring-[#F5B800]"></textarea>
+                                   @error('modalCatatan') border-red-400 bg-red-50 @else border-gray-200 @enderror
+                                   focus:outline-none focus:border-[#F5B800] focus:ring-1 focus:ring-[#F5B800]"></textarea>
                         @error('modalCatatan')
                             <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                         @enderror
@@ -564,17 +582,16 @@
 
                 </div>
 
-                {{-- ── FOOTER ──────────────────────────────────────────────────── --}}
                 <div class="flex justify-end gap-2 px-5 py-4 border-t border-gray-100">
                     <button wire:click="tutupModalStatus"
                         class="px-4 py-2 rounded-xl border border-gray-200 text-sm text-gray-600
-                           hover:bg-gray-50 transition-colors">
+                               hover:bg-gray-50 transition-colors">
                         Batal
                     </button>
                     <button wire:click="simpanStatus" wire:loading.attr="disabled" wire:target="simpanStatus"
                         class="px-5 py-2 rounded-xl bg-[#0D2D6B] text-white text-sm font-semibold
-                           hover:bg-[#163580] transition-colors disabled:opacity-60 disabled:cursor-not-allowed
-                           flex items-center gap-2">
+                               hover:bg-[#163580] transition-colors disabled:opacity-60 disabled:cursor-not-allowed
+                               flex items-center gap-2">
                         <span wire:loading.remove wire:target="simpanStatus">Simpan</span>
                         <span wire:loading wire:target="simpanStatus" class="flex items-center gap-1.5">
                             <svg class="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -592,7 +609,7 @@
         </div>
     @endif
 
-    {{-- ++ TAMBAHAN: Loading overlay saat klik tombol Edit ++ --}}
+    {{-- Loading overlay saat klik Edit --}}
     <div id="pageLoadingOverlay"
         style="display:none; position:fixed; inset:0; z-index:9999;
                background:rgba(13,45,107,0.18); backdrop-filter:blur(2px);
@@ -602,52 +619,38 @@
                     box-shadow:0 8px 32px rgba(13,45,107,0.18);
                     display:flex; align-items:center; gap:14px;">
             <span
-                style="
-                display:inline-block; width:22px; height:22px;
-                border:3px solid #e2e8f0;
-                border-top-color:#0D2D6B;
-                border-radius:50%;
-                animation:simdis-spin .7s linear infinite;">
-            </span>
-            <span style="font-size:14px; font-weight:600; color:#0D2D6B;">
-                Memuat halaman edit...
-            </span>
+                style="display:inline-block; width:22px; height:22px;
+                         border:3px solid #e2e8f0; border-top-color:#0D2D6B;
+                         border-radius:50%; animation:simdis-spin .7s linear infinite;"></span>
+            <span style="font-size:14px; font-weight:600; color:#0D2D6B;">Memuat halaman edit...</span>
         </div>
     </div>
 
-    {{-- ++ TAMBAHAN: Custom modal konfirmasi hapus ++ --}}
+    {{-- Custom confirm modal --}}
     <div id="simdisConfirmOverlay"
         style="display:none; position:fixed; inset:0; z-index:10000;
                background:rgba(0,0,0,0.45); backdrop-filter:blur(3px);
                align-items:center; justify-content:center; padding:16px;">
-
         <div id="simdisConfirmBox"
             style="background:#fff; border-radius:20px; width:100%; max-width:420px;
                    box-shadow:0 20px 60px rgba(0,0,0,0.18);
                    transform:scale(0.92); opacity:0;
                    transition:transform .2s cubic-bezier(.34,1.56,.64,1), opacity .18s ease;">
-
-            {{-- Icon area --}}
             <div id="simdisConfirmIconWrap" style="display:flex; justify-content:center; padding:28px 24px 0;">
                 <div id="simdisConfirmIcon"
                     style="width:60px; height:60px; border-radius:50%;
                            display:flex; align-items:center; justify-content:center; font-size:26px;">
                 </div>
             </div>
-
-            {{-- Body --}}
             <div style="padding:16px 28px 24px; text-align:center;">
                 <h3 id="simdisConfirmTitle"
                     style="font-size:17px; font-weight:700; color:#111827; margin:12px 0 8px;"></h3>
                 <p id="simdisConfirmMessage" style="font-size:13px; color:#6b7280; line-height:1.6; margin:0;"></p>
             </div>
-
-            {{-- Footer --}}
             <div style="display:flex; gap:10px; padding:0 20px 20px;">
                 <button id="simdisConfirmCancel" onclick="simdisCloseConfirm()"
-                    style="flex:1; height:42px; border-radius:12px;
-                           border:1.5px solid #e5e7eb; background:#fff;
-                           font-size:13px; font-weight:600; color:#6b7280;
+                    style="flex:1; height:42px; border-radius:12px; border:1.5px solid #e5e7eb;
+                           background:#fff; font-size:13px; font-weight:600; color:#6b7280;
                            cursor:pointer; transition:background .15s;">
                     Batal
                 </button>
@@ -658,8 +661,16 @@
                     Konfirmasi
                 </button>
             </div>
-
         </div>
+    </div>
+
+    {{-- Tooltip sdTip — letakkan SATU KALI di sini --}}
+    <div id="sdTip"
+        style="position:fixed; z-index:9999; pointer-events:none;
+               opacity:0; transition:opacity 0.15s;
+               background:#1e1b4b; color:#ede9fe;
+               font-size:11px; padding:6px 10px; border-radius:8px;
+               white-space:nowrap; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
     </div>
 
     <style>
@@ -679,28 +690,23 @@
     </style>
 
     <script>
-        // ── Loading overlay saat klik Edit ─────────────────────────────
         function showPageLoading() {
-            var overlay = document.getElementById('pageLoadingOverlay');
-            overlay.style.display = 'flex';
+            document.getElementById('pageLoadingOverlay').style.display = 'flex';
         }
 
-        // ── Custom confirm modal ────────────────────────────────────────
+        /* ── Confirm modal ── */
         var _simdisConfirmCallback = null;
-
         var _simdisTheme = {
             warning: {
                 icon: '🗑️',
                 bg: '#FEF3C7',
-                okColor: '#D97706',
-                okBg: '#F59E0B',
+                okBg: '#F59E0B'
             },
             danger: {
                 icon: '⚠️',
                 bg: '#FEE2E2',
-                okColor: '#fff',
-                okBg: '#DC2626',
-            }
+                okBg: '#DC2626'
+            },
         };
 
         function simdisConfirm(opts) {
@@ -716,7 +722,6 @@
             document.getElementById('simdisConfirmOk').style.background = theme.okBg;
 
             _simdisConfirmCallback = opts.onConfirm || null;
-
             overlay.style.display = 'flex';
             requestAnimationFrame(function() {
                 box.style.transform = 'scale(1)';
@@ -736,21 +741,74 @@
         }
 
         document.getElementById('simdisConfirmOk').addEventListener('click', function() {
-            if (typeof _simdisConfirmCallback === 'function') {
-                _simdisConfirmCallback();
-            }
+            if (typeof _simdisConfirmCallback === 'function') _simdisConfirmCallback();
             simdisCloseConfirm();
         });
 
-        // Klik di luar box = tutup
         document.getElementById('simdisConfirmOverlay').addEventListener('click', function(e) {
             if (e.target === this) simdisCloseConfirm();
         });
 
-        // Esc = tutup
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') simdisCloseConfirm();
         });
+
+        /* ── Tooltip: hanya untuk [data-tip] di kolom siswa ── */
+        (function() {
+            var tip = document.getElementById('sdTip');
+            if (!tip) return;
+
+            function show(el, e) {
+                tip.textContent = el.getAttribute('data-tip');
+                tip.style.opacity = '1';
+                position(e);
+            }
+
+            function position(e) {
+                var x = e.clientX;
+                var y = e.clientY;
+                /* Jaga agar tidak keluar layar */
+                var tw = tip.offsetWidth || 200;
+                var th = tip.offsetHeight || 28;
+                var left = Math.min(x - tw / 2, window.innerWidth - tw - 8);
+                tip.style.left = Math.max(8, left) + 'px';
+                tip.style.top = (y - th - 10) + 'px';
+            }
+
+            function hide() {
+                tip.style.opacity = '0';
+            }
+
+            /* Event delegation — aman saat Livewire re-render */
+            document.addEventListener('mouseover', function(e) {
+                var t = e.target.closest('[data-tip]');
+                if (t) show(t, e);
+                else hide();
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (parseFloat(tip.style.opacity) > 0) position(e);
+            });
+
+            document.addEventListener('mouseout', function(e) {
+                if (!e.relatedTarget || !e.relatedTarget.closest('[data-tip]')) hide();
+            });
+
+            /* Aksesibilitas keyboard */
+            document.addEventListener('focusin', function(e) {
+                var t = e.target.closest('[data-tip]');
+                if (!t) return;
+                tip.textContent = t.getAttribute('data-tip');
+                tip.style.opacity = '1';
+                var r = t.getBoundingClientRect();
+                tip.style.left = (r.left + r.width / 2 - (tip.offsetWidth || 100) / 2) + 'px';
+                tip.style.top = (r.top - (tip.offsetHeight || 28) - 8) + 'px';
+            });
+
+            document.addEventListener('focusout', function(e) {
+                if (e.target.closest('[data-tip]')) hide();
+            });
+        })();
     </script>
 
 </div>

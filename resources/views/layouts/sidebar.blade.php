@@ -335,8 +335,8 @@
         @endif
 
         @if (in_array($role, ['guru_bk', 'wali_kelas', 'orang_tua']))
-            <a href="{{ route('pelanggaran.index') }}" wire:navigate
-                class="simdis-nav-link {{ request()->routeIs('pelanggaran.*') ? 'active' : '' }}">
+        <a href="{{ route('pelanggaran.index') }}" wire:navigate
+        class="simdis-nav-link {{ request()->routeIs('pelanggaran.*', 'surat-panggilan.*') ? 'active' : '' }}">
                 <i class="fas fa-exclamation-triangle simdis-nav-icon"></i>
                 {{-- Label berbeda untuk orang_tua agar lebih kontekstual --}}
                 {{ $role === 'orang_tua' ? 'Pelanggaran Anak' : 'Data Pelanggaran' }}

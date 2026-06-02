@@ -2,14 +2,10 @@
 
 use App\Http\Controllers\Admin\TemplateImportController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ExportPelanggaranController;
 use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\PelanggaranController;
 use App\Http\Controllers\SuratPanggilanController;
-use App\Http\Livewire\Admin\KelasCrud;
-use App\Http\Livewire\Admin\PenggunaCrud;
-use App\Http\Livewire\Admin\SiswaCrud;
-use App\Http\Livewire\Admin\WaliKelasCrud;
-use App\Http\Livewire\Admin\WaliMuridCrud;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -48,25 +44,30 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/jenis-pelanggaran', function () {
             return view('jenispelanggaran.index');
         })->name('jenis-pelanggaran');
-    });
 
-    // Rute CRUD Pelanggaran (UNTUK ADMIN DAN GURU BK, atau role lain yang Anda izinkan)
-    // Perbaikan ada di sini: role:admin,guru_bk
-    // Untuk orang_tua: hanya boleh lihat
-    Route::middleware(['role:guru_bk,wali_kelas,orang_tua'])->group(function () {
-        Route::get('/pelanggaran', [PelanggaranController::class, 'index'])->name('pelanggaran.index');
-        Route::get('/monitoring', function () {
-            return view('monitoring.index');
-        })->name('monitoring.index');
-    });
-
-    // hanya guru_bk boleh CRUD pelanggaran siswa
-    Route::middleware(['role:guru_bk'])->group(function () {
         Route::get('/pelanggaran/create', [PelanggaranController::class, 'create'])->name('pelanggaran.create');
         Route::post('/pelanggaran', [PelanggaranController::class, 'store'])->name('pelanggaran.store');
         Route::get('/pelanggaran/{pelanggaran}/edit', [PelanggaranController::class, 'edit'])->name('pelanggaran.edit');
         Route::put('/pelanggaran/{pelanggaran}', [PelanggaranController::class, 'update'])->name('pelanggaran.update');
         Route::delete('/pelanggaran/{pelanggaran}', [PelanggaranController::class, 'destroy'])->name('pelanggaran.destroy');
+
+        Volt::route('/pelanggaran/{id}/surat-panggilan', 'surat-panggilan.create')
+            ->name('surat-panggilan.create');
+
+        // Cetak PDF (Controller biasa)
+        Route::get('/surat-panggilan/{id}/cetak', [SuratPanggilanController::class, 'cetak'])
+            ->name('surat-panggilan.cetak');
+
+        Route::middleware(['auth', 'role:guru_bk'])->group(function () {
+            Route::get('/pelanggaran/export-pdf', [ExportPelanggaranController::class, 'export'])
+                ->name('pelanggaran.export');
+        });
+    });
+    Route::middleware(['role:guru_bk,wali_kelas,orang_tua'])->group(function () {
+        Route::get('/pelanggaran', [PelanggaranController::class, 'index'])->name('pelanggaran.index');
+        Route::get('/monitoring', function () {
+            return view('monitoring.index');
+        })->name('monitoring.index');
     });
 
     Route::prefix('notifikasi')->name('notifikasi.')->group(function () {
@@ -79,16 +80,6 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('/log-aktivitas', 'log.log-aktivitas')
         ->middleware(['auth'])
         ->name('log.aktivitas');
-
-    Route::middleware(['auth', 'role:guru_bk,wali_kelas'])->group(function () {
-
-        Volt::route('/pelanggaran/{id}/surat-panggilan', 'surat-panggilan.create')
-            ->name('surat-panggilan.create');
-
-        // Cetak PDF (Controller biasa)
-        Route::get('/surat-panggilan/{id}/cetak', [SuratPanggilanController::class, 'cetak'])
-            ->name('surat-panggilan.cetak');
-    });
 });
 
 require __DIR__ . '/auth.php';
