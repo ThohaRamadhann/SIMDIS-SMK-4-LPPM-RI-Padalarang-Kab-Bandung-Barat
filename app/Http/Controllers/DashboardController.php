@@ -45,18 +45,28 @@ class DashboardController extends Controller
 
             $kelasData = Kelas::withCount('siswa')->orderByDesc('siswa_count')->get();
 
-            $charts = [
-                'pengguna_bulanan' => [
-                    'labels' => $bulanLabels,
-                    'data'   => $bulanData,
-                ],
-                'siswa_per_kelas' => [
-                    'labels' => $kelasData->map(
-                        fn($k) => $k->nama_kelas . ($k->jurusan ? ' ' . $k->jurusan : '')
-                    )->toArray(),
-                    'data' => $kelasData->pluck('siswa_count')->toArray(),
-                ],
-            ];
+$siswaPerTingkat = [
+    'X'   => Siswa::whereHas('kelas', fn($q) => $q->where('nama_kelas', 'like', 'X %')->where('nama_kelas', 'not like', 'XI %')->where('nama_kelas', 'not like', 'XII %'))->count(),
+    'XI'  => Siswa::whereHas('kelas', fn($q) => $q->where('nama_kelas', 'like', 'XI %')->where('nama_kelas', 'not like', 'XII %'))->count(),
+    'XII' => Siswa::whereHas('kelas', fn($q) => $q->where('nama_kelas', 'like', 'XII %'))->count(),
+];
+
+$charts = [
+    'pengguna_bulanan' => [
+        'labels' => $bulanLabels,
+        'data'   => $bulanData,
+    ],
+    'siswa_per_kelas' => [
+        'labels' => $kelasData->map(
+            fn($k) => $k->nama_kelas . ($k->jurusan ? ' ' . $k->jurusan : '')
+        )->toArray(),
+        'data' => $kelasData->pluck('siswa_count')->toArray(),
+    ],
+    'siswa_per_tingkat' => [
+        'labels' => array_keys($siswaPerTingkat),
+        'data'   => array_values($siswaPerTingkat),
+    ],
+];
 
             $kelengkapan = [];
 

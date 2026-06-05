@@ -33,6 +33,7 @@ class Index extends Component
     public $filterTingkat   = '';
     public $filterStatus    = '';
     public $filterWaliKelas = '';
+    public $filterTahunAjaran = '';
 
     // ── SORT & PAGINATION ────────────────────────────────────────────────
     public $sortBy  = 'terbaru';
@@ -44,6 +45,7 @@ class Index extends Component
     protected $queryString = [
         'search' => ['except' => ''],
         'sortBy' => ['except' => 'terbaru'],
+        'filterTahunAjaran' => ['except' => ''], 
     ];
 
     public function updatingSearch()
@@ -65,6 +67,10 @@ class Index extends Component
     public function updatingFilterWaliKelas()
     {
         $this->resetPage();
+    }
+    public function updatingFilterTahunAjaran() 
+    { 
+        $this->resetPage(); 
     }
     public function updatingSortBy()
     {
@@ -336,6 +342,12 @@ class Index extends Component
             $query->where('status_pembinaan', $this->filterStatus);
         }
 
+        if ($this->filterTahunAjaran) {
+            $query->whereHas('siswa.kelas', function ($q) {
+                $q->where('tahun_ajaran', $this->filterTahunAjaran);
+            });
+        }
+
         if ($this->filterWaliKelas && in_array($role, ['admin', 'guru_bk'])) {
             $query->where('id_walikelas', $this->filterWaliKelas);
         }
@@ -407,6 +419,10 @@ class Index extends Component
             'role'          => $role,
             'akumulasi'     => $akumulasi,   // [id_siswa][tingkat] = total
             'flagSurat'     => $flagSurat,   // [id_pelanggaran] = ['perlu','label','total']
+            'tahunAjaranList' => \App\Models\Kelas::select('tahun_ajaran')  // ← tambah ini
+                            ->distinct()
+                            ->orderByDesc('tahun_ajaran')
+                            ->pluck('tahun_ajaran'),
         ]);
     }
 }

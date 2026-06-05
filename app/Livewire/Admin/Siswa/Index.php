@@ -23,29 +23,32 @@ class Index extends Component
     public $isEdit  = false;
 
     // ── Search, filter, sort, pagination ──
-    public $search      = '';
-    public $filterKelas = '';
-    public $filterStatus = '';
-    public $sortBy      = 'az';     // az | za | terbaru
-    public $perPage     = 10;
+    public $search            = '';
+    public $filterKelas       = '';
+    public $filterStatus      = '';
+    public $filterTahunAjaran = '';
+    public $sortBy            = 'az';
+    public $perPage           = 10;
 
     // ── Soft delete ──
     public $showTrash = false;
 
     protected $queryString = [
-        'search'       => ['except' => ''],
-        'filterKelas'  => ['except' => ''],
-        'filterStatus' => ['except' => ''],
-        'sortBy'       => ['except' => 'az'],
-        'perPage'      => ['except' => 10],
+        'search'            => ['except' => ''],
+        'filterKelas'       => ['except' => ''],
+        'filterStatus'      => ['except' => ''],
+        'filterTahunAjaran' => ['except' => ''],
+        'sortBy'            => ['except' => 'az'],
+        'perPage'           => ['except' => 10],
     ];
 
-    public function updatingSearch()      { $this->resetPage(); }
-    public function updatingFilterKelas() { $this->resetPage(); }
-    public function updatingFilterStatus(){ $this->resetPage(); }
-    public function updatingSortBy()      { $this->resetPage(); }
-    public function updatingPerPage()     { $this->resetPage(); }
-    public function updatingShowTrash()   { $this->resetPage(); }
+    public function updatingSearch()            { $this->resetPage(); }
+    public function updatingFilterKelas()       { $this->resetPage(); }
+    public function updatingFilterStatus()      { $this->resetPage(); }
+    public function updatingFilterTahunAjaran() { $this->resetPage(); }
+    public function updatingSortBy()            { $this->resetPage(); }
+    public function updatingPerPage()           { $this->resetPage(); }
+    public function updatingShowTrash()         { $this->resetPage(); }
 
     // ── Reset form ──
     public function resetForm()
@@ -156,7 +159,6 @@ class Index extends Component
             $query->onlyTrashed();
         }
 
-        // Search nama atau NIS
         if ($this->search) {
             $query->where(function ($q) {
                 $q->where('nama', 'like', '%' . $this->search . '%')
@@ -164,31 +166,39 @@ class Index extends Component
             });
         }
 
-        // Filter kelas
         if ($this->filterKelas) {
             $query->where('id_kelas', $this->filterKelas);
         }
 
-        // Filter status
         if ($this->filterStatus) {
             $query->where('status', $this->filterStatus);
         }
 
-        // Sorting
+        if ($this->filterTahunAjaran) {
+            $query->whereHas('kelas', function ($q) {
+                $q->where('tahun_ajaran', $this->filterTahunAjaran);
+            });
+        }
+
         match ($this->sortBy) {
-            'za'     => $query->orderBy('nama', 'desc'),
-            'terbaru'=> $query->orderBy('id_siswa', 'desc'),
-            default  => $query->orderBy('nama', 'asc'),
+            'za'      => $query->orderBy('nama', 'desc'),
+            'terbaru' => $query->orderBy('id_siswa', 'desc'),
+            default   => $query->orderBy('nama', 'asc'),
         };
 
         return view('livewire.admin.siswa.index', [
-            'dataSiswa'  => $query->paginate($this->perPage),
-            'kelas'      => Kelas::orderBy('nama_kelas')->get(),
-            'wali'       => WaliMurid::with('pengguna')->orderBy('id_walimurid')->get(),
-            'allKelas'   => Kelas::orderBy('nama_kelas')->get(),
-            'trashCount' => Siswa::onlyTrashed()->count(),
+            'dataSiswa'       => $query->paginate($this->perPage),
+            'kelas'           => Kelas::orderBy('nama_kelas')->get(),
+            'wali'            => WaliMurid::with('pengguna')->orderBy('id_walimurid')->get(),
+            'allKelas'        => Kelas::orderBy('nama_kelas')->get(),
+            'trashCount'      => Siswa::onlyTrashed()->count(),
+            'tahunAjaranList' => Kelas::select('tahun_ajaran')
+                                    ->distinct()
+                                    ->orderByDesc('tahun_ajaran')
+                                    ->pluck('tahun_ajaran'),
         ]);
     }
+
     #[On('refresh')]
-public function refreshData(): void {}
+    public function refreshData(): void {}
 }

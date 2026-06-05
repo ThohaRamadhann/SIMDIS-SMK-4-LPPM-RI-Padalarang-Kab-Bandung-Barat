@@ -273,6 +273,16 @@
                     </select>
                 </div>
                 <div>
+                    <select wire:model.live="filterTahunAjaran"
+                        class="w-full h-9 px-2 text-xs rounded-lg border border-gray-200
+                               bg-gray-50 focus:bg-white focus:border-[#F5B800] outline-none transition">
+                        <option value="">Semua Tahun Ajaran</option>
+                        @foreach ($tahunAjaranList as $tahun)
+                            <option value="{{ $tahun }}">{{ $tahun }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
                     <select wire:model.live="filterStatus"
                         class="w-full h-9 px-2 text-xs rounded-lg border border-gray-200
                                bg-gray-50 focus:bg-white focus:border-[#F5B800] outline-none transition">

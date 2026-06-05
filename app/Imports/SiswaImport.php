@@ -22,6 +22,7 @@ class SiswaImport implements
 
     public array $errors   = [];
     public int   $imported = 0;
+    public int   $updated  = 0; // ← tambah counter khusus update
 
     public function collection(Collection $rows)
     {
@@ -46,21 +47,36 @@ class SiswaImport implements
                 continue;
             }
 
-            // Cek NIS duplikat
-            if (Siswa::where('nis', (string) $row['nis'])->exists()) {
-                $this->errors[] = "Baris " . ($index + 2) . ": NIS '{$row['nis']}' sudah terdaftar.";
-                continue;
+            // updateOrCreate: kalau NIS sudah ada → update, belum ada → insert
+            $siswa = Siswa::withTrashed()
+                ->where('nis', (string) $row['nis'])
+                ->first();
+
+            if ($siswa) {
+                // Pulihkan dulu kalau ternyata di trash
+                if ($siswa->trashed()) {
+                    $siswa->restore();
+                }
+
+                $siswa->update([
+                    'id_walimurid' => $waliMurid->id_walimurid,
+                    'id_kelas'     => $kelas->id_kelas,
+                    'nama'         => $row['nama'],
+                    'status'       => $row['status'] ?? 'aktif',
+                ]);
+
+                $this->updated++;
+            } else {
+                Siswa::create([
+                    'id_walimurid' => $waliMurid->id_walimurid,
+                    'id_kelas'     => $kelas->id_kelas,
+                    'nama'         => $row['nama'],
+                    'nis'          => (string) $row['nis'],
+                    'status'       => $row['status'] ?? 'aktif',
+                ]);
+
+                $this->imported++;
             }
-
-            Siswa::create([
-                'id_walimurid' => $waliMurid->id_walimurid,
-                'id_kelas'     => $kelas->id_kelas,
-                'nama'         => $row['nama'],
-                'nis'          => (string) $row['nis'], // ✅ Cast ke string
-                'status'       => $row['status'] ?? 'aktif',
-            ]);
-
-            $this->imported++;
         }
     }
 
@@ -68,7 +84,7 @@ class SiswaImport implements
     {
         return [
             'nama'               => 'required|string|max:255',
-            'nis'                => 'required|max:30', // ✅ Hapus 'string'
+            'nis'                => 'required|max:30',
             'username_walimurid' => 'required|string',
             'nama_kelas'         => 'required|string',
             'tahun_ajaran'       => 'required|string',

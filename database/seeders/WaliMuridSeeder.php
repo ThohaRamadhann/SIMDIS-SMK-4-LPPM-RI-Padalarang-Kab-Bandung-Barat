@@ -3,30 +3,21 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use App\Models\Pengguna;
 use App\Models\WaliMurid;
 
 class WaliMuridSeeder extends Seeder
 {
     public function run(): void
     {
-        $data = [
-            [
-                'id_pengguna' => 5,
-                'hubungan' => 'Ayah',
-            ],
-            [
-                'id_pengguna' => 6,
-                'hubungan' => 'Ibu',
-            ],
-        ];
+        $ortu = Pengguna::where('id_role',4)->get();
 
-        foreach ($data as $index => $wali) {
-            WaliMurid::updateOrCreate(
-                ['id_pengguna' => $wali['id_pengguna']],
-                [
-                    'hubungan' => $wali['hubungan']
-                ]
-            );
+        foreach($ortu as $item){
+
+            WaliMurid::create([
+                'id_pengguna' => $item->id_pengguna,
+                'hubungan' => rand(0,1) ? 'Ayah' : 'Ibu'
+            ]);
         }
     }
 }

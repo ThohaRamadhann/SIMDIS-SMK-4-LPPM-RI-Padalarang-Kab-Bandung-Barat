@@ -9,6 +9,8 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -19,22 +21,35 @@ class SiswaExport implements
     WithMapping,
     WithStyles,
     WithColumnWidths,
-    WithTitle
+    WithTitle,
+    WithEvents
 {
     protected bool $templateOnly;
+    protected ?string $filterTahunAjaran;
+    protected int $totalRows = 0;
 
-    public function __construct(bool $templateOnly = false)
+    public function __construct(bool $templateOnly = false, ?string $filterTahunAjaran = null)
     {
-        $this->templateOnly = $templateOnly;
+        $this->templateOnly      = $templateOnly;
+        $this->filterTahunAjaran = $filterTahunAjaran;
     }
 
     public function collection()
     {
-        if ($this->templateOnly) {
-            return collect([]);
+        if ($this->templateOnly) return collect([]);
+
+        $query = Siswa::with(['waliMurid.pengguna', 'kelas']);
+
+        if ($this->filterTahunAjaran) {
+            $query->whereHas('kelas', fn($q) =>
+                $q->where('tahun_ajaran', $this->filterTahunAjaran)
+            );
         }
 
-        return Siswa::with(['waliMurid.pengguna', 'kelas'])->get();
+        $data = $query->get();
+        $this->totalRows = $data->count();
+
+        return $data;
     }
 
     public function headings(): array
@@ -42,10 +57,10 @@ class SiswaExport implements
         return [
             'nama',
             'nis',
-            'username_walimurid', // FK via username pengguna
+            'username_walimurid',
             'nama_kelas',
             'tahun_ajaran',
-            'status',             // aktif / tidak_aktif / lulus
+            'status',
         ];
     }
 
@@ -80,6 +95,7 @@ class SiswaExport implements
 
     public function styles(Worksheet $sheet): array
     {
+        // Style header baris 1
         $sheet->getStyle('A1:F1')->applyFromArray([
             'font' => [
                 'bold'  => true,
@@ -96,13 +112,29 @@ class SiswaExport implements
             ],
         ]);
 
-        $sheet->setCellValue('A2', '* status: aktif / tidak_aktif / lulus | username_walimurid & nama_kelas harus sudah terdaftar');
-        $sheet->getStyle('A2')->applyFromArray([
-            'font'      => ['italic' => true, 'color' => ['rgb' => '888888'], 'size' => 9],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT],
-        ]);
-        $sheet->mergeCells('A2:F2');
-
         return [];
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                // Baris keterangan ditulis SETELAH data
+                // Baris 1 = heading, baris 2..N+1 = data, baris N+2 = keterangan
+                $keteranganRow = $this->totalRows + 2;
+
+                $event->sheet->setCellValue(
+                    'A' . $keteranganRow,
+                    '* status: aktif / nonaktif | username_walimurid & nama_kelas harus sudah terdaftar'
+                );
+
+                $event->sheet->getStyle('A' . $keteranganRow)->applyFromArray([
+                    'font'      => ['italic' => true, 'color' => ['rgb' => '888888'], 'size' => 9],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT],
+                ]);
+
+                $event->sheet->mergeCells('A' . $keteranganRow . ':F' . $keteranganRow);
+            },
+        ];
     }
 }

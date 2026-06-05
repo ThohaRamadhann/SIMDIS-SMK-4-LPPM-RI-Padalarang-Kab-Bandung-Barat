@@ -19,14 +19,32 @@
 
     <style>
         @keyframes loadingSlide {
-            0%   { width: 0%;   opacity: 1; }
-            80%  { width: 90%;  opacity: 1; }
-            100% { width: 100%; opacity: 0; }
+            0% {
+                width: 0%;
+                opacity: 1;
+            }
+
+            80% {
+                width: 90%;
+                opacity: 1;
+            }
+
+            100% {
+                width: 100%;
+                opacity: 0;
+            }
         }
 
         @keyframes loadingPulse {
-            0%, 100% { opacity: 1; }
-            50%       { opacity: 0.5; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
         }
 
         .simdis-loading-bar {
@@ -63,7 +81,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
@@ -71,11 +91,8 @@
 <body class="font-sans antialiased" style="background: #F0F4FB;">
 
     {{-- ── Global Loading Indicator ── --}}
-    <div
-        x-data="{ loading: false }"
-        x-on:livewire:navigate.window="loading = true"
-        x-on:livewire:navigated.window="loading = false"
-    >
+    <div x-data="{ loading: false }" x-on:livewire:navigate.window="loading = true"
+        x-on:livewire:navigated.window="loading = false">
         {{-- Loading bar atas --}}
         <div x-show="loading" x-cloak class="simdis-loading-bar"></div>
 
@@ -98,9 +115,9 @@
             @auth
                 <aside x-cloak :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
                     class="fixed lg:relative z-50 lg:translate-x-0
-                           w-64 flex-shrink-0 h-full overflow-y-auto
-                           transition-transform duration-300 ease-in-out"
-                    style="background: linear-gradient(180deg, #091E4A 0%, #0D2D6B 60%, #163580 100%);">
+        w-64 flex-shrink-0 h-full overflow-hidden
+        transition-transform duration-300 ease-in-out"
+                    style="background-color: #091E4A;">
                     @include('layouts.sidebar')
                 </aside>
             @endauth

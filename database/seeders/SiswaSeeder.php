@@ -4,50 +4,25 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Siswa;
-use App\Models\WaliMurid;
 use App\Models\Kelas;
+use App\Models\WaliMurid;
 
 class SiswaSeeder extends Seeder
 {
     public function run(): void
     {
-        $wali = WaliMurid::all();
         $kelas = Kelas::all();
+        $wali = WaliMurid::all();
 
-        if ($wali->count() < 2 || $kelas->count() < 2) {
-            $this->command->warn('Wali murid atau kelas belum cukup untuk seeder siswa.');
-            return;
-        }
+        for($i=1;$i<=50;$i++){
 
-        $data = [
-            [
-                'nama' => 'Siswa A',
-                'nis' => '1111',
-                'id_walimurid' => $wali->get(0)->id_walimurid,
-                'id_kelas' => $kelas->get(0)->id_kelas,
-                'status' => 'aktif',
-            ],
-            [
-                'nama' => 'Siswa B',
-                'nis' => '2222',
-                'id_walimurid' => $wali->get(0)->id_walimurid,
-                'id_kelas' => $kelas->get(0)->id_kelas,
-                'status' => 'aktif',
-            ],
-            [
-                'nama' => 'Siswa C',
-                'nis' => '3333',
-                'id_walimurid' => $wali->get(1)->id_walimurid,
-                'id_kelas' => $kelas->get(1)->id_kelas,
-                'status' => 'aktif',
-            ],
-        ];
-
-        foreach ($data as $i => $siswa) {
-            Siswa::updateOrCreate(
-                ['nis' => $siswa['nis']],
-                $siswa
-            );
+            Siswa::create([
+                'id_walimurid' => $wali[$i-1]->id_walimurid,
+                'id_kelas' => $kelas[($i-1) % $kelas->count()]->id_kelas,
+                'nama' => "Siswa $i",
+                'nis' => '2025'.str_pad($i,4,'0',STR_PAD_LEFT),
+                'status' => 'aktif'
+            ]);
         }
     }
 }

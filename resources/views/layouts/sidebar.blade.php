@@ -21,14 +21,17 @@
     }
 
     .simdis-sidebar {
-        width: 16rem;
-        min-height: 100vh;
-        background: linear-gradient(180deg, var(--navy-dark) 0%, var(--navy) 60%, var(--navy-mid) 100%);
+        width: 100%;
+        height: 100%;
+        min-height: unset;
+        background: linear-gradient(180deg, var(--navy-dark) 0%, var(--navy-dark) 100%);
+        background-color: var(--navy-dark);
         color: var(--white);
         box-shadow: 4px 0 24px rgba(9, 30, 74, 0.35);
         position: relative;
-        overflow: hidden;
-        display: flex;
+        overflow-x: hidden;
+        overflow-y: auto;
+        display: flex;  
         flex-direction: column;
     }
 
@@ -335,8 +338,8 @@
         @endif
 
         @if (in_array($role, ['guru_bk', 'wali_kelas', 'orang_tua']))
-        <a href="{{ route('pelanggaran.index') }}" wire:navigate
-        class="simdis-nav-link {{ request()->routeIs('pelanggaran.*', 'surat-panggilan.*') ? 'active' : '' }}">
+            <a href="{{ route('pelanggaran.index') }}" wire:navigate
+                class="simdis-nav-link {{ request()->routeIs('pelanggaran.*', 'surat-panggilan.*') ? 'active' : '' }}">
                 <i class="fas fa-exclamation-triangle simdis-nav-icon"></i>
                 {{-- Label berbeda untuk orang_tua agar lebih kontekstual --}}
                 {{ $role === 'orang_tua' ? 'Pelanggaran Anak' : 'Data Pelanggaran' }}

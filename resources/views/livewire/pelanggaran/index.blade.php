@@ -13,13 +13,14 @@
                     'search' => $search,
                     'jenis' => $filterJenis,
                     'tingkat' => $filterTingkat,
+                    'tahun_ajaran' => $filterTahunAjaran,
                     'status' => $filterStatus,
                     'wali_kelas' => $filterWaliKelas,
                     'sort' => $sortBy,
                 ]) }}"
                     target="_blank"
                     class="inline-flex items-center justify-center gap-2 bg-white border border-[#0D2D6B]
-                       text-[#0D2D6B] px-4 py-2 rounded-xl text-sm hover:bg-[#f0f4ff] transition-all">
+       text-[#0D2D6B] px-4 py-2 rounded-xl text-sm hover:bg-[#f0f4ff] transition-all">
                     <i class="fas fa-file-pdf text-xs"></i>
                     Export PDF
                 </a>
@@ -112,7 +113,7 @@
                 <div class="xl:col-span-2">
                     <input type="text" wire:model.live="search" placeholder="Cari nama siswa / NIS..."
                         class="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm
-                               focus:border-[#F5B800] focus:ring-[#F5B800]">
+                           focus:border-[#F5B800] focus:ring-[#F5B800]">
                 </div>
             @endif
 
@@ -157,7 +158,7 @@
 
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-3">
 
             @if (in_array($role, ['admin', 'guru_bk']))
                 <div>
@@ -170,6 +171,17 @@
                     </select>
                 </div>
             @endif
+
+            {{-- FILTER TAHUN AJARAN --}}
+            <div>
+                <select wire:model.live="filterTahunAjaran"
+                    class="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm">
+                    <option value="">Semua Tahun Ajaran</option>
+                    @foreach ($tahunAjaranList as $tahun)
+                        <option value="{{ $tahun }}">{{ $tahun }}</option>
+                    @endforeach
+                </select>
+            </div>
 
             <div>
                 <select wire:model.live="perPage" class="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm">
@@ -184,18 +196,18 @@
                 <div class="flex items-center gap-2">
                     <button wire:click="$toggle('showTrash')"
                         class="px-4 h-11 rounded-xl text-sm
-                               {{ $showTrash ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700' }}">
+                           {{ $showTrash ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700' }}">
                         Trash ({{ $trashCount }})
                     </button>
                     @if ($showTrash && $trashCount > 0)
                         <button
                             onclick="simdisConfirm({
-                                title: 'Kosongkan Semua Sampah?',
-                                message: 'Seluruh data yang ada di trash akan dihapus secara permanen dan tidak dapat dipulihkan kembali.',
-                                confirmText: 'Ya, Kosongkan',
-                                type: 'danger',
-                                onConfirm: () => @this.emptyTrash()
-                            })"
+                            title: 'Kosongkan Semua Sampah?',
+                            message: 'Seluruh data yang ada di trash akan dihapus secara permanen dan tidak dapat dipulihkan kembali.',
+                            confirmText: 'Ya, Kosongkan',
+                            type: 'danger',
+                            onConfirm: () => @this.emptyTrash()
+                        })"
                             class="px-4 h-11 rounded-xl bg-red-600 text-white text-sm">
                             Kosongkan
                         </button>
