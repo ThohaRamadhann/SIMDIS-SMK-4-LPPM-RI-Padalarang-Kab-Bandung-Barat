@@ -72,10 +72,10 @@ class PelanggaranController extends Controller
         ]);
 
         $pelanggaran->load([
-            'siswa.waliMurid.pengguna',
+            'siswa.waliSiswa.pengguna',
             'waliKelas.pengguna',
             'jenisPelanggaran',
-        ]);
+        ]);        
 
         LogAktivitas::catat(
             aksi: 'tambah_pelanggaran',

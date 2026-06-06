@@ -13,7 +13,7 @@ class SuratPanggilanController extends Controller
     {
         $surat = SuratPanggilan::with([
             'pelanggaran.siswa.kelas',
-            'pelanggaran.siswa.waliMurid.pengguna',
+            'pelanggaran.siswa.waliSiswa.pengguna',
             'pelanggaran.jenisPelanggaran',
             'waliKelas.pengguna',
         ])->findOrFail($id);
@@ -21,7 +21,7 @@ class SuratPanggilanController extends Controller
         $pelanggaran   = $surat->pelanggaran;
         $siswa         = $pelanggaran->siswa;
         $kelas         = $siswa?->kelas;
-        $namaOrtu      = $siswa?->waliMurid?->pengguna?->name ?? 'Orang Tua/Wali';
+        $namaOrtu      = $siswa?->waliSiswa?->pengguna?->name ?? 'Orang Tua/Wali';
         $namaWaliKelas = $surat->waliKelas?->pengguna?->name ?? '-';
 
         Carbon::setLocale('id');

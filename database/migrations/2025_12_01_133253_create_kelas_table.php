@@ -10,19 +10,22 @@ return new class extends Migration {
         Schema::create('kelas', function (Blueprint $table) {
             $table->id('id_kelas');
 
-            $table->unsignedBigInteger('id_walikelas')->nullable();
+            // Satu wali kelas hanya boleh mengampu satu kelas
+            $table->unsignedBigInteger('id_walikelas')
+                ->nullable()
+                ->unique();
 
-            $table->string('tingkat');        // X / XI / XII
-            $table->string('nama_kelas');     // IPA 1, IPS 2, dll
-            $table->string('jurusan')->nullable(); // TKJ, RPL, dll
-            $table->string('tahun_ajaran');   // 2024/2025
+            $table->string('tingkat');        // X, XI, XII
+            $table->string('nama_kelas');     // RPL 1, TKJ 2, dll
+            $table->string('jurusan')->nullable();
+            $table->string('tahun_ajaran');
 
             $table->timestamps();
 
             $table->foreign('id_walikelas')
                 ->references('id_walikelas')
                 ->on('wali_kelas')
-                ->nullOnDelete(); 
+                ->nullOnDelete();
         });
     }
 

@@ -1,5 +1,4 @@
 @php
-    // Ambil data role user yang sedang login
     $user = Auth::user();
     $role = optional($user->role)->nama_role;
 @endphp
@@ -31,11 +30,10 @@
         position: relative;
         overflow-x: hidden;
         overflow-y: auto;
-        display: flex;  
+        display: flex;
         flex-direction: column;
     }
 
-    /* Subtle geometric background texture */
     .simdis-sidebar::before {
         content: '';
         position: absolute;
@@ -47,12 +45,8 @@
         z-index: 0;
     }
 
-    .simdis-sidebar>* {
-        position: relative;
-        z-index: 1;
-    }
+    .simdis-sidebar > * { position: relative; z-index: 1; }
 
-    /* ── Logo / Header ── */
     .simdis-brand {
         padding: 1.25rem 1.25rem 1rem;
         border-bottom: 1px solid var(--gold-border);
@@ -63,201 +57,104 @@
     }
 
     .simdis-logo {
-        width: 40px;
-        height: 40px;
+        width: 40px; height: 40px;
         background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
         border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: flex; align-items: center; justify-content: center;
         flex-shrink: 0;
         box-shadow: 0 2px 8px rgba(245, 184, 0, 0.4);
     }
 
-    .simdis-logo svg {
-        width: 22px;
-        height: 22px;
-        fill: var(--navy-dark);
-    }
+    .simdis-logo svg { width: 22px; height: 22px; fill: var(--navy-dark); }
 
     .simdis-brand-text h3 {
-        font-size: 1.05rem;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        color: var(--white);
-        line-height: 1.2;
-        margin: 0;
+        font-size: 1.05rem; font-weight: 700;
+        letter-spacing: 0.04em; color: var(--white); line-height: 1.2; margin: 0;
     }
 
     .simdis-brand-text span {
-        font-size: 0.7rem;
-        color: var(--gold);
-        font-weight: 500;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
+        font-size: 0.7rem; color: var(--gold); font-weight: 500;
+        letter-spacing: 0.06em; text-transform: uppercase;
     }
 
-    /* ── Role badge ── */
     .simdis-role-badge {
         margin: 0.85rem 1.25rem 0;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        background: var(--gold-muted);
-        border: 1px solid var(--gold-border);
-        border-radius: 20px;
-        padding: 0.25rem 0.65rem;
-        font-size: 0.7rem;
-        font-weight: 600;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        color: var(--gold);
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        background: var(--gold-muted); border: 1px solid var(--gold-border);
+        border-radius: 20px; padding: 0.25rem 0.65rem;
+        font-size: 0.7rem; font-weight: 600;
+        letter-spacing: 0.05em; text-transform: uppercase; color: var(--gold);
     }
 
     .simdis-role-badge::before {
-        content: '';
-        width: 6px;
-        height: 6px;
-        background: var(--gold);
-        border-radius: 50%;
+        content: ''; width: 6px; height: 6px;
+        background: var(--gold); border-radius: 50%;
         animation: simdis-pulse 2s ease-in-out infinite;
     }
 
     @keyframes simdis-pulse {
-
-        0%,
-        100% {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        50% {
-            opacity: 0.5;
-            transform: scale(0.8);
-        }
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50%       { opacity: 0.5; transform: scale(0.8); }
     }
 
-    /* ── Nav ── */
-    .simdis-nav {
-        margin-top: 1rem;
-        padding: 0 0.75rem;
-        flex: 1;
-    }
+    .simdis-nav { margin-top: 1rem; padding: 0 0.75rem; flex: 1; }
 
     .simdis-section-label {
         padding: 0.6rem 0.5rem 0.3rem;
-        font-size: 0.62rem;
-        font-weight: 700;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: rgba(245, 184, 0, 0.55);
-        margin-top: 0.5rem;
+        font-size: 0.62rem; font-weight: 700;
+        letter-spacing: 0.12em; text-transform: uppercase;
+        color: rgba(245, 184, 0, 0.55); margin-top: 0.5rem;
     }
 
-    .simdis-divider {
-        height: 1px;
-        background: var(--gold-border);
-        margin: 0.5rem 0;
-        opacity: 0.5;
-    }
+    .simdis-divider { height: 1px; background: var(--gold-border); margin: 0.5rem 0; opacity: 0.5; }
 
-    /* ── Nav link base ── */
     .simdis-nav-link {
-        display: flex;
-        align-items: center;
-        gap: 0.65rem;
-        padding: 0.6rem 0.75rem;
-        border-radius: 8px;
-        font-size: 0.85rem;
-        font-weight: 500;
-        color: rgba(255, 255, 255, 0.75);
-        text-decoration: none;
-        margin-bottom: 2px;
-        position: relative;
-        overflow: hidden;
-
-        /* Smooth transition for all states */
-        transition:
-            color 0.22s ease,
-            background 0.22s ease,
-            box-shadow 0.22s ease,
-            transform 0.18s ease;
+        display: flex; align-items: center; gap: 0.65rem;
+        padding: 0.6rem 0.75rem; border-radius: 8px;
+        font-size: 0.85rem; font-weight: 500;
+        color: rgba(255, 255, 255, 0.75); text-decoration: none;
+        margin-bottom: 2px; position: relative; overflow: hidden;
+        transition: color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease, transform 0.18s ease;
     }
 
     .simdis-nav-link .simdis-nav-icon {
-        width: 1.1rem;
-        text-align: center;
-        font-size: 0.85rem;
-        flex-shrink: 0;
-        transition: color 0.22s ease, transform 0.22s ease;
+        width: 1.1rem; text-align: center; font-size: 0.85rem;
+        flex-shrink: 0; transition: color 0.22s ease, transform 0.22s ease;
     }
 
-    /* Left accent bar (hidden by default) */
     .simdis-nav-link::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 20%;
-        height: 60%;
-        width: 3px;
-        background: var(--gold);
-        border-radius: 0 3px 3px 0;
-        opacity: 0;
-        transform: scaleY(0.4);
+        content: ''; position: absolute; left: 0; top: 20%; height: 60%; width: 3px;
+        background: var(--gold); border-radius: 0 3px 3px 0;
+        opacity: 0; transform: scaleY(0.4);
         transition: opacity 0.2s ease, transform 0.2s ease;
     }
 
-    /* Hover state */
     .simdis-nav-link:hover {
-        color: var(--white);
-        background: rgba(245, 184, 0, 0.1);
-        transform: translateX(3px);
+        color: var(--white); background: rgba(245, 184, 0, 0.1); transform: translateX(3px);
     }
 
-    .simdis-nav-link:hover .simdis-nav-icon {
-        color: var(--gold);
-        transform: scale(1.15);
-    }
+    .simdis-nav-link:hover .simdis-nav-icon { color: var(--gold); transform: scale(1.15); }
 
-    /* Active state */
     .simdis-nav-link.active {
         color: var(--navy-dark);
         background: linear-gradient(90deg, var(--gold) 0%, var(--gold-dark) 100%);
         box-shadow: 0 4px 14px rgba(245, 184, 0, 0.35);
-        font-weight: 700;
-        transform: translateX(2px);
+        font-weight: 700; transform: translateX(2px);
     }
 
-    .simdis-nav-link.active::before {
-        opacity: 0;
-        /* bar hidden on active—gold bg is enough */
-    }
+    .simdis-nav-link.active::before { opacity: 0; }
+    .simdis-nav-link.active .simdis-nav-icon { color: var(--navy-dark); }
 
-    .simdis-nav-link.active .simdis-nav-icon {
-        color: var(--navy-dark);
-    }
-
-    /* Ripple on click */
     .simdis-nav-link .simdis-ripple {
-        position: absolute;
-        border-radius: 50%;
+        position: absolute; border-radius: 50%;
         background: rgba(255, 255, 255, 0.25);
-        width: 0;
-        height: 0;
-        transform: translate(-50%, -50%);
+        width: 0; height: 0; transform: translate(-50%, -50%);
         pointer-events: none;
         animation: simdis-ripple-anim 0.45s ease-out forwards;
     }
 
-    @keyframes simdis-ripple-anim {
-        to {
-            width: 200px;
-            height: 200px;
-            opacity: 0;
-        }
-    }
+    @keyframes simdis-ripple-anim { to { width: 200px; height: 200px; opacity: 0; } }
 
-    /* ── Footer ── */
     .simdis-footer {
         padding: 1rem 1.25rem;
         border-top: 1px solid var(--gold-border);
@@ -265,59 +162,50 @@
     }
 
     .simdis-logout {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        padding: 0.55rem 0.75rem;
-        border-radius: 8px;
-        font-size: 0.82rem;
-        font-weight: 500;
-        color: rgba(255, 255, 255, 0.6);
-        text-decoration: none;
+        display: flex; align-items: center; gap: 0.6rem;
+        padding: 0.55rem 0.75rem; border-radius: 8px;
+        font-size: 0.82rem; font-weight: 500;
+        color: rgba(255, 255, 255, 0.6); text-decoration: none;
         transition: color 0.2s ease, background 0.2s ease;
-        cursor: pointer;
-        background: transparent;
-        border: none;
-        width: 100%;
+        cursor: pointer; background: transparent; border: none; width: 100%;
     }
 
-    .simdis-logout:hover {
-        color: #ff6b6b;
-        background: rgba(255, 107, 107, 0.1);
-    }
+    .simdis-logout:hover { color: #ff6b6b; background: rgba(255, 107, 107, 0.1); }
 </style>
 
 <aside class="simdis-sidebar">
 
     {{-- ── Brand / Logo ── --}}
     <div class="simdis-brand">
-
         <div class="simdis-logo">
-
-            {{-- Icon disiplin siswa --}}
             <svg viewBox="0 0 24 24" fill="currentColor">
-                <path
-                    d="M12 2L4 5v6c0 5 3.5 9.5 8 11 4.5-1.5 8-6 8-11V5l-8-3zm-1 12l-3-3 1.4-1.4L11 11.2l3.6-3.6L16 9l-5 5z" />
+                <path d="M12 2L4 5v6c0 5 3.5 9.5 8 11 4.5-1.5 8-6 8-11V5l-8-3zm-1 12l-3-3 1.4-1.4L11 11.2l3.6-3.6L16 9l-5 5z" />
             </svg>
-
         </div>
-
         <div class="simdis-brand-text">
             <h3>SIMDIS</h3>
             <span>Sistem Informasi Disiplin Siswa</span>
         </div>
-
     </div>
 
-    {{-- ── Role badge ── --}}
+    {{-- ── Role badge — tampilkan label ramah ── --}}
     <div class="simdis-role-badge">
-        {{ str_replace('_', ' ', $role) }}
+        @php
+            $roleLabel = match($role) {
+                'admin'       => 'Admin',
+                'guru_bk'     => 'Guru BK',
+                'wali_kelas'  => 'Wali Kelas',
+                'wali_siswa'  => 'Wali Siswa',   // sebelumnya: orang_tua
+                default       => str_replace('_', ' ', $role),
+            };
+        @endphp
+        {{ $roleLabel }}
     </div>
 
     {{-- ── Navigation ── --}}
     <nav class="simdis-nav">
 
-        {{-- General --}}
+        {{-- Dashboard & Profile — semua role --}}
         <a href="{{ route('dashboard') }}" wire:navigate
             class="simdis-nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
             <i class="fas fa-tachometer-alt simdis-nav-icon"></i>
@@ -332,18 +220,26 @@
 
         <div class="simdis-divider"></div>
 
-        {{-- Manajemen Data (non-admin) --}}
+        {{-- ── MANAJEMEN DATA (non-admin) ── --}}
         @if ($role !== 'admin')
             <div class="simdis-section-label">Manajemen Data</div>
         @endif
 
-        @if (in_array($role, ['guru_bk', 'wali_kelas', 'orang_tua']))
+        {{--
+            Pelanggaran & Monitoring:
+            - guru_bk  → lihat semua
+            - wali_kelas → lihat sesuai kelas
+            - wali_siswa → lihat hanya anak sendiri (scope di controller/livewire)
+            (sebelumnya role ini bernama orang_tua)
+        --}}
+        @if (in_array($role, ['guru_bk', 'wali_kelas', 'wali_siswa']))
             <a href="{{ route('pelanggaran.index') }}" wire:navigate
                 class="simdis-nav-link {{ request()->routeIs('pelanggaran.*', 'surat-panggilan.*') ? 'active' : '' }}">
                 <i class="fas fa-exclamation-triangle simdis-nav-icon"></i>
-                {{-- Label berbeda untuk orang_tua agar lebih kontekstual --}}
-                {{ $role === 'orang_tua' ? 'Pelanggaran Anak' : 'Data Pelanggaran' }}
+                {{-- Label berbeda untuk wali_siswa agar lebih kontekstual --}}
+                {{ $role === 'wali_siswa' ? 'Pelanggaran Anak' : 'Data Pelanggaran' }}
             </a>
+
             <a href="{{ route('monitoring.index') }}" wire:navigate
                 class="simdis-nav-link {{ request()->routeIs('monitoring.*') ? 'active' : '' }}">
                 <i class="fas fa-chart-line simdis-nav-icon"></i>
@@ -351,6 +247,7 @@
             </a>
         @endif
 
+        {{-- Jenis Pelanggaran — guru_bk saja --}}
         @if ($role === 'guru_bk')
             <a href="{{ route('jenis-pelanggaran') }}" wire:navigate
                 class="simdis-nav-link {{ request()->routeIs('jenis-pelanggaran') ? 'active' : '' }}">
@@ -359,8 +256,7 @@
             </a>
         @endif
 
-
-        {{-- Administrasi Sistem (admin only) --}}
+        {{-- ── ADMINISTRASI SISTEM (admin saja) ── --}}
         @if ($role === 'admin')
             <div class="simdis-section-label">Administrasi Sistem</div>
 
@@ -376,10 +272,11 @@
                 Siswa
             </a>
 
-            <a href="{{ route('wali-murid') }}" wire:navigate
-                class="simdis-nav-link {{ request()->routeIs('wali-murid') ? 'active' : '' }}">
+            {{-- sebelumnya: route('wali-murid') --}}
+            <a href="{{ route('wali-siswa') }}" wire:navigate
+                class="simdis-nav-link {{ request()->routeIs('wali-siswa') ? 'active' : '' }}">
                 <i class="fas fa-user-tie simdis-nav-icon"></i>
-                Wali Murid
+                Wali Siswa
             </a>
 
             <a href="{{ route('wali-kelas') }}" wire:navigate
@@ -395,6 +292,7 @@
             </a>
         @endif
 
+        {{-- Log Aktivitas — semua role --}}
         <a href="{{ route('log.aktivitas') }}" wire:navigate
             class="simdis-nav-link {{ request()->routeIs('log.aktivitas') ? 'active' : '' }}">
             <i class="fas fa-history simdis-nav-icon"></i>
@@ -404,7 +302,6 @@
     </nav>
 </aside>
 
-{{-- Ripple effect on nav links --}}
 <script>
     document.querySelectorAll('.simdis-nav-link').forEach(link => {
         link.addEventListener('click', function(e) {
@@ -412,7 +309,7 @@
             ripple.classList.add('simdis-ripple');
             const rect = this.getBoundingClientRect();
             ripple.style.left = (e.clientX - rect.left) + 'px';
-            ripple.style.top = (e.clientY - rect.top) + 'px';
+            ripple.style.top  = (e.clientY - rect.top)  + 'px';
             this.appendChild(ripple);
             setTimeout(() => ripple.remove(), 500);
         });

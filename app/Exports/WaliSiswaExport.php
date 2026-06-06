@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\WaliMurid;
+use App\Models\WaliSiswa;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -13,7 +13,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
-class WaliMuridExport implements
+class WaliSiswaExport implements
     FromCollection,
     WithHeadings,
     WithMapping,
@@ -34,7 +34,7 @@ class WaliMuridExport implements
             return collect([]);
         }
 
-        return WaliMurid::with('pengguna')->get();
+        return WaliSiswa::with('pengguna')->get();
     }
 
     public function headings(): array
@@ -55,7 +55,7 @@ class WaliMuridExport implements
 
     public function title(): string
     {
-        return 'Wali Murid';
+        return 'Wali Siswa';
     }
 
     public function columnWidths(): array

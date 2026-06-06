@@ -11,15 +11,17 @@ class PelanggaranPolicy
     use HandlesAuthorization;
 
     /**
-     * Determine whether the user can view any Pelanggaran.
+     * Siapa yang boleh melihat daftar pelanggaran.
      */
     public function viewAny(Pengguna $user): bool
     {
-        return in_array($user->role->nama_role, ['admin', 'guru_bk', 'wali_kelas', 'orang_tua']);
+        return in_array($user->role->nama_role, [
+            'admin', 'guru_bk', 'wali_kelas', 'wali_siswa', // wali_siswa = orang_tua lama
+        ]);
     }
 
     /**
-     * Determine whether the user can view a specific Pelanggaran.
+     * Siapa yang boleh melihat satu pelanggaran.
      */
     public function view(Pengguna $user, Pelanggaran $pelanggaran): bool
     {
@@ -30,50 +32,52 @@ class PelanggaranPolicy
         }
 
         if ($role === 'wali_kelas') {
-            return $pelanggaran->id_walikelas === $user->waliKelas->id_walikelas;
+            return $pelanggaran->id_walikelas === optional($user->waliKelas)->id_walikelas;
         }
 
-        if ($role === 'orang_tua') {
-            return $pelanggaran->siswa->id_walimurid === $user->waliMurid->id_walimurid;
+        if ($role === 'wali_siswa') {
+            // Pastikan pelanggaran ini milik anak dari wali siswa yang login
+            // id_walisiswa menggantikan id_walimurid
+            return optional($pelanggaran->siswa)->id_walisiswa
+                === optional($user->waliSiswa)->id_walisiswa;
         }
 
         return false;
     }
 
     /**
-     * Determine whether the user can create Pelanggaran.
+     * Siapa yang boleh membuat pelanggaran baru.
      */
     public function create(Pengguna $user): bool
     {
-        $role = $user->role->nama_role;
-        return in_array($role, ['admin','guru_bk', 'wali_kelas']);
+        return in_array($user->role->nama_role, ['admin', 'guru_bk', 'wali_kelas']);
     }
 
     /**
-     * Determine whether the user can update the Pelanggaran.
+     * Siapa yang boleh mengubah pelanggaran.
      */
     public function update(Pengguna $user, Pelanggaran $pelanggaran): bool
     {
         $role = $user->role->nama_role;
 
-        if ($role === 'admin') return true;
-        if ($role === 'guru_bk') return true;
+        if ($role === 'admin')    return true;
+        if ($role === 'guru_bk')  return true;
         if ($role === 'wali_kelas') return $pelanggaran->status_pembinaan === null;
 
+        // wali_siswa tidak boleh edit
         return false;
     }
 
     /**
-     * Determine whether the user can delete the Pelanggaran.
+     * Siapa yang boleh menghapus pelanggaran.
      */
     public function delete(Pengguna $user, Pelanggaran $pelanggaran): bool
     {
-        $role = $user->role->nama_role;
-        return in_array($role, ['admin', 'guru_bk']);
+        return in_array($user->role->nama_role, ['admin', 'guru_bk']);
     }
 
     /**
-     * Determine whether the user can restore the Pelanggaran.
+     * Siapa yang boleh memulihkan pelanggaran dari trash.
      */
     public function restore(Pengguna $user, Pelanggaran $pelanggaran): bool
     {
@@ -81,7 +85,7 @@ class PelanggaranPolicy
     }
 
     /**
-     * Determine whether the user can permanently delete the Pelanggaran.
+     * Siapa yang boleh menghapus permanen.
      */
     public function forceDelete(Pengguna $user, Pelanggaran $pelanggaran): bool
     {

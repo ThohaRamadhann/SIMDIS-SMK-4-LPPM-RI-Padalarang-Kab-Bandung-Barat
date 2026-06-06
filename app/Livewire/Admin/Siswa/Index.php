@@ -4,7 +4,7 @@ namespace App\Livewire\Admin\Siswa;
 
 use App\Models\Kelas;
 use App\Models\Siswa;
-use App\Models\WaliMurid;
+use App\Models\WaliSiswa;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -17,10 +17,10 @@ class Index extends Component
     public $id_siswa;
     public $nama;
     public $nis;
-    public $status  = 'aktif';
+    public $status     = 'aktif';
     public $id_kelas;
-    public $id_walimurid;
-    public $isEdit  = false;
+    public $id_walisiswa;
+    public $isEdit     = false;
 
     // ── Search, filter, sort, pagination ──
     public $search            = '';
@@ -50,7 +50,6 @@ class Index extends Component
     public function updatingPerPage()           { $this->resetPage(); }
     public function updatingShowTrash()         { $this->resetPage(); }
 
-    // ── Reset form ──
     public function resetForm()
     {
         $this->id_siswa     = null;
@@ -58,19 +57,18 @@ class Index extends Component
         $this->nis          = '';
         $this->status       = 'aktif';
         $this->id_kelas     = '';
-        $this->id_walimurid = '';
+        $this->id_walisiswa = '';
         $this->isEdit       = false;
         $this->resetErrorBag();
     }
 
-    // ── Simpan ──
     public function store()
     {
         $this->validate([
             'nama'         => 'required',
             'nis'          => 'required|unique:siswa,nis',
             'id_kelas'     => 'required',
-            'id_walimurid' => 'required',
+            'id_walisiswa' => 'required',
         ]);
 
         Siswa::create([
@@ -78,14 +76,13 @@ class Index extends Component
             'nis'          => $this->nis,
             'status'       => $this->status,
             'id_kelas'     => $this->id_kelas,
-            'id_walimurid' => $this->id_walimurid,
+            'id_walisiswa' => $this->id_walisiswa,
         ]);
 
         $this->resetForm();
         session()->flash('success', 'Siswa berhasil ditambahkan.');
     }
 
-    // ── Edit ──
     public function edit($id)
     {
         $s = Siswa::findOrFail($id);
@@ -95,18 +92,17 @@ class Index extends Component
         $this->nis          = $s->nis;
         $this->status       = $s->status;
         $this->id_kelas     = $s->id_kelas;
-        $this->id_walimurid = $s->id_walimurid;
+        $this->id_walisiswa = $s->id_walisiswa;
         $this->isEdit       = true;
     }
 
-    // ── Update ──
     public function update()
     {
         $this->validate([
             'nama'         => 'required',
             'nis'          => 'required|unique:siswa,nis,' . $this->id_siswa . ',id_siswa',
             'id_kelas'     => 'required',
-            'id_walimurid' => 'required',
+            'id_walisiswa' => 'required',
         ]);
 
         Siswa::findOrFail($this->id_siswa)->update([
@@ -114,14 +110,13 @@ class Index extends Component
             'nis'          => $this->nis,
             'status'       => $this->status,
             'id_kelas'     => $this->id_kelas,
-            'id_walimurid' => $this->id_walimurid,
+            'id_walisiswa' => $this->id_walisiswa,
         ]);
 
         $this->resetForm();
         session()->flash('success', 'Siswa berhasil diperbarui.');
     }
 
-    // ── Soft Delete ──
     public function delete($id)
     {
         Siswa::findOrFail($id)->delete();
@@ -129,31 +124,27 @@ class Index extends Component
         session()->flash('success', 'Siswa dipindahkan ke tong sampah.');
     }
 
-    // ── Restore ──
     public function restore($id)
     {
         Siswa::onlyTrashed()->findOrFail($id)->restore();
         session()->flash('success', 'Siswa berhasil dipulihkan.');
     }
 
-    // ── Hapus permanen ──
     public function forceDelete($id)
     {
         Siswa::onlyTrashed()->findOrFail($id)->forceDelete();
         session()->flash('success', 'Siswa dihapus permanen.');
     }
 
-    // ── Kosongkan trash ──
     public function emptyTrash()
     {
         Siswa::onlyTrashed()->forceDelete();
         session()->flash('success', 'Tong sampah dikosongkan.');
     }
 
-    // ── Render ──
     public function render()
     {
-        $query = Siswa::with(['kelas', 'waliMurid.pengguna']);
+        $query = Siswa::with(['kelas', 'waliSiswa.pengguna']);
 
         if ($this->showTrash) {
             $query->onlyTrashed();
@@ -189,7 +180,7 @@ class Index extends Component
         return view('livewire.admin.siswa.index', [
             'dataSiswa'       => $query->paginate($this->perPage),
             'kelas'           => Kelas::orderBy('nama_kelas')->get(),
-            'wali'            => WaliMurid::with('pengguna')->orderBy('id_walimurid')->get(),
+            'wali'            => WaliSiswa::with('pengguna')->orderBy('id_walisiswa')->get(),
             'allKelas'        => Kelas::orderBy('nama_kelas')->get(),
             'trashCount'      => Siswa::onlyTrashed()->count(),
             'tahunAjaranList' => Kelas::select('tahun_ajaran')

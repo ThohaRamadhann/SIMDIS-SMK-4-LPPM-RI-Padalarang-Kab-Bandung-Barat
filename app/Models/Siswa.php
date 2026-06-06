@@ -8,20 +8,21 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Siswa extends Model
 {
     use SoftDeletes;
+
     protected $table = 'siswa';
     protected $primaryKey = 'id_siswa';
 
     protected $fillable = [
-        'id_walimurid',
+        'id_walisiswa',
         'id_kelas',
         'nama',
         'nis',
         'status',
     ];
 
-    public function waliMurid()
+    public function waliSiswa()
     {
-        return $this->belongsTo(WaliMurid::class, 'id_walimurid');
+        return $this->belongsTo(WaliSiswa::class, 'id_walisiswa');
     }
 
     public function kelas()

@@ -6,7 +6,7 @@ use App\Models\Pelanggaran;
 use App\Models\Pengguna;
 use App\Models\Siswa;
 use App\Models\Kelas;
-use App\Models\WaliMurid;
+use App\Models\WaliSiswa;
 use App\Models\WaliKelas;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -29,7 +29,7 @@ class DashboardController extends Controller
                 'total_pengguna'  => Pengguna::count(),
                 'total_siswa'     => Siswa::count(),
                 'total_kelas'     => Kelas::count(),
-                'total_walimurid' => WaliMurid::count(),
+                'total_waliswa'   => WaliSiswa::count(),   // sebelumnya: total_walimurid
                 'total_walikelas' => WaliKelas::count(),
             ];
 
@@ -45,44 +45,51 @@ class DashboardController extends Controller
 
             $kelasData = Kelas::withCount('siswa')->orderByDesc('siswa_count')->get();
 
-$siswaPerTingkat = [
-    'X'   => Siswa::whereHas('kelas', fn($q) => $q->where('nama_kelas', 'like', 'X %')->where('nama_kelas', 'not like', 'XI %')->where('nama_kelas', 'not like', 'XII %'))->count(),
-    'XI'  => Siswa::whereHas('kelas', fn($q) => $q->where('nama_kelas', 'like', 'XI %')->where('nama_kelas', 'not like', 'XII %'))->count(),
-    'XII' => Siswa::whereHas('kelas', fn($q) => $q->where('nama_kelas', 'like', 'XII %'))->count(),
-];
+            $siswaPerTingkat = [
+                'X'   => Siswa::whereHas('kelas', fn($q) => $q->where('nama_kelas', 'like', 'X %')->where('nama_kelas', 'not like', 'XI %')->where('nama_kelas', 'not like', 'XII %'))->count(),
+                'XI'  => Siswa::whereHas('kelas', fn($q) => $q->where('nama_kelas', 'like', 'XI %')->where('nama_kelas', 'not like', 'XII %'))->count(),
+                'XII' => Siswa::whereHas('kelas', fn($q) => $q->where('nama_kelas', 'like', 'XII %'))->count(),
+            ];
 
-$charts = [
-    'pengguna_bulanan' => [
-        'labels' => $bulanLabels,
-        'data'   => $bulanData,
-    ],
-    'siswa_per_kelas' => [
-        'labels' => $kelasData->map(
-            fn($k) => $k->nama_kelas . ($k->jurusan ? ' ' . $k->jurusan : '')
-        )->toArray(),
-        'data' => $kelasData->pluck('siswa_count')->toArray(),
-    ],
-    'siswa_per_tingkat' => [
-        'labels' => array_keys($siswaPerTingkat),
-        'data'   => array_values($siswaPerTingkat),
-    ],
-];
+            $charts = [
+                'pengguna_bulanan' => [
+                    'labels' => $bulanLabels,
+                    'data'   => $bulanData,
+                ],
+                'siswa_per_kelas' => [
+                    'labels' => $kelasData->map(
+                        fn($k) => $k->nama_kelas . ($k->jurusan ? ' ' . $k->jurusan : '')
+                    )->toArray(),
+                    'data' => $kelasData->pluck('siswa_count')->toArray(),
+                ],
+                'siswa_per_tingkat' => [
+                    'labels' => array_keys($siswaPerTingkat),
+                    'data'   => array_values($siswaPerTingkat),
+                ],
+            ];
 
             $kelengkapan = [];
 
-            $siswaTanpaWali = Siswa::whereNull('id_walimurid')->orWhere('id_walimurid', 0)->get(['id_siswa', 'nama', 'nis']);
+            // Siswa tanpa wali siswa
+            $siswaTanpaWali = Siswa::whereNull('id_walisiswa')
+                ->orWhere('id_walisiswa', 0)
+                ->get(['id_siswa', 'nama', 'nis']);
+
             if ($siswaTanpaWali->isNotEmpty()) {
                 $kelengkapan[] = [
                     'tipe'     => 'warning',
                     'icon'     => '👨‍👩‍👧',
-                    'judul'    => 'Siswa Belum Punya Wali Murid',
+                    'judul'    => 'Siswa Belum Punya Wali Siswa',
                     'jumlah'   => $siswaTanpaWali->count(),
-                    'detail'   => $siswaTanpaWali->take(5)->map(fn($s) => $s->nama . ($s->nis ? ' (NIS: ' . $s->nis . ')' : ''))->toArray(),
+                    'detail'   => $siswaTanpaWali->take(5)
+                        ->map(fn($s) => $s->nama . ($s->nis ? ' (NIS: ' . $s->nis . ')' : ''))
+                        ->toArray(),
                     'ada_lagi' => max(0, $siswaTanpaWali->count() - 5),
                     'link'     => route('siswa'),
                 ];
             }
 
+            // Siswa tanpa kelas
             $siswaTanpaKelas = Siswa::whereNull('id_kelas')->orWhere('id_kelas', 0)->get(['id_siswa', 'nama', 'nis']);
             if ($siswaTanpaKelas->isNotEmpty()) {
                 $kelengkapan[] = [
@@ -96,22 +103,24 @@ $charts = [
                 ];
             }
 
-            $idSudahAdaWaliMurid    = WaliMurid::pluck('id_pengguna')->toArray();
-            $orangTuaBelumTerhubung = Pengguna::whereHas('role', fn($q) => $q->where('nama_role', 'orang_tua'))
-                ->whereNotIn('id_pengguna', $idSudahAdaWaliMurid)
+            // Akun wali_siswa belum terhubung ke data wali siswa
+            $idSudahAdaWaliSiswa    = WaliSiswa::pluck('id_pengguna')->toArray();
+            $waliSiswaBelumTerhubung = Pengguna::whereHas('role', fn($q) => $q->where('nama_role', 'wali_siswa'))
+                ->whereNotIn('id_pengguna', $idSudahAdaWaliSiswa)
                 ->get(['id_pengguna', 'name', 'username']);
-            if ($orangTuaBelumTerhubung->isNotEmpty()) {
+            if ($waliSiswaBelumTerhubung->isNotEmpty()) {
                 $kelengkapan[] = [
                     'tipe'     => 'danger',
                     'icon'     => '🔗',
-                    'judul'    => 'Akun Orang Tua Belum Terhubung',
-                    'jumlah'   => $orangTuaBelumTerhubung->count(),
-                    'detail'   => $orangTuaBelumTerhubung->take(5)->map(fn($p) => $p->name . ' (@' . $p->username . ')')->toArray(),
-                    'ada_lagi' => max(0, $orangTuaBelumTerhubung->count() - 5),
-                    'link'     => route('wali-murid'),
+                    'judul'    => 'Akun Wali Siswa Belum Terhubung',
+                    'jumlah'   => $waliSiswaBelumTerhubung->count(),
+                    'detail'   => $waliSiswaBelumTerhubung->take(5)->map(fn($p) => $p->name . ' (@' . $p->username . ')')->toArray(),
+                    'ada_lagi' => max(0, $waliSiswaBelumTerhubung->count() - 5),
+                    'link'     => route('wali-siswa'),
                 ];
             }
 
+            // Nomor telepon kosong
             $tanpaNoTelpon = Pengguna::whereNull('no_telpon')->orWhere('no_telpon', '')->with('role')->get(['id_pengguna', 'name', 'username', 'id_role']);
             if ($tanpaNoTelpon->isNotEmpty()) {
                 $kelengkapan[] = [
@@ -125,6 +134,7 @@ $charts = [
                 ];
             }
 
+            // Duplikat siswa
             $duplikat = Siswa::select('nama', 'id_kelas', DB::raw('COUNT(*) as total'))
                 ->groupBy('nama', 'id_kelas')->having('total', '>', 1)->with('kelas')->get();
             if ($duplikat->isNotEmpty()) {
@@ -139,6 +149,7 @@ $charts = [
                 ];
             }
 
+            // Wali kelas belum mengampu kelas
             $idWaliKelasPunyaKelas = Kelas::whereNotNull('id_walikelas')->pluck('id_walikelas')->toArray();
             $waliKelasTanpaKelas   = WaliKelas::whereNotIn('id_walikelas', $idWaliKelasPunyaKelas)->with('pengguna')->get();
             if ($waliKelasTanpaKelas->isNotEmpty()) {
@@ -153,6 +164,7 @@ $charts = [
                 ];
             }
 
+            // NUPTK wali kelas kosong
             $waliKelasTanpaNuptk = WaliKelas::whereNull('nuptk')->orWhere('nuptk', '')->with('pengguna')->get();
             if ($waliKelasTanpaNuptk->isNotEmpty()) {
                 $kelengkapan[] = [
@@ -175,9 +187,15 @@ $charts = [
             $baseQuery   = fn() => Pelanggaran::where('id_walikelas', $idWaliKelas);
             $kelas       = Kelas::where('id_walikelas', $idWaliKelas)->first();
             $jumlahSiswa = $kelas ? Siswa::where('id_kelas', $kelas->id_kelas)->count() : 0;
-        } elseif ($role === 'orang_tua') {
-            $idWaliMurid = optional($user->waliMurid)->id_walimurid;
-            $baseQuery   = fn() => Pelanggaran::whereHas('siswa', fn($q) => $q->where('id_walimurid', $idWaliMurid));
+        } elseif ($role === 'wali_siswa') {
+
+            $idWaliSiswa = optional($user->waliSiswa)->id_walisiswa;
+        
+            $baseQuery = fn() => Pelanggaran::whereHas(
+                'siswa',
+                fn($q) => $q->where('id_walisiswa', $idWaliSiswa)
+            );
+        
         } else {
             $baseQuery   = fn() => Pelanggaran::query();
             $jumlahSiswa = Siswa::count();
@@ -187,7 +205,7 @@ $charts = [
         $sudahDitindak    = $baseQuery()->where('status_pembinaan', 'Selesai')->count();
         $belumDitindak    = $baseQuery()->where('status_pembinaan', 'Belum Ditindak')->count();
 
-        if ($role === 'orang_tua') {
+        if ($role === 'wali_siswa') {
             $stats = [
                 'total_pelanggaran' => $totalPelanggaran,
                 'sudah_ditindak'    => $sudahDitindak,
@@ -211,7 +229,7 @@ $charts = [
         }
         $charts['bulanan'] = ['labels' => $bulanLabels, 'data' => $bulanData];
 
-        $jenisPelanggaran  = $baseQuery()->select('id_jenispelanggaran', DB::raw('count(*) as total'))
+        $jenisPelanggaran = $baseQuery()->select('id_jenispelanggaran', DB::raw('count(*) as total'))
             ->groupBy('id_jenispelanggaran')->with('jenisPelanggaran')->orderByDesc('total')->get();
         $charts['jenis'] = [
             'labels'  => $jenisPelanggaran->map(fn($p) => optional($p->jenisPelanggaran)->nama_pelanggaran ?? 'Tidak diketahui')->toArray(),
@@ -221,8 +239,8 @@ $charts = [
 
         $kelengkapan = [];
 
-        $view = match($role) {
-            'orang_tua'  => 'dashboard.orang-tua',
+        $view = match ($role) {
+            'wali_siswa' => 'dashboard.wali-siswa',   // sebelumnya: orang-tua
             'wali_kelas' => 'dashboard.wali-kelas',
             default      => 'dashboard.guru-bk',
         };

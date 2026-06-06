@@ -27,15 +27,14 @@
             <div class="flex items-center justify-between mb-3">
                 <div>
                     <h2 class="text-[16px] font-bold text-[#0D2D6B]">
-                        {{ $isEdit ? 'Edit Wali Murid' : 'Tambah Wali Murid' }}
+                        {{ $isEdit ? 'Edit Wali Siswa' : 'Tambah Wali Siswa' }}
                     </h2>
-                    <p class="text-xs text-gray-500">Kelola data wali murid SIMDIS</p>
+                    <p class="text-xs text-gray-500">Kelola data wali siswa SIMDIS</p>
                 </div>
                 <button @click="formOpen = false; $wire.resetForm()"
                     class="flex items-center justify-center w-7 h-7 rounded-lg
                            bg-gray-100 hover:bg-gray-200 text-gray-400 hover:text-gray-600
-                           transition-colors flex-shrink-0"
-                    title="Tutup form">
+                           transition-colors flex-shrink-0">
                     <i class="fas fa-xmark text-xs"></i>
                 </button>
             </div>
@@ -43,11 +42,11 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
 
                 <div>
-                    <label class="text-xs font-semibold text-[#0D2D6B]">Nama Wali Murid *</label>
+                    <label class="text-xs font-semibold text-[#0D2D6B]">Nama Wali Siswa *</label>
                     <select wire:model.live="id_pengguna"
                         class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
-                        <option value="">-- Pilih Nama Wali Murid --</option>
+                        <option value="">-- Pilih Nama Wali Siswa --</option>
                         @foreach ($pengguna as $p)
                             <option value="{{ $p->id_pengguna }}">{{ $p->name }} ({{ $p->username }})</option>
                         @endforeach
@@ -106,10 +105,10 @@
         <div class="flex justify-between items-center mb-3">
             <div>
                 <h3 class="text-[16px] font-bold text-[#0D2D6B]">
-                    {{ $showTrash ? 'Tong Sampah' : 'Daftar Wali Murid' }}
+                    {{ $showTrash ? 'Tong Sampah' : 'Daftar Wali Siswa' }}
                 </h3>
                 <p class="text-xs text-gray-500">
-                    {{ $showTrash ? 'Data yang telah dihapus.' : 'Data seluruh wali murid' }}
+                    {{ $showTrash ? 'Data yang telah dihapus.' : 'Data seluruh wali siswa' }}
                 </p>
             </div>
             <div class="flex flex-wrap justify-end items-center gap-2">
@@ -123,7 +122,7 @@
                             ? 'bg-[#F0F4FB] text-[#4A5E8A] border-[#E2EAF4] hover:bg-[#e2eaf7]'
                             : 'bg-[#0D2D6B] text-white border-[#0D2D6B] hover:bg-[#163580]'">
                         <i class="fas text-xs" :class="formOpen ? 'fa-xmark' : 'fa-plus'"></i>
-                        <span x-text="formOpen ? 'Tutup Form' : 'Tambah Wali Murid'"></span>
+                        <span x-text="formOpen ? 'Tutup Form' : 'Tambah Wali Siswa'"></span>
                     </button>
                 @endif
                 <button wire:click="$toggle('showTrash')"
@@ -151,7 +150,7 @@
                         </svg>
                         Import Data
                     </p>
-                    @livewire('admin.import-data', ['type' => 'wali_murid'])
+                    @livewire('admin.import-data', ['type' => 'wali_siswa'])
                 </div>
                 <div class="sm:border-l sm:border-gray-200 sm:pl-3">
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">
@@ -160,7 +159,7 @@
                         </svg>
                         Export Data
                     </p>
-                    @livewire('admin.export-data', ['type' => 'wali_murid'])
+                    @livewire('admin.export-data', ['type' => 'wali_siswa'])
                 </div>
             </div>
 
@@ -220,8 +219,8 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse ($data as $item)
-                        @php $isEditingRow = $isEdit && $id_walimurid == $item->id_walimurid; @endphp
-                        <tr wire:key="wali-{{ $item->id_walimurid }}"
+                        @php $isEditingRow = $isEdit && $id_walisiswa == $item->id_walisiswa; @endphp
+                        <tr wire:key="wali-{{ $item->id_walisiswa }}"
                             class="hover:bg-gray-50 transition {{ $isEditingRow ? 'bg-[rgba(245,184,0,0.07)]' : '' }}"
                             style="{{ $isEditingRow ? 'outline:1.5px solid rgba(245,184,0,0.35);outline-offset:-1px;' : '' }}">
 
@@ -256,23 +255,23 @@
 
                             <td class="px-3 py-2 text-center whitespace-nowrap">
                                 @if ($showTrash)
-                                    <button wire:click="restore({{ $item->id_walimurid }})"
+                                    <button wire:click="restore({{ $item->id_walisiswa }})"
                                         class="text-xs font-semibold mr-2 transition" style="color:#276749;">
                                         <i class="fas fa-rotate-left"></i> Pulihkan
                                     </button>
-                                    <button wire:click="forceDelete({{ $item->id_walimurid }})"
+                                    <button wire:click="forceDelete({{ $item->id_walisiswa }})"
                                         wire:confirm="Hapus permanen? Data tidak bisa dikembalikan."
                                         class="text-red-500 text-xs font-semibold hover:text-red-700 transition">
                                         <i class="fas fa-trash"></i> Hapus
                                     </button>
                                 @else
-                                    <button wire:click="edit({{ $item->id_walimurid }})"
+                                    <button wire:click="edit({{ $item->id_walisiswa }})"
                                         @click="$dispatch('open-form')"
                                         class="text-[#0D2D6B] text-xs font-semibold hover:text-[#163580] mr-2 transition">
                                         {{ $isEditingRow ? '✎ Diedit' : 'Edit' }}
                                     </button>
                                     @if (!$isEditingRow)
-                                        <button wire:click="hapus({{ $item->id_walimurid }})"
+                                        <button wire:click="hapus({{ $item->id_walisiswa }})"
                                             wire:confirm="Pindahkan data ini ke tong sampah?"
                                             class="text-red-500 text-xs font-semibold hover:text-red-700 transition">
                                             Hapus
@@ -285,7 +284,7 @@
                         <tr>
                             <td colspan="6" class="text-center py-8 text-gray-400 text-xs">
                                 <i class="fas fa-{{ $showTrash ? 'trash' : 'user-tie' }} block text-2xl mb-2 opacity-25"></i>
-                                {{ $showTrash ? 'Tong sampah kosong.' : 'Tidak ada data wali murid ditemukan.' }}
+                                {{ $showTrash ? 'Tong sampah kosong.' : 'Tidak ada data wali siswa ditemukan.' }}
                             </td>
                         </tr>
                     @endforelse

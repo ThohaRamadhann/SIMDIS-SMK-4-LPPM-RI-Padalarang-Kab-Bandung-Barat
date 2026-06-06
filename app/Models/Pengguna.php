@@ -3,16 +3,15 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Contracts\Auth\CanResetPassword;   // ← tambah
-use Illuminate\Auth\Passwords\CanResetPassword as CanResetPasswordTrait; // ← tambah
+use Illuminate\Contracts\Auth\CanResetPassword;
+use Illuminate\Auth\Passwords\CanResetPassword as CanResetPasswordTrait;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class Pengguna extends Authenticatable implements CanResetPassword
 {
-    use SoftDeletes, Notifiable, CanResetPasswordTrait; // ← tambah Notifiable & trait
+    use SoftDeletes, Notifiable, CanResetPasswordTrait;
 
     protected $table = 'pengguna';
     protected $primaryKey = 'id_pengguna';
@@ -31,7 +30,6 @@ class Pengguna extends Authenticatable implements CanResetPassword
         'remember_token',
     ];
 
-    // Tambah casts agar password_reset_tokens bisa match
     protected $casts = [
         'password' => 'hashed',
     ];
@@ -41,9 +39,9 @@ class Pengguna extends Authenticatable implements CanResetPassword
         return $this->belongsTo(Role::class, 'id_role');
     }
 
-    public function waliMurid()
+    public function waliSiswa()
     {
-        return $this->hasOne(WaliMurid::class, 'id_pengguna');
+        return $this->hasOne(WaliSiswa::class, 'id_pengguna');
     }
 
     public function waliKelas()

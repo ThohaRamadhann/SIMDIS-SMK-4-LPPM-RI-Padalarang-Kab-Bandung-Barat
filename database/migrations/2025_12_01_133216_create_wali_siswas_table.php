@@ -7,13 +7,13 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('wali_murid', function (Blueprint $table) {
-            $table->id('id_walimurid');
-
+        Schema::create('wali_siswa', function (Blueprint $table) {
+            $table->id('id_walisiswa');
             $table->unsignedBigInteger('id_pengguna');
-            $table->string('hubungan'); // ayah / ibu / wali
+            $table->string('hubungan');
 
             $table->timestamps();
+            $table->softDeletes(); // menambahkan kolom deleted_at
 
             $table->foreign('id_pengguna')
                 ->references('id_pengguna')
@@ -24,6 +24,6 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::dropIfExists('wali_murid');
+        Schema::dropIfExists('wali_siswa');
     }
 };

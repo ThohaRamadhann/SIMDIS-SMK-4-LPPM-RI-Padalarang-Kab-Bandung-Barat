@@ -71,10 +71,11 @@
                     @error('id_kelas') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                 </div>
 
+                {{-- Searchable dropdown Wali Siswa --}}
                 <div x-data="{
                     open: false,
                     search: '',
-                    selected: @entangle('id_walimurid'),
+                    selected: @entangle('id_walisiswa'),
                     get filteredWali() {
                         return this.walis.filter(w =>
                             w.name.toLowerCase().includes(this.search.toLowerCase())
@@ -82,17 +83,17 @@
                     },
                     walis: [
                         @foreach($wali as $w) {
-                            id: {{ $w->id_walimurid }},
+                            id: {{ $w->id_walisiswa }},
                             name: '{{ optional($w->pengguna)->name ?? '-' }} {{ $w->hubungan ? '(' . $w->hubungan . ')' : '' }}'
                         },
                         @endforeach
                     ],
                     selectedName() {
                         const found = this.walis.find(w => w.id == this.selected)
-                        return found ? found.name : '-- Pilih Wali Murid --'
+                        return found ? found.name : '-- Pilih Wali Siswa --'
                     }
                 }" class="relative">
-                    <label class="text-xs font-semibold text-[#0D2D6B]">Wali Murid *</label>
+                    <label class="text-xs font-semibold text-[#0D2D6B]">Wali Siswa *</label>
                     <button type="button" @click="open = !open"
                         class="mt-0.5 w-full h-10 px-3 rounded-lg border border-gray-200 bg-gray-50
                                text-left text-sm flex items-center justify-between hover:bg-white
@@ -107,13 +108,13 @@
                         class="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
                         style="display:none">
                         <div class="p-2 border-b border-gray-100">
-                            <input type="text" x-model="search" placeholder="Cari nama wali murid..."
+                            <input type="text" x-model="search" placeholder="Cari nama wali siswa..."
                                 class="w-full h-9 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                        focus:bg-white focus:border-[#F5B800] outline-none transition">
                         </div>
                         <div class="max-h-56 overflow-y-auto">
                             <template x-if="filteredWali.length === 0">
-                                <div class="px-3 py-4 text-sm text-gray-400 text-center">Wali murid tidak ditemukan</div>
+                                <div class="px-3 py-4 text-sm text-gray-400 text-center">Wali siswa tidak ditemukan</div>
                             </template>
                             <template x-for="wali in filteredWali" :key="wali.id">
                                 <button type="button"
@@ -124,7 +125,7 @@
                             </template>
                         </div>
                     </div>
-                    @error('id_walimurid') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                    @error('id_walisiswa') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                 </div>
 
                 <div>
@@ -167,7 +168,7 @@
                     @endif
                 </div>
                 <ul class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#4A5E8A]">
-                    <li><span class="text-[#F5B800] font-bold">•</span> Pastikan wali murid sudah terdaftar</li>
+                    <li><span class="text-[#F5B800] font-bold">•</span> Pastikan wali siswa sudah terdaftar</li>
                     <li><span class="text-[#F5B800] font-bold">•</span> NIS harus unik per siswa</li>
                     <li><span class="text-[#F5B800] font-bold">•</span> Status nonaktif menonaktifkan siswa</li>
                 </ul>
@@ -193,7 +194,6 @@
                 <span class="text-xs font-semibold text-[#0D2D6B] bg-blue-50 px-3 py-1 rounded-full">
                     {{ $dataSiswa->total() }} siswa
                 </span>
-                {{-- Tombol Tambah / Tutup Form --}}
                 @if (!$showTrash)
                     <button @click="formOpen = !formOpen; if(!formOpen) $wire.resetForm()"
                         class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors"
@@ -204,7 +204,6 @@
                         <span x-text="formOpen ? 'Tutup Form' : 'Tambah Siswa'"></span>
                     </button>
                 @endif
-                {{-- Toggle trash --}}
                 <button wire:click="$toggle('showTrash')"
                     class="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors
                            {{ $showTrash
@@ -333,7 +332,7 @@
                         <th class="px-3 py-2 text-left font-bold">Nama</th>
                         <th class="px-3 py-2 text-left font-bold">NIS</th>
                         <th class="px-3 py-2 text-left font-bold">Kelas</th>
-                        <th class="px-3 py-2 text-left font-bold">Wali Murid</th>
+                        <th class="px-3 py-2 text-left font-bold">Wali Siswa</th>
                         <th class="px-3 py-2 text-left font-bold">Status</th>
                         <th class="px-3 py-2 text-center font-bold">Aksi</th>
                     </tr>
@@ -384,8 +383,9 @@
                                 @endif
                             </td>
 
+                            {{-- ← ganti waliMurid → waliSiswa --}}
                             <td class="px-3 py-2 text-gray-500 text-xs">
-                                {{ optional(optional($s->waliMurid)->pengguna)->name ?? '-' }}
+                                {{ optional(optional($s->waliSiswa)->pengguna)->name ?? '-' }}
                             </td>
 
                             <td class="px-3 py-2">

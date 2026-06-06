@@ -4,7 +4,7 @@ namespace App\Imports;
 
 use App\Models\Pengguna;
 use App\Models\Role;
-use App\Models\WaliMurid;
+use App\Models\WaliSiswa;
 use App\Models\WaliKelas;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
@@ -29,24 +29,20 @@ class PenggunaImport implements
     {
         foreach ($rows as $index => $row) {
 
-            // Normalisasi role
             $roleName = strtolower(trim($row['role']));
             $roleName = str_replace(' ', '_', $roleName);
 
-            // Cari role
             $role = Role::where('nama_role', $roleName)->first();
             if (!$role) {
                 $this->errors[] = "Baris " . ($index + 2) . ": Role '{$row['role']}' tidak ditemukan.";
                 continue;
             }
 
-            // Cek username duplikat
             if (Pengguna::where('username', $row['username'])->exists()) {
                 $this->errors[] = "Baris " . ($index + 2) . ": Username '{$row['username']}' sudah digunakan.";
                 continue;
             }
 
-            // Normalisasi nomor telepon
             $phone = isset($row['no_telpon'])
                 ? preg_replace('/[^0-9]/', '', (string) $row['no_telpon'])
                 : null;
@@ -65,24 +61,23 @@ class PenggunaImport implements
                 }
             }
 
-            // Simpan pengguna
             $user = Pengguna::create([
                 'id_role'   => $role->id_role,
-                'name'      => $row['name'],       // ← sesuai kolom DB
+                'name'      => $row['name'],
                 'username'  => $row['username'],
                 'email'     => $row['email'] ?? null,
                 'no_telpon' => $phone,
                 'password'  => Hash::make($row['password']),
             ]);
 
-            // Role: orang_tua
+            // Role: orang_tua → buat entri wali siswa
             if ($role->nama_role === 'orang_tua') {
                 if (empty($row['hubungan'])) {
                     $this->errors[] = "Baris " . ($index + 2) . ": Hubungan wajib diisi untuk role orang tua.";
                     $user->delete();
                     continue;
                 }
-                WaliMurid::create([
+                WaliSiswa::create([
                     'id_pengguna' => $user->id_pengguna,
                     'hubungan'    => trim($row['hubungan']),
                 ]);
@@ -104,7 +99,7 @@ class PenggunaImport implements
     public function rules(): array
     {
         return [
-            'name'      => 'required|string|max:255',  // ← sesuai kolom DB
+            'name'      => 'required|string|max:255',
             'username'  => 'required|string|max:255',
             'role'      => 'required|string',
             'password'  => 'required|string|min:6',

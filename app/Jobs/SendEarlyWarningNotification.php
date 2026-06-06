@@ -29,7 +29,8 @@ class SendEarlyWarningNotification implements ShouldQueue
     public function handle(): void
     {
         $pelanggaran = Pelanggaran::with([
-            'siswa.waliMurid.pengguna',
+            'siswa.waliSiswa.pengguna',
+            'siswa.kelas',
             'waliKelas.pengguna',
             'jenisPelanggaran',
         ])->find($this->idPelanggaran);
@@ -39,9 +40,7 @@ class SendEarlyWarningNotification implements ShouldQueue
             return;
         }
 
-        $siswa = $pelanggaran->siswa;
-
-        // Langsung pakai nilai DB (Ringan / Sedang / Berat) — sudah konsisten kapital
+        $siswa   = $pelanggaran->siswa;
         $tingkat = optional($pelanggaran->jenisPelanggaran)->tingkat_pelanggaran ?? '';
 
         if (! $siswa || ! $tingkat) {
@@ -69,10 +68,16 @@ class SendEarlyWarningNotification implements ShouldQueue
         $penerima = $penerima->merge($guruBK);
 
         $waliKelas = optional($pelanggaran->waliKelas)->pengguna;
-        if ($waliKelas) $penerima->push($waliKelas);
+        if ($waliKelas) {
+            $penerima->push($waliKelas);
+        }
 
-        $orangTua = optional($siswa->waliMurid)->pengguna ?? null;
-        if ($orangTua) $penerima->push($orangTua);
+        // ✅ FIX: waliSiswa sudah pasti ter-load karena eager load
+        // di atas sudah include 'siswa.waliSiswa.pengguna'
+        $orangTua = optional($siswa->waliSiswa)->pengguna ?? null;
+        if ($orangTua) {
+            $penerima->push($orangTua);
+        }
 
         $penerima = $penerima->unique('id_pengguna');
 
@@ -101,27 +106,27 @@ class SendEarlyWarningNotification implements ShouldQueue
                 ]);
             }
 
-            // Broadcast realtime ke bell
             broadcast(new NotifikasiBaru($notif));
         }
 
-        // ── Kirim WhatsApp hanya untuk aksi 'panggil_ortu' ──
-        // Pembinaan = urusan internal sekolah, cukup notif bell
-        // Pemanggilan ortu = ortu harus datang, WA lebih efektif
         if ($this->aksi === 'panggil_ortu') {
             $this->kirimWhatsApp($siswa, $total, $tingkat);
         }
     }
 
-    /**
-     * Kirim WhatsApp ke orang tua siswa
-     */
     private function kirimWhatsApp($siswa, int $total, string $tingkat): void
     {
-        $orangTuaPengguna = optional($siswa->waliMurid)->pengguna ?? null;
+        // ✅ FIX: Gunakan loadMissing agar relasi pasti ada
+        // tanpa query ulang jika sudah ter-load
+        $siswa->loadMissing(['waliSiswa.pengguna', 'kelas']);
+
+        $orangTuaPengguna = optional($siswa->waliSiswa)->pengguna ?? null;
 
         if (! $orangTuaPengguna) {
-            Log::warning('EWS WA: orang tua tidak ditemukan', ['id_siswa' => $siswa->id_siswa]);
+            Log::warning('EWS WA: orang tua tidak ditemukan', [
+                'id_siswa'     => $siswa->id_siswa,
+                'id_walisiswa' => $siswa->id_walisiswa,
+            ]);
             return;
         }
 
@@ -134,8 +139,7 @@ class SendEarlyWarningNotification implements ShouldQueue
             return;
         }
 
-        // Ambil data pelanggaran terbaru siswa untuk info detail
-        $pelanggaranTerbaru = \App\Models\Pelanggaran::with('jenisPelanggaran')
+        $pelanggaranTerbaru = Pelanggaran::with('jenisPelanggaran')
             ->where('id_siswa', $siswa->id_siswa)
             ->whereHas('jenisPelanggaran', fn($q) =>
                 $q->where('tingkat_pelanggaran', $tingkat)
@@ -143,7 +147,6 @@ class SendEarlyWarningNotification implements ShouldQueue
             ->latest('waktu_kejadian')
             ->first();
 
-        // $tingkat sudah kapital dari DB — tidak perlu ucfirst
         $namaOrtu        = $orangTuaPengguna->name;
         $namaSiswa       = $siswa->nama;
         $kelasSiswa      = optional($siswa->kelas)->nama_kelas ?? '-';
@@ -187,10 +190,6 @@ class SendEarlyWarningNotification implements ShouldQueue
             ->update(['status' => 'dibatalkan']);
     }
 
-    /**
-     * Tentukan aksi berdasarkan tingkat dan total pelanggaran.
-     * Nilai tingkat: 'Ringan' | 'Sedang' | 'Berat' (kapital, sesuai ENUM DB)
-     */
     private function tentukanAksi(string $tingkat, int $total): ?string
     {
         return match ($tingkat) {

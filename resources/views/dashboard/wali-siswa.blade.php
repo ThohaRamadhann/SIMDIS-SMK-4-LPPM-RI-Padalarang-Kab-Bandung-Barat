@@ -9,35 +9,20 @@
 
     <style>
         .dash-card {
-            background: #fff;
-            border-radius: 14px;
-            padding: 1.35rem 1.5rem;
+            background: #fff; border-radius: 14px; padding: 1.35rem 1.5rem;
             box-shadow: 0 2px 12px rgba(13, 45, 107, 0.08);
             border: 1px solid rgba(13, 45, 107, 0.07);
-            display: flex;
-            align-items: center;
-            gap: 1rem;
+            display: flex; align-items: center; gap: 1rem;
             transition: transform 0.18s ease, box-shadow 0.18s ease;
         }
-        .dash-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 24px rgba(13, 45, 107, 0.13);
-        }
+        .dash-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(13, 45, 107, 0.13); }
         .dash-card-icon {
-            width: 52px; height: 52px;
-            border-radius: 12px;
+            width: 52px; height: 52px; border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
             font-size: 1.4rem; flex-shrink: 0;
         }
-        .dash-card-label {
-            font-size: 0.72rem; font-weight: 600;
-            color: #4A5E8A; text-transform: uppercase;
-            letter-spacing: 0.05em; margin-bottom: 0.2rem;
-        }
-        .dash-card-value {
-            font-size: 1.9rem; font-weight: 800;
-            color: #0D2D6B; line-height: 1;
-        }
+        .dash-card-label { font-size: 0.72rem; font-weight: 600; color: #4A5E8A; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+        .dash-card-value { font-size: 1.9rem; font-weight: 800; color: #0D2D6B; line-height: 1; }
         .dash-card-sub { font-size: 0.72rem; color: #718096; margin-top: 0.25rem; }
         .chart-card {
             background: #fff; border-radius: 14px; padding: 1.5rem;
@@ -46,16 +31,8 @@
         }
         .chart-title { font-size: 0.9rem; font-weight: 700; color: #0D2D6B; margin-bottom: 0.2rem; }
         .chart-subtitle { font-size: 0.72rem; color: #718096; margin-bottom: 1rem; }
-        .section-label {
-            font-size: 0.7rem; font-weight: 700;
-            letter-spacing: 0.1em; text-transform: uppercase;
-            color: #4A5E8A; margin-bottom: 0.75rem;
-        }
-        .trend-badge {
-            display: inline-flex; align-items: center; gap: 0.25rem;
-            font-size: 0.72rem; font-weight: 600;
-            padding: 0.2rem 0.55rem; border-radius: 20px;
-        }
+        .section-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #4A5E8A; margin-bottom: 0.75rem; }
+        .trend-badge { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.72rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 20px; }
         .trend-up   { background: #ffe4e4; color: #c53030; }
         .trend-down { background: #e6ffed; color: #276749; }
         .trend-same { background: #f0f4fb; color: #4A5E8A; }
@@ -74,7 +51,7 @@
             </span>
         </div>
 
-        {{-- STATS --}}
+        {{-- STATS — hanya pelanggaran anak sendiri --}}
         <div>
             <p class="section-label">Ringkasan Pelanggaran Anak</p>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -108,6 +85,40 @@
 
             </div>
         </div>
+
+        {{-- INFO ANAK --}}
+        @php
+            $waliSiswa = auth()->user()->waliSiswa;
+            $anakList  = $waliSiswa ? $waliSiswa->siswa()->with('kelas')->get() : collect();
+        @endphp
+        @if ($anakList->isNotEmpty())
+            <div>
+                <p class="section-label">Data Anak</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    @foreach ($anakList as $anak)
+                        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
+                            <div style="width:42px;height:42px;border-radius:50%;flex-shrink:0;
+                                        background:linear-gradient(135deg,#0D2D6B,#163580);
+                                        color:#F5B800;font-size:16px;font-weight:700;
+                                        display:flex;align-items:center;justify-content:center;">
+                                {{ strtoupper(substr($anak->nama, 0, 1)) }}
+                            </div>
+                            <div>
+                                <div class="font-bold text-[#0D2D6B] text-sm">{{ $anak->nama }}</div>
+                                <div class="text-xs text-gray-500">NIS: {{ $anak->nis }}</div>
+                                <div class="text-xs text-gray-500">
+                                    Kelas: {{ optional($anak->kelas)->nama_kelas ?? '-' }}
+                                </div>
+                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full mt-1 inline-block
+                                    {{ $anak->status === 'aktif' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500' }}">
+                                    {{ ucfirst($anak->status) }}
+                                </span>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
         {{-- CHARTS --}}
         <div>
@@ -150,12 +161,9 @@
 
     <script>
     (function () {
-
-        // ── Namespace unik per role ──────────────────────────────────────────
-        const CHART_KEY = '_charts_dashboard_walimurid';
+        const CHART_KEY = '_charts_dashboard_waliswa';
         const CHART_IDS = ['chartBulanan', 'chartJenis'];
 
-        // ── Data di-embed saat render ────────────────────────────────────────
         const _bulananData   = @json($charts['bulanan']['data'] ?? []);
         const _bulananLabels = @json($charts['bulanan']['labels'] ?? []);
         const _jenisLabels   = @json($charts['jenis']['labels'] ?? []);
@@ -171,13 +179,10 @@
             dataLabels: { enabled: false },
         };
 
-        // ── Retry counter ────────────────────────────────────────────────────
         let _retryCount = 0;
         const MAX_RETRY = 20;
-
         if (!window[CHART_KEY]) window[CHART_KEY] = [];
 
-        // ── Destroy ──────────────────────────────────────────────────────────
         function destroyCharts() {
             (window[CHART_KEY] || []).forEach(c => { try { c.destroy(); } catch (e) {} });
             window[CHART_KEY] = [];
@@ -187,34 +192,26 @@
             });
         }
 
-        // ── Init ─────────────────────────────────────────────────────────────
         function initCharts() {
             const bulananEl = document.getElementById('chartBulanan');
             const jenisEl   = document.getElementById('chartJenis');
 
             if (!bulananEl || !jenisEl) {
-                if (_retryCount < MAX_RETRY) {
-                    _retryCount++;
-                    setTimeout(initCharts, 100);
-                }
+                if (_retryCount < MAX_RETRY) { _retryCount++; setTimeout(initCharts, 100); }
                 return;
             }
 
             _retryCount = 0;
             destroyCharts();
 
-            // ── Chart 1: Tren Bulanan ───────────────────────────────────────
+            // Chart 1: Tren Bulanan
             const maxBulanan = Math.max(1, ...(_bulananData.length ? _bulananData : [1]));
-
             const c1 = new ApexCharts(bulananEl, {
                 ...baseOpts,
                 series: [{ name: 'Pelanggaran', data: _bulananData }],
                 chart:  { ...baseOpts.chart, type: 'area', height: 280 },
                 colors: [navyColor],
-                fill: {
-                    type: 'gradient',
-                    gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.02, stops: [0, 90, 100] },
-                },
+                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.02, stops: [0, 90, 100] } },
                 stroke:  { curve: 'smooth', width: 2.5 },
                 markers: { size: 5, colors: ['#fff'], strokeColors: [navyColor], strokeWidth: 2.5, hover: { size: 7 } },
                 xaxis: {
@@ -231,7 +228,7 @@
             c1.render();
             window[CHART_KEY].push(c1);
 
-            // ── Chart 2: Jenis Pelanggaran ──────────────────────────────────
+            // Chart 2: Jenis Pelanggaran
             const maxJenis = Math.max(1, ...(_jenisData.length ? _jenisData : [1]));
             const tingkatColors = _jenisTingkat.map(t => {
                 const val = t ? t.toLowerCase() : '';
@@ -277,24 +274,14 @@
             window[CHART_KEY].push(c2);
         }
 
-        // ── Bootstrap ────────────────────────────────────────────────────────
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => setTimeout(initCharts, 80));
         } else {
             setTimeout(initCharts, 80);
         }
 
-        // ── Livewire SPA navigation ──────────────────────────────────────────
-        document.addEventListener('livewire:navigate', function () {
-            destroyCharts();
-            _retryCount = 0;
-        });
-
-        document.addEventListener('livewire:navigated', function () {
-            _retryCount = 0;
-            setTimeout(initCharts, 80);
-        });
-
+        document.addEventListener('livewire:navigate',   function () { destroyCharts(); _retryCount = 0; });
+        document.addEventListener('livewire:navigated',  function () { _retryCount = 0; setTimeout(initCharts, 80); });
     })();
     </script>
 

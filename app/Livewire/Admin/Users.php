@@ -5,7 +5,7 @@ namespace App\Livewire\Admin;
 use App\Models\Pengguna;
 use App\Models\Role;
 use App\Models\WaliKelas;
-use App\Models\WaliMurid;
+use App\Models\WaliSiswa;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
@@ -43,7 +43,6 @@ class Users extends Component
     public function updatingPerPage()    { $this->resetPage(); }
     public function updatingShowTrash()  { $this->resetPage(); }
 
-    // ── Computed: nama role yang dipilih ──
     public function getSelectedRoleNameProperty()
     {
         if ($this->id_role) {
@@ -52,7 +51,6 @@ class Users extends Component
         return null;
     }
 
-    // ── Validasi ──
     protected function rules()
     {
         $rules = [
@@ -75,8 +73,6 @@ class Users extends Component
 
         $roleName = $this->selectedRoleName;
 
-        // Hanya wali_kelas yang butuh NUPTK & jabatan
-        // guru_bk cukup data pengguna saja (seperti admin)
         if ($roleName === 'wali_kelas') {
             $waliKelasId = null;
             if ($this->editingId) {
@@ -99,10 +95,9 @@ class Users extends Component
         return $rules;
     }
 
-    // ── Render ──
     public function render()
     {
-        $query = Pengguna::with('role', 'waliKelas', 'waliMurid');
+        $query = Pengguna::with('role', 'waliKelas', 'waliSiswa');
 
         if ($this->showTrash) {
             $query->onlyTrashed();
@@ -135,24 +130,15 @@ class Users extends Component
         ]);
     }
 
-    // ── Reset form ──
     public function resetForm()
     {
         $this->reset([
-            'editingId',
-            'name',
-            'username',
-            'email',
-            'no_telpon',
-            'id_role',
-            'password',
-            'nuptk',
-            'jabatan',
-            'hubungan',
+            'editingId', 'name', 'username', 'email',
+            'no_telpon', 'id_role', 'password',
+            'nuptk', 'jabatan', 'hubungan',
         ]);
     }
 
-    // ── Simpan / Update ──
     public function save()
     {
         $this->validate();
@@ -180,35 +166,30 @@ class Users extends Component
             $message  = 'Pengguna berhasil ditambahkan!';
         }
 
-        // Hanya wali_kelas yang masuk tabel wali_kelas
-        // guru_bk, admin, dll → hanya di tabel pengguna
         if ($roleName === 'wali_kelas') {
             WaliKelas::updateOrCreate(
                 ['id_pengguna' => $pengguna->id_pengguna],
                 ['nuptk' => $this->nuptk, 'jabatan' => $this->jabatan]
             );
-            $pengguna->waliMurid()->delete();
+            $pengguna->waliSiswa()->delete();
         } elseif ($roleName === 'orang_tua') {
-            WaliMurid::updateOrCreate(
+            WaliSiswa::updateOrCreate(
                 ['id_pengguna' => $pengguna->id_pengguna],
                 ['hubungan' => $this->hubungan]
             );
             $pengguna->waliKelas()->delete();
         } else {
-            // admin, guru_bk, dan role lain:
-            // bersihkan relasi jika sebelumnya pernah punya
             $pengguna->waliKelas()->delete();
-            $pengguna->waliMurid()->delete();
+            $pengguna->waliSiswa()->delete();
         }
 
         $this->resetForm();
         session()->flash('success', $message);
     }
 
-    // ── Edit ──
     public function editUser($id)
     {
-        $u = Pengguna::with(['waliKelas', 'waliMurid'])->findOrFail($id);
+        $u = Pengguna::with(['waliKelas', 'waliSiswa'])->findOrFail($id);
 
         $this->editingId = $id;
         $this->name      = $u->name;
@@ -224,46 +205,42 @@ class Users extends Component
         if ($u->waliKelas) {
             $this->nuptk   = $u->waliKelas->nuptk;
             $this->jabatan = $u->waliKelas->jabatan;
-        } elseif ($u->waliMurid) {
-            $this->hubungan = $u->waliMurid->hubungan;
+        } elseif ($u->waliSiswa) {
+            $this->hubungan = $u->waliSiswa->hubungan;
         }
     }
 
-    // ── Soft Delete ──
     public function deleteUser($id)
     {
         $user = Pengguna::findOrFail($id);
         $user->waliKelas()->delete();
-        $user->waliMurid()->delete();
+        $user->waliSiswa()->delete();
         $user->delete();
         $this->resetForm();
         session()->flash('success', 'Pengguna dipindahkan ke tong sampah.');
     }
 
-    // ── Restore dari trash ──
     public function restoreUser($id)
     {
         Pengguna::onlyTrashed()->findOrFail($id)->restore();
         session()->flash('success', 'Pengguna berhasil dipulihkan.');
     }
 
-    // ── Hapus permanen ──
     public function forceDeleteUser($id)
     {
         $user = Pengguna::onlyTrashed()->findOrFail($id);
         $user->waliKelas()->forceDelete();
-        $user->waliMurid()->forceDelete();
+        $user->waliSiswa()->forceDelete();
         $user->forceDelete();
         session()->flash('success', 'Pengguna dihapus permanen.');
     }
 
-    // ── Kosongkan seluruh trash ──
     public function emptyTrash()
     {
         $trashed = Pengguna::onlyTrashed()->get();
         foreach ($trashed as $user) {
             $user->waliKelas()->forceDelete();
-            $user->waliMurid()->forceDelete();
+            $user->waliSiswa()->forceDelete();
             $user->forceDelete();
         }
         session()->flash('success', 'Tong sampah dikosongkan.');

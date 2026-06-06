@@ -21,10 +21,10 @@ class TemplateImportController extends Controller
             'filename' => 'template_wali_kelas.xlsx',
             'catatan'  => "CATATAN:\n- username_pengguna harus sudah terdaftar di tabel pengguna\n- nuptk & jabatan boleh kosong\n- jabatan contoh: walikelas / guru bk",
         ],
-        'wali_murid' => [
+        'wali_siswa' => [
             'headers'  => ['username_pengguna', 'hubungan'],
             'contoh'   => [['john_doe', 'ayah']],
-            'filename' => 'template_wali_murid.xlsx',
+            'filename' => 'template_wali_siswa.xlsx',
             'catatan'  => "CATATAN:\n- username_pengguna harus sudah terdaftar di tabel pengguna\n- hubungan hanya boleh: ayah / ibu / wali",
         ],
         'kelas' => [
@@ -34,10 +34,10 @@ class TemplateImportController extends Controller
             'catatan'  => "CATATAN:\n- tingkat contoh: X, XI, XII\n- nuptk_walikelas boleh kosong jika belum ada wali kelas\n- jurusan boleh kosong",
         ],
         'siswa' => [
-            'headers'  => ['nama', 'nis', 'status', 'username_walimurid', 'nama_kelas', 'tahun_ajaran'],
+            'headers'  => ['nama', 'nis', 'status', 'username_walisiswa', 'nama_kelas', 'tahun_ajaran'],
             'contoh'   => [['Ahmad Fauzi', '2024001', 'aktif', 'john_doe', 'X TKJ 1', '2024/2025']],
             'filename' => 'template_siswa.xlsx',
-            'catatan'  => "CATATAN:\n- NIS harus unik\n- status default: aktif (boleh kosong)\n- username_walimurid harus sudah terdaftar sebagai wali murid\n- nama_kelas & tahun_ajaran harus sesuai data kelas yang ada",
+            'catatan'  => "CATATAN:\n- NIS harus unik\n- status default: aktif (boleh kosong)\n- username_walisiswa harus sudah terdaftar sebagai wali siswa\n- nama_kelas & tahun_ajaran harus sesuai data kelas yang ada",
         ],
     ];
 

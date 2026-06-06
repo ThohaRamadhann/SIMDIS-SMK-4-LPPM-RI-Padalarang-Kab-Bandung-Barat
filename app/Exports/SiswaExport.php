@@ -38,7 +38,7 @@ class SiswaExport implements
     {
         if ($this->templateOnly) return collect([]);
 
-        $query = Siswa::with(['waliMurid.pengguna', 'kelas']);
+        $query = Siswa::with(['waliSiswa.pengguna', 'kelas']);
 
         if ($this->filterTahunAjaran) {
             $query->whereHas('kelas', fn($q) =>
@@ -57,7 +57,7 @@ class SiswaExport implements
         return [
             'nama',
             'nis',
-            'username_walimurid',
+            'username_walisiswa',
             'nama_kelas',
             'tahun_ajaran',
             'status',
@@ -69,7 +69,7 @@ class SiswaExport implements
         return [
             $row->nama,
             $row->nis,
-            optional(optional($row->waliMurid)->pengguna)->username,
+            optional(optional($row->waliSiswa)->pengguna)->username,
             optional($row->kelas)->nama_kelas,
             optional($row->kelas)->tahun_ajaran,
             $row->status,
@@ -95,7 +95,6 @@ class SiswaExport implements
 
     public function styles(Worksheet $sheet): array
     {
-        // Style header baris 1
         $sheet->getStyle('A1:F1')->applyFromArray([
             'font' => [
                 'bold'  => true,
@@ -119,13 +118,11 @@ class SiswaExport implements
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                // Baris keterangan ditulis SETELAH data
-                // Baris 1 = heading, baris 2..N+1 = data, baris N+2 = keterangan
                 $keteranganRow = $this->totalRows + 2;
 
                 $event->sheet->setCellValue(
                     'A' . $keteranganRow,
-                    '* status: aktif / nonaktif | username_walimurid & nama_kelas harus sudah terdaftar'
+                    '* status: aktif / nonaktif | username_walisiswa & nama_kelas harus sudah terdaftar'
                 );
 
                 $event->sheet->getStyle('A' . $keteranganRow)->applyFromArray([

@@ -21,62 +21,63 @@ Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
 
-
 Route::middleware(['auth'])->group(function () {
 
-    // Rute Pengelolaan Data Dasar (HANYA UNTUK ADMIN)
+    // ── ADMIN ONLY ──────────────────────────────────────────────────────────
     Route::middleware(['role:admin'])->group(function () {
 
-        Route::view('/users', 'admin.users')->name('users');             // pengelolaan akun pengguna
-        Route::view('/siswa', 'admin.siswa')->name('siswa');             // pengelolaan siswa
-        Route::view('/wali-murid', 'admin.walimurid')->name('wali-murid'); // pengelolaan wali murid
-        Route::view('/wali-kelas', 'admin.walikelas')->name('wali-kelas'); // pengelolaan wali kelas
-        Route::view('/kelas', 'admin.kelas')->name('kelas');
+        Route::view('/users',      'admin.users')->name('users');
+        Route::view('/siswa',      'admin.siswa')->name('siswa');
+        Route::view('/wali-siswa', 'admin.walisiswa')->name('wali-siswa'); // sebelumnya: wali-murid
+        Route::view('/wali-kelas', 'admin.walikelas')->name('wali-kelas');
+        Route::view('/kelas',      'admin.kelas')->name('kelas');
 
         // Download template import
         Route::get('/admin/template/{type}', [TemplateImportController::class, 'download'])
             ->name('admin.template.download')
-            ->where('type', 'pengguna|wali_kelas|wali_murid|kelas|siswa');
+            ->where('type', 'pengguna|wali_kelas|wali_siswa|kelas|siswa'); // wali_murid → wali_siswa
     });
 
-    // routes/web.php
-    Route::middleware(['auth', 'guru_bk'])->group(function () {
+    // ── GURU BK ONLY ────────────────────────────────────────────────────────
+    Route::middleware(['role:guru_bk'])->group(function () {
+
         Route::get('/jenis-pelanggaran', function () {
             return view('jenispelanggaran.index');
         })->name('jenis-pelanggaran');
 
-        Route::get('/pelanggaran/create', [PelanggaranController::class, 'create'])->name('pelanggaran.create');
-        Route::post('/pelanggaran', [PelanggaranController::class, 'store'])->name('pelanggaran.store');
+        Route::get('/pelanggaran/create',           [PelanggaranController::class, 'create'])->name('pelanggaran.create');
+        Route::post('/pelanggaran',                 [PelanggaranController::class, 'store'])->name('pelanggaran.store');
         Route::get('/pelanggaran/{pelanggaran}/edit', [PelanggaranController::class, 'edit'])->name('pelanggaran.edit');
-        Route::put('/pelanggaran/{pelanggaran}', [PelanggaranController::class, 'update'])->name('pelanggaran.update');
+        Route::put('/pelanggaran/{pelanggaran}',    [PelanggaranController::class, 'update'])->name('pelanggaran.update');
         Route::delete('/pelanggaran/{pelanggaran}', [PelanggaranController::class, 'destroy'])->name('pelanggaran.destroy');
 
         Volt::route('/pelanggaran/{id}/surat-panggilan', 'surat-panggilan.create')
             ->name('surat-panggilan.create');
 
-        // Cetak PDF (Controller biasa)
         Route::get('/surat-panggilan/{id}/cetak', [SuratPanggilanController::class, 'cetak'])
             ->name('surat-panggilan.cetak');
 
-        Route::middleware(['auth', 'role:guru_bk'])->group(function () {
-            Route::get('/pelanggaran/export-pdf', [ExportPelanggaranController::class, 'export'])
-                ->name('pelanggaran.export');
-        });
+        Route::get('/pelanggaran/export-pdf', [ExportPelanggaranController::class, 'export'])
+            ->name('pelanggaran.export');
     });
-    Route::middleware(['role:guru_bk,wali_kelas,orang_tua'])->group(function () {
+
+    // ── GURU BK + WALI KELAS + WALI SISWA ──────────────────────────────────
+    // wali_siswa menggantikan orang_tua — tetap bisa lihat pelanggaran & monitoring
+    Route::middleware(['role:guru_bk,wali_kelas,wali_siswa'])->group(function () {
         Route::get('/pelanggaran', [PelanggaranController::class, 'index'])->name('pelanggaran.index');
-        Route::get('/monitoring', function () {
+        Route::get('/monitoring',  function () {
             return view('monitoring.index');
         })->name('monitoring.index');
     });
 
+    // ── NOTIFIKASI (semua role login) ───────────────────────────────────────
     Route::prefix('notifikasi')->name('notifikasi.')->group(function () {
-        Route::get('/',              [NotifikasiController::class, 'index'])->name('index');
+        Route::get('/',                   [NotifikasiController::class, 'index'])->name('index');
         Route::post('/{notifikasi}/read', [NotifikasiController::class, 'markAsRead'])->name('read');
-        Route::post('/read-all',     [NotifikasiController::class, 'markAllRead'])->name('read-all');
+        Route::post('/read-all',          [NotifikasiController::class, 'markAllRead'])->name('read-all');
     });
 
-    // Log Aktivitas — semua role yang sudah login
+    // ── LOG AKTIVITAS (semua role login) ────────────────────────────────────
     Volt::route('/log-aktivitas', 'log.log-aktivitas')
         ->middleware(['auth'])
         ->name('log.aktivitas');

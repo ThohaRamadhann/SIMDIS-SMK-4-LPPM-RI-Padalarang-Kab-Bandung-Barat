@@ -10,7 +10,7 @@ return new class extends Migration {
         Schema::create('siswa', function (Blueprint $table) {
             $table->id('id_siswa');
 
-            $table->unsignedBigInteger('id_walimurid');
+            $table->unsignedBigInteger('id_walisiswa');
             $table->unsignedBigInteger('id_kelas');
 
             $table->string('nama');
@@ -19,9 +19,9 @@ return new class extends Migration {
 
             $table->timestamps();
 
-            $table->foreign('id_walimurid')
-                ->references('id_walimurid')
-                ->on('wali_murid')
+            $table->foreign('id_walisiswa')
+                ->references('id_walisiswa')
+                ->on('wali_siswa')
                 ->cascadeOnDelete();
 
             $table->foreign('id_kelas')

@@ -3,7 +3,7 @@
 namespace App\Imports;
 
 use App\Models\Pengguna;
-use App\Models\WaliMurid;
+use App\Models\WaliSiswa;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -11,7 +11,7 @@ use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 
-class WaliMuridImport implements
+class WaliSiswaImport implements
     ToCollection,
     WithHeadingRow,
     WithValidation,
@@ -32,13 +32,13 @@ class WaliMuridImport implements
                 continue;
             }
 
-            $alreadyWaliMurid = WaliMurid::where('id_pengguna', $pengguna->id_pengguna)->exists();
-            if ($alreadyWaliMurid) {
-                $this->errors[] = "Baris " . ($index + 2) . ": Pengguna '{$row['username_pengguna']}' sudah terdaftar sebagai wali murid.";
+            $alreadyWaliSiswa = WaliSiswa::where('id_pengguna', $pengguna->id_pengguna)->exists();
+            if ($alreadyWaliSiswa) {
+                $this->errors[] = "Baris " . ($index + 2) . ": Pengguna '{$row['username_pengguna']}' sudah terdaftar sebagai wali siswa.";
                 continue;
             }
 
-            WaliMurid::create([
+            WaliSiswa::create([
                 'id_pengguna' => $pengguna->id_pengguna,
                 'hubungan'    => $row['hubungan'],
             ]);

@@ -7,7 +7,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 use App\Exports\PenggunaExport;
 use App\Exports\WaliKelasExport;
-use App\Exports\WaliMuridExport;
+use App\Exports\WaliSiswaExport;
 use App\Exports\KelasExport;
 use App\Exports\SiswaExport;
 
@@ -36,7 +36,7 @@ class ExportData extends Component
         return match ($this->type) {
             'pengguna'   => new PenggunaExport($isTemplate),
             'wali_kelas' => new WaliKelasExport($isTemplate),
-            'wali_murid' => new WaliMuridExport($isTemplate),
+            'wali_siswa' => new WaliSiswaExport($isTemplate),
             'kelas'      => new KelasExport($isTemplate),
             'siswa'      => new SiswaExport($isTemplate),
             default      => null,
@@ -48,7 +48,7 @@ class ExportData extends Component
         $label = match ($this->type) {
             'pengguna'   => 'pengguna',
             'wali_kelas' => 'wali-kelas',
-            'wali_murid' => 'wali-murid',
+            'wali_siswa' => 'wali-siswa',
             'kelas'      => 'kelas',
             'siswa'      => 'siswa',
             default      => 'data',

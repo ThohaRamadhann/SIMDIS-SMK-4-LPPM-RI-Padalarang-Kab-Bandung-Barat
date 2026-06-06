@@ -7,11 +7,12 @@ use App\Models\Pengguna;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class WaliMurid extends Model
+class WaliSiswa extends Model
 {
     use SoftDeletes;
-    protected $table = 'wali_murid';
-    protected $primaryKey = 'id_walimurid';
+
+    protected $table = 'wali_siswa';
+    protected $primaryKey = 'id_walisiswa';
 
     protected $fillable = [
         'id_pengguna',
@@ -25,6 +26,6 @@ class WaliMurid extends Model
 
     public function siswa()
     {
-        return $this->hasMany(Siswa::class, 'id_walimurid');
+        return $this->hasMany(Siswa::class, 'id_walisiswa');
     }
 }

@@ -28,11 +28,11 @@ class Index extends Component
     public string $modalCatatan    = '';
 
     // ── FILTER ──────────────────────────────────────────────────────────
-    public $search          = '';
-    public $filterJenis     = '';
-    public $filterTingkat   = '';
-    public $filterStatus    = '';
-    public $filterWaliKelas = '';
+    public $search            = '';
+    public $filterJenis       = '';
+    public $filterTingkat     = '';
+    public $filterStatus      = '';
+    public $filterWaliKelas   = '';
     public $filterTahunAjaran = '';
 
     // ── SORT & PAGINATION ────────────────────────────────────────────────
@@ -43,55 +43,25 @@ class Index extends Component
     public $showTrash = false;
 
     protected $queryString = [
-        'search' => ['except' => ''],
-        'sortBy' => ['except' => 'terbaru'],
-        'filterTahunAjaran' => ['except' => ''], 
+        'search'            => ['except' => ''],
+        'sortBy'            => ['except' => 'terbaru'],
+        'filterTahunAjaran' => ['except' => ''],
     ];
 
-    public function updatingSearch()
-    {
-        $this->resetPage();
-    }
-    public function updatingFilterJenis()
-    {
-        $this->resetPage();
-    }
-    public function updatingFilterTingkat()
-    {
-        $this->resetPage();
-    }
-    public function updatingFilterStatus()
-    {
-        $this->resetPage();
-    }
-    public function updatingFilterWaliKelas()
-    {
-        $this->resetPage();
-    }
-    public function updatingFilterTahunAjaran() 
-    { 
-        $this->resetPage(); 
-    }
-    public function updatingSortBy()
-    {
-        $this->resetPage();
-    }
-    public function updatingPerPage()
-    {
-        $this->resetPage();
-    }
-    public function updatingShowTrash()
-    {
-        $this->resetPage();
-    }
+    public function updatingSearch()            { $this->resetPage(); }
+    public function updatingFilterJenis()       { $this->resetPage(); }
+    public function updatingFilterTingkat()     { $this->resetPage(); }
+    public function updatingFilterStatus()      { $this->resetPage(); }
+    public function updatingFilterWaliKelas()   { $this->resetPage(); }
+    public function updatingFilterTahunAjaran() { $this->resetPage(); }
+    public function updatingSortBy()            { $this->resetPage(); }
+    public function updatingPerPage()           { $this->resetPage(); }
+    public function updatingShowTrash()         { $this->resetPage(); }
 
-    // ── HAPUS (SOFT DELETE) ──────────────────────────────────────────────
     public function hapus($id): void
     {
         $this->cekAkses(['admin', 'guru_bk']);
-
         $pelanggaran = Pelanggaran::with(['siswa', 'jenisPelanggaran'])->findOrFail($id);
-
         LogAktivitas::catat(
             aksi: 'hapus_pelanggaran',
             modul: 'pelanggaran',
@@ -99,18 +69,14 @@ class Index extends Component
                 . ' - ' . $pelanggaran->jenisPelanggaran->nama_pelanggaran . ' ke tong sampah',
             idReferensi: $id
         );
-
         $pelanggaran->delete();
         session()->flash('success', 'Data dipindahkan ke sampah.');
     }
 
-    // ── RESTORE ──────────────────────────────────────────────────────────
     public function restore($id): void
     {
         $this->cekAkses(['admin', 'guru_bk']);
-
         $pelanggaran = Pelanggaran::onlyTrashed()->with(['siswa', 'jenisPelanggaran'])->findOrFail($id);
-
         LogAktivitas::catat(
             aksi: 'restore_pelanggaran',
             modul: 'pelanggaran',
@@ -118,18 +84,14 @@ class Index extends Component
                 . ' - ' . $pelanggaran->jenisPelanggaran->nama_pelanggaran . ' dari tong sampah',
             idReferensi: $id
         );
-
         $pelanggaran->restore();
         session()->flash('success', 'Data berhasil dipulihkan.');
     }
 
-    // ── FORCE DELETE ─────────────────────────────────────────────────────
     public function forceDelete($id): void
     {
         $this->cekAkses(['admin', 'guru_bk']);
-
         $pelanggaran = Pelanggaran::onlyTrashed()->with(['siswa', 'jenisPelanggaran'])->findOrFail($id);
-
         LogAktivitas::catat(
             aksi: 'hapus_permanen_pelanggaran',
             modul: 'pelanggaran',
@@ -137,41 +99,32 @@ class Index extends Component
                 . ' - ' . $pelanggaran->jenisPelanggaran->nama_pelanggaran,
             idReferensi: $id
         );
-
         $pelanggaran->forceDelete();
         session()->flash('success', 'Data dihapus permanen.');
     }
 
-    // ── EMPTY TRASH ──────────────────────────────────────────────────────
     public function emptyTrash(): void
     {
         $this->cekAkses(['admin', 'guru_bk']);
-
         LogAktivitas::catat(
             aksi: 'kosongkan_sampah_pelanggaran',
             modul: 'pelanggaran',
             keterangan: 'Mengosongkan seluruh tong sampah pelanggaran',
         );
-
         Pelanggaran::onlyTrashed()->forceDelete();
         session()->flash('success', 'Tong sampah dikosongkan.');
     }
 
-    // ── BUKA MODAL STATUS ────────────────────────────────────────────────
     public function bukaModalStatus($id): void
     {
         $this->cekAkses(['guru_bk', 'wali_kelas']);
-
         $data = Pelanggaran::with('siswa')->findOrFail($id);
-
         $this->modalId     = $data->id_pelanggaran;
         $this->modalSiswa  = optional($data->siswa)->nama ?? '-';
         $this->modalStatus = $data->status_pembinaan ?? 'Belum Ditindak';
-
         $this->modalTanggal = $data->tanggal_pembinaan
             ? \Carbon\Carbon::parse($data->tanggal_pembinaan)->format('Y-m-d')
             : '';
-
         $jamRaw = $data->getRawOriginal('jam_pembinaan');
         if ($jamRaw) {
             [$this->modalJamHour, $this->modalJamMinute] = explode(':', substr($jamRaw, 0, 5));
@@ -179,13 +132,11 @@ class Index extends Component
             $this->modalJamHour   = '';
             $this->modalJamMinute = '';
         }
-
         $this->modalCatatan    = $data->catatan_bk ?? '';
         $this->showModalStatus = true;
         $this->resetErrorBag();
     }
 
-    // ── TUTUP MODAL ──────────────────────────────────────────────────────
     public function tutupModalStatus(): void
     {
         $this->showModalStatus = false;
@@ -199,7 +150,6 @@ class Index extends Component
         $this->resetErrorBag();
     }
 
-    // ── SIMPAN STATUS ────────────────────────────────────────────────────
     public function simpanStatus(): void
     {
         $this->cekAkses(['guru_bk', 'wali_kelas']);
@@ -215,7 +165,6 @@ class Index extends Component
             $rules['modalJamHour']   = 'nullable';
             $rules['modalJamMinute'] = 'nullable';
             $rules['modalCatatan']   = 'nullable|string|max:1000';
-
             $messages['modalTanggal.required'] = 'Tanggal pembinaan wajib diisi saat status Dalam Proses.';
             $messages['modalTanggal.date']     = 'Format tanggal tidak valid.';
             $messages['modalCatatan.max']      = 'Catatan maksimal 1000 karakter.';
@@ -226,7 +175,6 @@ class Index extends Component
             $rules['modalJamHour']   = 'required';
             $rules['modalJamMinute'] = 'required';
             $rules['modalCatatan']   = 'required|string|min:10|max:1000';
-
             $messages['modalTanggal.required']   = 'Tanggal pembinaan wajib diisi untuk status Selesai.';
             $messages['modalTanggal.date']       = 'Format tanggal tidak valid.';
             $messages['modalJamHour.required']   = 'Jam pembinaan wajib dipilih untuk status Selesai.';
@@ -244,7 +192,6 @@ class Index extends Component
         }
 
         $pelanggaran = Pelanggaran::with('siswa')->findOrFail($this->modalId);
-
         $pelanggaran->update([
             'status_pembinaan'  => $this->modalStatus,
             'tanggal_pembinaan' => $this->modalTanggal ?: null,
@@ -265,7 +212,6 @@ class Index extends Component
         $this->tutupModalStatus();
     }
 
-    // ─────────────────────────────────────────────────────────────────────
     private function perluPanggilOrtu(string $tingkat, int $total): bool
     {
         return match ($tingkat) {
@@ -276,7 +222,6 @@ class Index extends Component
         };
     }
 
-    // ── HELPER: label tooltip untuk tombol surat ─────────────────────────
     private function labelSurat(string $tingkat, int $total): string
     {
         return match ($tingkat) {
@@ -287,7 +232,6 @@ class Index extends Component
         };
     }
 
-    // ── HELPER: cek akses role ────────────────────────────────────────────
     private function cekAkses(array $roles): void
     {
         $role = optional(Auth::user()->role)->nama_role;
@@ -296,7 +240,6 @@ class Index extends Component
         }
     }
 
-    // ── RENDER ───────────────────────────────────────────────────────────
     public function render()
     {
         $user = Auth::user();
@@ -308,12 +251,11 @@ class Index extends Component
             'jenisPelanggaran',
         ]);
 
-        // Scope berdasarkan role
         if ($role === 'wali_kelas') {
             $query->where('id_walikelas', optional($user->waliKelas)->id_walikelas);
         } elseif ($role === 'orang_tua') {
             $query->whereHas('siswa', function ($q) use ($user) {
-                $q->where('id_walimurid', optional($user->waliMurid)->id_walimurid);
+                $q->where('id_walisiswa', optional($user->waliSiswa)->id_walisiswa);
             });
         }
 
@@ -355,55 +297,32 @@ class Index extends Component
         match ($this->sortBy) {
             'terlama' => $query->orderBy('created_at', 'asc'),
             'az'      => $query->join('siswa', 'pelanggaran.id_siswa', '=', 'siswa.id_siswa')
-                ->orderBy('siswa.nama', 'asc')
-                ->select('pelanggaran.*'),
+                ->orderBy('siswa.nama', 'asc')->select('pelanggaran.*'),
             'za'      => $query->join('siswa', 'pelanggaran.id_siswa', '=', 'siswa.id_siswa')
-                ->orderBy('siswa.nama', 'desc')
-                ->select('pelanggaran.*'),
+                ->orderBy('siswa.nama', 'desc')->select('pelanggaran.*'),
             default   => $query->orderBy('created_at', 'desc'),
         };
 
         $pelanggarans = $query->paginate($this->perPage);
 
-        // ── Hitung akumulasi per siswa per tingkat (hanya halaman ini) ────
-        //
-        // Kenapa tidak pakai getCollection()->groupBy()?
-        // → Karena paginate() hanya membawa data halaman aktif.
-        //   Akumulasi harus dari SEMUA pelanggaran siswa tersebut,
-        //   bukan hanya yang tampil di halaman ini.
-        //   Maka kita query ulang dengan filter id_siswa saja.
-        //
         $siswaIds = $pelanggarans->getCollection()
-            ->pluck('id_siswa')
-            ->unique()
-            ->values()
-            ->all();
+            ->pluck('id_siswa')->unique()->values()->all();
 
-        // Satu query agregat — jauh lebih efisien daripada N+1
         $rawCounts = Pelanggaran::whereIn('id_siswa', $siswaIds)
-            ->join(
-                'jenis_pelanggaran',
-                'pelanggaran.id_jenispelanggaran',
-                '=',
-                'jenis_pelanggaran.id_jenispelanggaran'
-            )
+            ->join('jenis_pelanggaran', 'pelanggaran.id_jenispelanggaran', '=', 'jenis_pelanggaran.id_jenispelanggaran')
             ->selectRaw('pelanggaran.id_siswa, jenis_pelanggaran.tingkat_pelanggaran, COUNT(*) as total')
             ->groupBy('pelanggaran.id_siswa', 'jenis_pelanggaran.tingkat_pelanggaran')
             ->get();
 
-        // [id_siswa][tingkat] = total  (misal: [5]['Sedang'] = 4)
         $akumulasi = [];
         foreach ($rawCounts as $row) {
             $akumulasi[$row->id_siswa][$row->tingkat_pelanggaran] = (int) $row->total;
         }
 
-        // ── Flag surat per baris ──────────────────────────────────────────
-        // [id_pelanggaran] => ['perlu' => bool, 'label' => string, 'total' => int]
         $flagSurat = [];
         foreach ($pelanggarans->getCollection() as $p) {
             $tingkat = $p->jenisPelanggaran->tingkat_pelanggaran ?? '';
             $total   = $akumulasi[$p->id_siswa][$tingkat] ?? 0;
-
             $flagSurat[$p->id_pelanggaran] = [
                 'perlu' => $this->perluPanggilOrtu($tingkat, $total),
                 'label' => $this->labelSurat($tingkat, $total),
@@ -412,17 +331,15 @@ class Index extends Component
         }
 
         return view('livewire.pelanggaran.index', [
-            'pelanggarans'  => $pelanggarans,
-            'waliKelasList' => WaliKelas::with('pengguna')->get(),
-            'jenisList'     => JenisPelanggaran::orderBy('nama_pelanggaran')->get(),
-            'trashCount'    => Pelanggaran::onlyTrashed()->count(),
-            'role'          => $role,
-            'akumulasi'     => $akumulasi,   // [id_siswa][tingkat] = total
-            'flagSurat'     => $flagSurat,   // [id_pelanggaran] = ['perlu','label','total']
-            'tahunAjaranList' => \App\Models\Kelas::select('tahun_ajaran')  // ← tambah ini
-                            ->distinct()
-                            ->orderByDesc('tahun_ajaran')
-                            ->pluck('tahun_ajaran'),
+            'pelanggarans'    => $pelanggarans,
+            'waliKelasList'   => WaliKelas::with('pengguna')->get(),
+            'jenisList'       => JenisPelanggaran::orderBy('nama_pelanggaran')->get(),
+            'trashCount'      => Pelanggaran::onlyTrashed()->count(),
+            'role'            => $role,
+            'akumulasi'       => $akumulasi,
+            'flagSurat'       => $flagSurat,
+            'tahunAjaranList' => \App\Models\Kelas::select('tahun_ajaran')
+                                ->distinct()->orderByDesc('tahun_ajaran')->pluck('tahun_ajaran'),
         ]);
     }
 }

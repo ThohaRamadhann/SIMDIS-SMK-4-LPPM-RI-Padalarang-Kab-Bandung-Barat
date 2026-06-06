@@ -220,17 +220,44 @@
             color: #fff;
         }
 
-        .tipe-warning .kelengkapan-icon-wrap { background: #fff8e1; }
-        .tipe-warning .kelengkapan-badge     { background: #fff8e1; color: #b7791f; }
-        .tipe-warning .kelengkapan-header    { border-left: 4px solid #F5B800; }
+        .tipe-warning .kelengkapan-icon-wrap {
+            background: #fff8e1;
+        }
 
-        .tipe-danger .kelengkapan-icon-wrap  { background: #fff0f0; }
-        .tipe-danger .kelengkapan-badge      { background: #fff0f0; color: #c53030; }
-        .tipe-danger .kelengkapan-header     { border-left: 4px solid #fc8181; }
+        .tipe-warning .kelengkapan-badge {
+            background: #fff8e1;
+            color: #b7791f;
+        }
 
-        .tipe-info .kelengkapan-icon-wrap    { background: #ebf8ff; }
-        .tipe-info .kelengkapan-badge        { background: #ebf8ff; color: #2b6cb0; }
-        .tipe-info .kelengkapan-header       { border-left: 4px solid #63b3ed; }
+        .tipe-warning .kelengkapan-header {
+            border-left: 4px solid #F5B800;
+        }
+
+        .tipe-danger .kelengkapan-icon-wrap {
+            background: #fff0f0;
+        }
+
+        .tipe-danger .kelengkapan-badge {
+            background: #fff0f0;
+            color: #c53030;
+        }
+
+        .tipe-danger .kelengkapan-header {
+            border-left: 4px solid #fc8181;
+        }
+
+        .tipe-info .kelengkapan-icon-wrap {
+            background: #ebf8ff;
+        }
+
+        .tipe-info .kelengkapan-badge {
+            background: #ebf8ff;
+            color: #2b6cb0;
+        }
+
+        .tipe-info .kelengkapan-header {
+            border-left: 4px solid #63b3ed;
+        }
 
         .kelengkapan-ok {
             background: #fff;
@@ -248,6 +275,7 @@
             flex-wrap: wrap;
             margin-bottom: 12px;
         }
+
         .grouped-legend-item {
             display: flex;
             align-items: center;
@@ -255,6 +283,7 @@
             font-size: 0.72rem;
             color: #4A5E8A;
         }
+
         .grouped-legend-dot {
             width: 10px;
             height: 10px;
@@ -311,9 +340,9 @@
                 <div class="dash-card">
                     <div class="dash-card-icon" style="background:#fff5e6">👨‍👩‍👧</div>
                     <div>
-                        <div class="dash-card-label">Total Wali Murid</div>
-                        <div class="dash-card-value">{{ $stats['total_walimurid'] }}</div>
-                        <div class="dash-card-sub">orang tua terdaftar</div>
+                        <div class="dash-card-label">Total Wali Siswa</div>
+                        <div class="dash-card-value">{{ $stats['total_walisiswa'] }}</div>
+                        <div class="dash-card-sub">Wali Siswa terdaftar</div>
                     </div>
                 </div>
 
@@ -364,7 +393,8 @@
                                     <div class="kelengkapan-item">{{ $baris }}</div>
                                 @endforeach
                                 @if ($item['ada_lagi'] > 0)
-                                    <p class="kelengkapan-more">+ {{ $item['ada_lagi'] }} data lainnya tidak ditampilkan</p>
+                                    <p class="kelengkapan-more">+ {{ $item['ada_lagi'] }} data lainnya tidak
+                                        ditampilkan</p>
                                 @endif
                                 <a href="{{ $item['link'] }}" class="kelengkapan-link">Kelola Data →</a>
                             </div>
@@ -375,7 +405,8 @@
                 <div class="kelengkapan-ok">
                     <div style="font-size:2.5rem;margin-bottom:.5rem">✅</div>
                     <p style="font-weight:700;color:#276749;font-size:.9rem">Semua Data Sudah Lengkap</p>
-                    <p style="font-size:.75rem;color:#718096;margin-top:.25rem">Tidak ada data yang bermasalah saat ini.</p>
+                    <p style="font-size:.75rem;color:#718096;margin-top:.25rem">Tidak ada data yang bermasalah saat ini.
+                    </p>
                 </div>
             @endif
         </div>
@@ -419,8 +450,7 @@
                         </div>
 
                         <div id="chartSiswaPerKelasWrap" style="position:relative;width:100%;">
-                            <canvas id="chartSiswaPerKelas"
-                                role="img"
+                            <canvas id="chartSiswaPerKelas" role="img"
                                 aria-label="Grouped bar chart distribusi siswa per jurusan untuk kelas X, XI, dan XII">
                             </canvas>
                         </div>
@@ -434,21 +464,21 @@
     </div>
 
     <script>
-        (function () {
+        (function() {
 
             /* ── ApexCharts instances (chart 1 & 2) ── */
-            const APEX_KEY  = '_charts_dashboard_admin';
-            const APEX_IDS  = ['chartPenggunaBulanan', 'chartSiswaTingkat'];
+            const APEX_KEY = '_charts_dashboard_admin';
+            const APEX_IDS = ['chartPenggunaBulanan', 'chartSiswaTingkat'];
 
             /* ── Chart.js instance (chart 3) ── */
             let _chartjsInstance = null;
 
-            const _penggunaData  = @json($charts['pengguna_bulanan']['data']);
+            const _penggunaData = @json($charts['pengguna_bulanan']['data']);
             const _penggunaLabel = @json($charts['pengguna_bulanan']['labels']);
-            const _tingkatData   = @json($charts['siswa_per_tingkat']['data']);
-            const _tingkatLabel  = @json($charts['siswa_per_tingkat']['labels']);
-            const _kelasData     = @json($charts['siswa_per_kelas']['data']);
-            const _kelasLabel    = @json($charts['siswa_per_kelas']['labels']);
+            const _tingkatData = @json($charts['siswa_per_tingkat']['data']);
+            const _tingkatLabel = @json($charts['siswa_per_tingkat']['labels']);
+            const _kelasData = @json($charts['siswa_per_kelas']['data']);
+            const _kelasLabel = @json($charts['siswa_per_kelas']['labels']);
 
             const navyColor = '#0D2D6B';
             const goldColor = '#F5B800';
@@ -456,10 +486,22 @@
             const gridColor = '#f0f4fb';
 
             const baseOpts = {
-                chart: { toolbar: { show: false }, fontFamily: 'inherit' },
-                grid:  { borderColor: gridColor, strokeDashArray: 4 },
-                tooltip: { theme: 'light' },
-                dataLabels: { enabled: false },
+                chart: {
+                    toolbar: {
+                        show: false
+                    },
+                    fontFamily: 'inherit'
+                },
+                grid: {
+                    borderColor: gridColor,
+                    strokeDashArray: 4
+                },
+                tooltip: {
+                    theme: 'light'
+                },
+                dataLabels: {
+                    enabled: false
+                },
             };
 
             let _retryCount = 0;
@@ -471,7 +513,11 @@
                Destroy all charts
             ───────────────────────────────────────── */
             function destroyCharts() {
-                (window[APEX_KEY] || []).forEach(c => { try { c.destroy(); } catch (e) {} });
+                (window[APEX_KEY] || []).forEach(c => {
+                    try {
+                        c.destroy();
+                    } catch (e) {}
+                });
                 window[APEX_KEY] = [];
 
                 APEX_IDS.forEach(id => {
@@ -480,7 +526,9 @@
                 });
 
                 if (_chartjsInstance) {
-                    try { _chartjsInstance.destroy(); } catch (e) {}
+                    try {
+                        _chartjsInstance.destroy();
+                    } catch (e) {}
                     _chartjsInstance = null;
                 }
 
@@ -507,7 +555,7 @@
                     const match = label.match(/^(XII|XI|X)\s+(.+)$/i);
                     if (!match) return;
 
-                    const tingkat  = match[1].toUpperCase();
+                    const tingkat = match[1].toUpperCase();
                     const fullName = match[2].trim();
 
                     /* Shorten long names: keep up to first 14 chars, strip trailing word */
@@ -516,19 +564,28 @@
                         shortName = shortName.substring(0, 13).replace(/\s\S*$/, '') + '…';
                     }
 
-                    if (!grouped[shortName]) grouped[shortName] = { X: 0, XI: 0, XII: 0 };
+                    if (!grouped[shortName]) grouped[shortName] = {
+                        X: 0,
+                        XI: 0,
+                        XII: 0
+                    };
 
-                    if (tingkat === 'X')   grouped[shortName].X   = _kelasData[i];
-                    else if (tingkat === 'XI')  grouped[shortName].XI  = _kelasData[i];
+                    if (tingkat === 'X') grouped[shortName].X = _kelasData[i];
+                    else if (tingkat === 'XI') grouped[shortName].XI = _kelasData[i];
                     else if (tingkat === 'XII') grouped[shortName].XII = _kelasData[i];
                 });
 
-                const labels  = Object.keys(grouped);
-                const dataX   = labels.map(k => grouped[k].X);
-                const dataXI  = labels.map(k => grouped[k].XI);
+                const labels = Object.keys(grouped);
+                const dataX = labels.map(k => grouped[k].X);
+                const dataXI = labels.map(k => grouped[k].XI);
                 const dataXII = labels.map(k => grouped[k].XII);
 
-                return { labels, dataX, dataXI, dataXII };
+                return {
+                    labels,
+                    dataX,
+                    dataXI,
+                    dataXII
+                };
             }
 
             /* ─────────────────────────────────────────
@@ -536,14 +593,20 @@
             ───────────────────────────────────────── */
             function initCharts() {
                 if (typeof ApexCharts === 'undefined' || typeof Chart === 'undefined') {
-                    if (_retryCount < MAX_RETRY) { _retryCount++; setTimeout(initCharts, 100); }
+                    if (_retryCount < MAX_RETRY) {
+                        _retryCount++;
+                        setTimeout(initCharts, 100);
+                    }
                     return;
                 }
 
                 const allIds = [...APEX_IDS, 'chartSiswaPerKelas'];
                 const missing = allIds.some(id => !document.getElementById(id));
                 if (missing) {
-                    if (_retryCount < MAX_RETRY) { _retryCount++; setTimeout(initCharts, 100); }
+                    if (_retryCount < MAX_RETRY) {
+                        _retryCount++;
+                        setTimeout(initCharts, 100);
+                    }
                     return;
                 }
 
@@ -553,40 +616,67 @@
                 /* ── Chart 1: Pertumbuhan Pengguna (ApexCharts Bar) ── */
                 const c1 = new ApexCharts(document.getElementById('chartPenggunaBulanan'), {
                     ...baseOpts,
-                    series: [{ name: 'Pengguna Baru', data: _penggunaData }],
-                    chart: { ...baseOpts.chart, type: 'bar', height: 300 },
+                    series: [{
+                        name: 'Pengguna Baru',
+                        data: _penggunaData
+                    }],
+                    chart: {
+                        ...baseOpts.chart,
+                        type: 'bar',
+                        height: 300
+                    },
                     colors: [navyColor],
                     plotOptions: {
                         bar: {
                             borderRadius: 6,
                             columnWidth: '50%',
-                            dataLabels: { position: 'top' },
+                            dataLabels: {
+                                position: 'top'
+                            },
                         },
                     },
                     dataLabels: {
                         enabled: true,
                         offsetY: -18,
-                        style: { fontSize: '11px', fontWeight: 700, colors: [navyColor] },
+                        style: {
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            colors: [navyColor]
+                        },
                         formatter: v => v > 0 ? v : '',
                     },
                     xaxis: {
                         categories: _penggunaLabel,
-                        labels: { style: { fontSize: '11px', colors: '#718096' } },
-                        axisBorder: { show: false },
-                        axisTicks: { show: false },
+                        labels: {
+                            style: {
+                                fontSize: '11px',
+                                colors: '#718096'
+                            }
+                        },
+                        axisBorder: {
+                            show: false
+                        },
+                        axisTicks: {
+                            show: false
+                        },
                     },
                     yaxis: {
                         min: 0,
                         max: Math.max(..._penggunaData, 1) + 10,
                         tickAmount: 5,
                         labels: {
-                            style: { fontSize: '11px', colors: '#718096' },
+                            style: {
+                                fontSize: '11px',
+                                colors: '#718096'
+                            },
                             formatter: v => Math.round(v),
                         },
                     },
                     tooltip: {
                         theme: 'light',
-                        y: { formatter: v => v + ' pengguna' },
+                        y: {
+                            formatter: v => v + ' pengguna'
+                        },
                     },
                 });
                 c1.render();
@@ -597,13 +687,21 @@
                 const c2 = new ApexCharts(document.getElementById('chartSiswaTingkat'), {
                     ...baseOpts,
                     series: _tingkatData,
-                    chart: { ...baseOpts.chart, type: 'donut', height: 280 },
+                    chart: {
+                        ...baseOpts.chart,
+                        type: 'donut',
+                        height: 280
+                    },
                     colors: [navyColor, goldColor, blueColor],
                     labels: _tingkatLabel.map((l, i) => 'Kelas ' + l + ' (' + _tingkatData[i] + ' siswa)'),
                     legend: {
                         position: 'bottom',
                         fontSize: '12px',
-                        markers: { width: 10, height: 10, radius: 5 },
+                        markers: {
+                            width: 10,
+                            height: 10,
+                            radius: 5
+                        },
                     },
                     plotOptions: {
                         pie: {
@@ -632,19 +730,31 @@
                     dataLabels: {
                         enabled: true,
                         formatter: val => Math.round(val) + '%',
-                        style: { fontSize: '11px', fontWeight: 700 },
-                        dropShadow: { enabled: false },
+                        style: {
+                            fontSize: '11px',
+                            fontWeight: 700
+                        },
+                        dropShadow: {
+                            enabled: false
+                        },
                     },
                     tooltip: {
                         theme: 'light',
-                        y: { formatter: v => v + ' siswa' },
+                        y: {
+                            formatter: v => v + ' siswa'
+                        },
                     },
                 });
                 c2.render();
                 window[APEX_KEY].push(c2);
 
                 /* ── Chart 3: Distribusi Siswa per Kelas (Chart.js Grouped Bar) ── */
-                const { labels, dataX, dataXI, dataXII } = buildGroupedData();
+                const {
+                    labels,
+                    dataX,
+                    dataXI,
+                    dataXII
+                } = buildGroupedData();
                 const maxVal = Math.max(...dataX, ...dataXI, ...dataXII, 1) + 2;
 
                 /* Responsive height: at least 280px, grow with number of jurusan */
@@ -655,8 +765,7 @@
                     type: 'bar',
                     data: {
                         labels: labels,
-                        datasets: [
-                            {
+                        datasets: [{
                                 label: 'Kelas X',
                                 data: dataX,
                                 backgroundColor: navyColor,
@@ -683,7 +792,9 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: { display: false },
+                            legend: {
+                                display: false
+                            },
                             tooltip: {
                                 callbacks: {
                                     label: ctx => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y + ' siswa',
@@ -692,26 +803,38 @@
                         },
                         scales: {
                             x: {
-                                grid: { display: false },
+                                grid: {
+                                    display: false
+                                },
                                 ticks: {
-                                    font: { size: 10 },
+                                    font: {
+                                        size: 10
+                                    },
                                     color: '#718096',
                                     autoSkip: false,
                                     maxRotation: 30,
                                 },
-                                border: { display: false },
+                                border: {
+                                    display: false
+                                },
                             },
                             y: {
                                 beginAtZero: true,
                                 max: maxVal,
                                 ticks: {
                                     stepSize: 1,
-                                    font: { size: 11 },
+                                    font: {
+                                        size: 11
+                                    },
                                     color: '#718096',
                                     callback: v => Number.isInteger(v) ? v : '',
                                 },
-                                grid: { color: gridColor },
-                                border: { display: false },
+                                grid: {
+                                    color: gridColor
+                                },
+                                border: {
+                                    display: false
+                                },
                             },
                         },
                         barPercentage: 0.85,
@@ -724,7 +847,7 @@
             /* ─────────────────────────────────────────
                Toggle kelengkapan accordion
             ───────────────────────────────────────── */
-            window.toggleKelengkapan = function (i) {
+            window.toggleKelengkapan = function(i) {
                 const card = document.getElementById('card-' + i);
                 if (card) card.classList.toggle('open');
             };
@@ -738,8 +861,14 @@
                 setTimeout(initCharts, 150);
             }
 
-            document.addEventListener('livewire:navigate',   function () { destroyCharts(); _retryCount = 0; });
-            document.addEventListener('livewire:navigated',  function () { _retryCount = 0; setTimeout(initCharts, 200); });
+            document.addEventListener('livewire:navigate', function() {
+                destroyCharts();
+                _retryCount = 0;
+            });
+            document.addEventListener('livewire:navigated', function() {
+                _retryCount = 0;
+                setTimeout(initCharts, 200);
+            });
 
         })();
     </script>

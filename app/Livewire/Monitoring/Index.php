@@ -15,33 +15,19 @@ class Index extends Component
 
     protected $paginationTheme = 'tailwind';
 
-    // Filter
     public $search       = '';
     public $filterKelas  = '';
     public $filterStatus = '';
     public $perPage      = 10;
 
-    // Modal Detail
     public $showModal    = false;
     public $modalSiswa   = null;
     public $modalRiwayat = [];
 
-    public function updatingSearch()
-    {
-        $this->resetPage();
-    }
-    public function updatingFilterKelas()
-    {
-        $this->resetPage();
-    }
-    public function updatingFilterStatus()
-    {
-        $this->resetPage();
-    }
-    public function updatingPerPage()
-    {
-        $this->resetPage();
-    }
+    public function updatingSearch()      { $this->resetPage(); }
+    public function updatingFilterKelas() { $this->resetPage(); }
+    public function updatingFilterStatus(){ $this->resetPage(); }
+    public function updatingPerPage()     { $this->resetPage(); }
 
     public static function hitungStatus(Siswa $siswa): array
     {
@@ -64,7 +50,6 @@ class Index extends Component
             fn($p) => strtolower($p->jenisPelanggaran?->tingkat_pelanggaran ?? '') === 'berat'
         );
 
-        // ── Gabung tanggal + jam dengan benar ──
         $pembinaan = $semua->where('status_pembinaan', 'Selesai')
             ->whereNotNull('tanggal_pembinaan')
             ->sortByDesc('tanggal_pembinaan')
@@ -77,7 +62,6 @@ class Index extends Component
             $jam          = $pembinaan->getRawOriginal('jam_pembinaan') ?? '00:00:00';
             $tglPembinaan = Carbon::parse($tanggal . ' ' . $jam);
         }
-        // ───────────────────────────────────────
 
         if ($jumlah === 0) {
             return [
@@ -118,13 +102,12 @@ class Index extends Component
                 ->latest('waktu_kejadian'),
         ])->findOrFail($id);
 
-        // Validasi akses per role sebelum tampilkan detail
         if ($role === 'wali_kelas') {
             $idKelasAmpu = optional($user->waliKelas)->kelas?->id_kelas;
             abort_if($siswa->id_kelas !== $idKelasAmpu, 403);
         } elseif ($role === 'orang_tua') {
-            $idWaliMurid = optional($user->waliMurid)->id_walimurid;
-            abort_if($siswa->id_walimurid !== $idWaliMurid, 403);
+            $idWaliSiswa = optional($user->waliSiswa)->id_walisiswa;
+            abort_if($siswa->id_walisiswa !== $idWaliSiswa, 403);
         }
 
         $this->modalSiswa   = $siswa;
@@ -150,55 +133,43 @@ class Index extends Component
         ])
             ->whereHas(
                 'pelanggaran',
-                fn($q) =>
-                $q->where('status_pembinaan', 'Selesai')
+                fn($q) => $q->where('status_pembinaan', 'Selesai')
                     ->whereNotNull('tanggal_pembinaan')
             )
             ->whereNull('deleted_at');
 
-        // ── Scope berdasarkan role ──
         if ($role === 'wali_kelas') {
-            // Hanya siswa di kelas yang diampu wali kelas ini
             $idKelasAmpu = optional($user->waliKelas)->kelas?->id_kelas;
             $query->where('id_kelas', $idKelasAmpu);
         } elseif ($role === 'orang_tua') {
-            // Hanya anak sendiri
-            $idWaliMurid = optional($user->waliMurid)->id_walimurid;
-            $query->where('id_walimurid', $idWaliMurid);
+            $idWaliSiswa = optional($user->waliSiswa)->id_walisiswa;
+            $query->where('id_walisiswa', $idWaliSiswa);
         }
-        // guru_bk → tidak ada filter tambahan, semua siswa
 
-        // Search (tidak tersedia untuk orang_tua karena hanya lihat 1 anak)
         if ($this->search && $role !== 'orang_tua') {
             $query->where(
-                fn($q) =>
-                $q->where('nama', 'like', '%' . $this->search . '%')
+                fn($q) => $q->where('nama', 'like', '%' . $this->search . '%')
                     ->orWhere('nis', 'like', '%' . $this->search . '%')
             );
         }
 
-        // Filter kelas (hanya guru_bk yang bisa filter lintas kelas)
         if ($this->filterKelas && $role === 'guru_bk') {
             $query->where('id_kelas', $this->filterKelas);
         }
 
         $siswaList = $query->get();
 
-        // Hitung status disiplin tiap siswa
         $siswaData = $siswaList->map(function ($siswa) {
             $statusInfo = self::hitungStatus($siswa);
             return array_merge(['siswa' => $siswa], $statusInfo);
         });
 
-        // Filter status disiplin
         if ($this->filterStatus) {
             $siswaData = $siswaData->filter(
                 fn($d) => ($d['status'] ?? '') === $this->filterStatus
             );
         }
 
-        // Ringkasan — guru_bk dan wali_kelas tampilkan semua card
-        // orang_tua hanya tampilkan status anak sendiri
         $ringkasan = [
             'total'     => $siswaData->count(),
             'baik'      => $siswaData->where('status', 'baik')->count(),
@@ -206,22 +177,20 @@ class Index extends Component
             'berisiko'  => $siswaData->where('status', 'berisiko')->count(),
         ];
 
-        // Paginasi manual
         $page   = $this->getPage();
         $offset = ($page - 1) * $this->perPage;
         $paged  = $siswaData->values()->slice($offset, $this->perPage);
 
-        // Kelas untuk filter dropdown — hanya relevan untuk guru_bk
         $kelasList = $role === 'guru_bk'
             ? \App\Models\Kelas::orderBy('nama_kelas')->get()
             : collect();
 
         return view('livewire.monitoring.index', [
-            'siswaData'  => $paged,
-            'total'      => $siswaData->count(),
-            'ringkasan'  => $ringkasan,
-            'kelasList'  => $kelasList,
-            'role'       => $role,
+            'siswaData' => $paged,
+            'total'     => $siswaData->count(),
+            'ringkasan' => $ringkasan,
+            'kelasList' => $kelasList,
+            'role'      => $role,
         ]);
     }
 }

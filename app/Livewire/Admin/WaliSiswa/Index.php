@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Livewire\Admin\WaliMurid;
+namespace App\Livewire\Admin\WaliSiswa;
 
 use App\Models\Pengguna;
-use App\Models\WaliMurid;
+use App\Models\WaliSiswa;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -13,14 +13,14 @@ class Index extends Component
     use WithPagination;
 
     // ── Form fields ──
-    public $id_walimurid;
+    public $id_walisiswa;
     public $id_pengguna;
     public $hubungan = '';
     public $isEdit   = false;
 
     // ── Search, sort, pagination ──
     public $search  = '';
-    public $sortBy  = 'terbaru';   // terbaru | az | za
+    public $sortBy  = 'terbaru';
     public $perPage = 10;
 
     // ── Soft delete ──
@@ -37,42 +37,39 @@ class Index extends Component
     public function updatingPerPage()   { $this->resetPage(); }
     public function updatingShowTrash() { $this->resetPage(); }
 
-    // ── Auto-load data saat id_pengguna berubah ──
     public function updated($property)
     {
         if ($property === 'id_pengguna') {
-            $this->loadWaliMuridData();
+            $this->loadWaliSiswaData();
         }
     }
 
-    public function loadWaliMuridData()
+    public function loadWaliSiswaData()
     {
         if ($this->id_pengguna) {
-            $waliMurid = WaliMurid::where('id_pengguna', $this->id_pengguna)->first();
+            $waliSiswa = WaliSiswa::where('id_pengguna', $this->id_pengguna)->first();
 
-            if ($waliMurid) {
-                $this->id_walimurid = $waliMurid->id_walimurid;
-                $this->hubungan     = $waliMurid->hubungan;
+            if ($waliSiswa) {
+                $this->id_walisiswa = $waliSiswa->id_walisiswa;
+                $this->hubungan     = $waliSiswa->hubungan;
                 $this->isEdit       = true;
             } else {
-                $this->id_walimurid = null;
+                $this->id_walisiswa = null;
                 $this->hubungan     = '';
                 $this->isEdit       = false;
             }
         }
     }
 
-    // ── Reset form ──
     public function resetForm()
     {
-        $this->id_walimurid = null;
+        $this->id_walisiswa = null;
         $this->id_pengguna  = '';
         $this->hubungan     = '';
         $this->isEdit       = false;
         $this->resetErrorBag();
     }
 
-    // ── Simpan / Update ──
     public function simpan()
     {
         $this->validate([
@@ -81,12 +78,12 @@ class Index extends Component
         ]);
 
         if ($this->isEdit) {
-            WaliMurid::findOrFail($this->id_walimurid)->update([
+            WaliSiswa::findOrFail($this->id_walisiswa)->update([
                 'hubungan' => $this->hubungan,
             ]);
             $message = 'Data berhasil diperbarui';
         } else {
-            WaliMurid::create([
+            WaliSiswa::create([
                 'id_pengguna' => $this->id_pengguna,
                 'hubungan'    => $this->hubungan,
             ]);
@@ -97,56 +94,49 @@ class Index extends Component
         session()->flash('success', $message);
     }
 
-    // ── Edit ──
     public function edit($id)
     {
-        $data = WaliMurid::findOrFail($id);
+        $data = WaliSiswa::findOrFail($id);
 
-        $this->id_walimurid = $data->id_walimurid;
+        $this->id_walisiswa = $data->id_walisiswa;
         $this->id_pengguna  = $data->id_pengguna;
         $this->hubungan     = $data->hubungan;
         $this->isEdit       = true;
     }
 
-    // ── Soft Delete ──
     public function hapus($id)
     {
-        WaliMurid::findOrFail($id)->delete();
+        WaliSiswa::findOrFail($id)->delete();
         $this->resetForm();
         session()->flash('success', 'Data dipindahkan ke tong sampah.');
     }
 
-    // ── Restore ──
     public function restore($id)
     {
-        WaliMurid::onlyTrashed()->findOrFail($id)->restore();
+        WaliSiswa::onlyTrashed()->findOrFail($id)->restore();
         session()->flash('success', 'Data berhasil dipulihkan.');
     }
 
-    // ── Hapus permanen ──
     public function forceDelete($id)
     {
-        WaliMurid::onlyTrashed()->findOrFail($id)->forceDelete();
+        WaliSiswa::onlyTrashed()->findOrFail($id)->forceDelete();
         session()->flash('success', 'Data dihapus permanen.');
     }
 
-    // ── Kosongkan trash ──
     public function emptyTrash()
     {
-        WaliMurid::onlyTrashed()->forceDelete();
+        WaliSiswa::onlyTrashed()->forceDelete();
         session()->flash('success', 'Tong sampah dikosongkan.');
     }
 
-    // ── Render ──
     public function render()
     {
-        $query = WaliMurid::with('pengguna');
+        $query = WaliSiswa::with('pengguna');
 
         if ($this->showTrash) {
             $query->onlyTrashed();
         }
 
-        // Search nama, username, atau hubungan
         if ($this->search) {
             $query->where(function ($q) {
                 $q->whereHas('pengguna', function ($p) {
@@ -156,18 +146,16 @@ class Index extends Component
             });
         }
 
-        // Sorting
         match ($this->sortBy) {
-            'az'     => $query->join('pengguna', 'wali_murid.id_pengguna', '=', 'pengguna.id_pengguna')
-                              ->orderBy('pengguna.name', 'asc')
-                              ->select('wali_murid.*'),
-            'za'     => $query->join('pengguna', 'wali_murid.id_pengguna', '=', 'pengguna.id_pengguna')
-                              ->orderBy('pengguna.name', 'desc')
-                              ->select('wali_murid.*'),
-            default  => $query->orderBy('wali_murid.id_walimurid', 'desc'),
+            'az'    => $query->join('pengguna', 'wali_siswa.id_pengguna', '=', 'pengguna.id_pengguna')
+                             ->orderBy('pengguna.name', 'asc')
+                             ->select('wali_siswa.*'),
+            'za'    => $query->join('pengguna', 'wali_siswa.id_pengguna', '=', 'pengguna.id_pengguna')
+                             ->orderBy('pengguna.name', 'desc')
+                             ->select('wali_siswa.*'),
+            default => $query->orderBy('wali_siswa.id_walisiswa', 'desc'),
         };
 
-        // Daftar pengguna untuk dropdown (role orang_tua)
         $penggunaList = Pengguna::whereHas('role', function ($q) {
             $q->where('nama_role', 'orang_tua');
         })->orderBy('name')->get();
@@ -177,13 +165,13 @@ class Index extends Component
             $penggunaList = $penggunaList->push($current)->unique('id_pengguna')->sortBy('name');
         }
 
-        return view('livewire.admin.walimurid.index', [
+        return view('livewire.admin.walisiswa.index', [
             'data'       => $query->paginate($this->perPage),
             'pengguna'   => $penggunaList,
-            'trashCount' => WaliMurid::onlyTrashed()->count(),
+            'trashCount' => WaliSiswa::onlyTrashed()->count(),
         ]);
     }
 
     #[On('refresh')]
-public function refreshData(): void {}
+    public function refreshData(): void {}
 }
