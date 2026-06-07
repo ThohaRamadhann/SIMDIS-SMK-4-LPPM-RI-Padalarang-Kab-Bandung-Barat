@@ -96,6 +96,12 @@ new class extends Component {
             ->update(['is_read' => true, 'read_at' => now()]);
         $this->loadNotifikasi();
     }
+
+    public function refreshNotifikasi(): void
+    {
+        $this->loadNotifikasi();
+        $this->dispatch('notifikasi-refreshed');
+    }
 };
 ?>
 
@@ -181,15 +187,25 @@ new class extends Component {
 
         const userId = {{ auth()->user()->id_pengguna }};
         window.Echo.private('notifikasi.' + userId)
-            .listen('.NotifikasiBaru', (e) => {
-                const notif = e.notifikasi;
-                this.notifikasis.unshift(notif);
-                if (this.notifikasis.length > 10)
-                    this.notifikasis = this.notifikasis.slice(0, 10);
-                this.unreadCount++;
-                window.dispatchEvent(new CustomEvent('notif-count-update', { detail: { count: this.unreadCount } }));
+            .listen('.NotifikasiBaru', () => {
                 this.playSound();
+                this.unreadCount++;
+                window.dispatchEvent(new CustomEvent('notif-count-update', {
+                    detail: { count: this.unreadCount }
+                }));
+                setTimeout(() => {
+                    $wire.refreshNotifikasi();
+                }, 800);
             });
+
+        // Sync data Alpine dari Livewire setelah refresh
+        $wire.on('notifikasi-refreshed', () => {
+            this.notifikasis = $wire.notifikasis;
+            this.unreadCount = $wire.unreadCount;
+            window.dispatchEvent(new CustomEvent('notif-count-update', {
+                detail: { count: this.unreadCount }
+            }));
+        });
     },
 
     playSound() {

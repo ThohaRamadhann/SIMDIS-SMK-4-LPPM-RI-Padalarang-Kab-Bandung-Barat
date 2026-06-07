@@ -34,7 +34,7 @@ class PelanggaranController extends Controller
         $siswa = Siswa::with(['kelas.waliKelas.pengguna'])
             ->where(function ($query) use ($q) {
                 $query->where('nama', 'like', "%{$q}%")
-                      ->orWhere('nis',  'like', "%{$q}%");
+                    ->orWhere('nis',  'like', "%{$q}%");
             })
             ->orderBy('nama')
             ->limit(30)
@@ -138,15 +138,19 @@ class PelanggaranController extends Controller
     {
         $waliKelas        = WaliKelas::with('pengguna')->get();
         $jenisPelanggaran = JenisPelanggaran::orderByRaw("
-            CASE tingkat_pelanggaran
-                WHEN 'Ringan' THEN 1
-                WHEN 'Sedang' THEN 2
-                WHEN 'Berat'  THEN 3
-                ELSE 4
-            END
-        ")->orderBy('nama_pelanggaran')->get();
+        CASE tingkat_pelanggaran
+            WHEN 'Ringan' THEN 1
+            WHEN 'Sedang' THEN 2
+            WHEN 'Berat'  THEN 3
+            ELSE 4
+        END
+    ")->orderBy('nama_pelanggaran')->get();
 
-        // Muat siswa yang sedang diedit untuk ditampilkan di TomSelect
+      
+        $siswa = Siswa::with(['kelas.waliKelas.pengguna'])
+            ->orderBy('nama')
+            ->get();
+
         $selectedSiswa = Siswa::with(['kelas.waliKelas.pengguna'])
             ->find($pelanggaran->id_siswa);
 
@@ -154,7 +158,8 @@ class PelanggaranController extends Controller
             'pelanggaran',
             'waliKelas',
             'jenisPelanggaran',
-            'selectedSiswa'
+            'selectedSiswa',
+            'siswa'
         ));
     }
 

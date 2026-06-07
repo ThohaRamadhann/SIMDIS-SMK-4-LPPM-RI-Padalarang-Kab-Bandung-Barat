@@ -31,21 +31,21 @@
                 @csrf
 
                 {{-- SISWA --}}
-<div>
-    <label class="text-xs font-semibold text-[#0D2D6B]">Siswa</label>
-    <select name="id_siswa" id="id_siswa" class="mt-0.5 w-full">
-        <option value="">-- Cari nama atau NIS siswa --</option>
-        @if(old('id_siswa') && $selectedSiswa)
-            <option value="{{ $selectedSiswa->id_siswa }}"
-                data-kelas="{{ $selectedSiswa->kelas->nama_kelas ?? '' }}"
-                data-wali="{{ $selectedSiswa->kelas?->waliKelas?->pengguna?->name ?? '-' }}"
-                data-idwalikelas="{{ $selectedSiswa->kelas?->waliKelas?->id_walikelas ?? '' }}"
-                selected>
-                {{ $selectedSiswa->nama }} — {{ $selectedSiswa->nis }}
-            </option>
-        @endif
-    </select>
-</div>
+                <div>
+                    <label class="text-xs font-semibold text-[#0D2D6B]">Siswa</label>
+                    <select name="id_siswa" id="id_siswa" class="mt-0.5 w-full">
+                        <option value="">-- Cari nama atau NIS siswa --</option>
+                        @if (old('id_siswa') && $selectedSiswa)
+                            <option value="{{ $selectedSiswa->id_siswa }}"
+                                data-kelas="{{ $selectedSiswa->kelas->nama_kelas ?? '' }}"
+                                data-wali="{{ $selectedSiswa->kelas?->waliKelas?->pengguna?->name ?? '-' }}"
+                                data-idwalikelas="{{ $selectedSiswa->kelas?->waliKelas?->id_walikelas ?? '' }}"
+                                selected>
+                                {{ $selectedSiswa->nama }} — {{ $selectedSiswa->nis }}
+                            </option>
+                        @endif
+                    </select>
+                </div>
 
                 {{-- KELAS --}}
                 <div>
@@ -98,8 +98,7 @@
 
                             {{-- Search --}}
                             <div class="sticky top-0 bg-white px-3 py-2 border-b border-gray-100 z-10">
-                                <input type="text" id="dropdown_search"
-                                    placeholder="Cari jenis pelanggaran..."
+                                <input type="text" id="dropdown_search" placeholder="Cari jenis pelanggaran..."
                                     class="w-full h-8 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                            focus:outline-none focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20">
                             </div>
@@ -129,15 +128,18 @@
                                         <span class="flex-1 min-w-0 truncate">{{ $j->nama_pelanggaran }}</span>
 
                                         @if ($j->tingkat_pelanggaran === 'Ringan')
-                                            <span class="flex-shrink-0 inline-flex items-center px-2 py-0.5
+                                            <span
+                                                class="flex-shrink-0 inline-flex items-center px-2 py-0.5
                                                          rounded-full text-[10px] font-semibold
                                                          bg-green-100 text-green-800">Ringan</span>
                                         @elseif ($j->tingkat_pelanggaran === 'Sedang')
-                                            <span class="flex-shrink-0 inline-flex items-center px-2 py-0.5
+                                            <span
+                                                class="flex-shrink-0 inline-flex items-center px-2 py-0.5
                                                          rounded-full text-[10px] font-semibold
                                                          bg-yellow-100 text-yellow-800">Sedang</span>
                                         @elseif ($j->tingkat_pelanggaran === 'Berat')
-                                            <span class="flex-shrink-0 inline-flex items-center px-2 py-0.5
+                                            <span
+                                                class="flex-shrink-0 inline-flex items-center px-2 py-0.5
                                                          rounded-full text-[10px] font-semibold
                                                          bg-red-100 text-red-800">Berat</span>
                                         @endif
@@ -221,9 +223,7 @@
 
                 {{-- BUTTON --}}
                 <div class="flex items-center gap-2 pt-2">
-                    <button
-                        type="submit"
-                        id="btn-simpan"
+                    <button type="submit" id="btn-simpan"
                         class="inline-flex items-center gap-2 bg-[#0D2D6B] text-white px-4 py-2 text-sm
                                rounded-lg hover:bg-[#163580] transition disabled:opacity-75 disabled:cursor-not-allowed">
                         <span id="btn-simpan-text">Simpan</span>
@@ -398,40 +398,59 @@
         });
     
         // ── INIT TOMSELECT (AJAX) ────────────────────────────────────────
-        const tomSiswa = new TomSelect("#id_siswa", {
-            create: false,
-            placeholder: "Cari nama siswa atau NIS...",
-            valueField: 'id',
-            labelField: 'text',
-            searchField: ['text'],
-            preload: false,
-            load: function (query, callback) {
-                if (query.length < 2) return callback();
-                fetch('{{ route('siswa.search') }}?q=' + encodeURIComponent(query), {
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                })
-                .then(r => r.json())
-                .then(data => callback(data))
-                .catch(() => callback());
-            },
-            onChange: function (value) {
-                const item = this.options[value];
-                if (!item) {
-                    namaWali.value  = '';
-                    idWali.value    = '';
-                    namaKelas.value = '';
-                    return;
-                }
-                namaWali.value  = item.wali        || '';
-                idWali.value    = item.idwalikelas || '';
-                namaKelas.value = item.kelas        || '';
-            },
-            render: {
-                option:     data => `<div class="py-1">${data.text}</div>`,
-                item:       data => `<div>${data.text}</div>`,
-                no_results: ()   => `<div class="py-2 px-3 text-sm text-gray-400">Siswa tidak ditemukan</div>`,
-                loading:    ()   => `<div class="py-2 px-3 text-sm text-gray-400">Mencari...</div>`,
-            },
+        function initTomSelect() {
+            if (window._tomSiswa) {
+                try { window._tomSiswa.destroy(); } catch(e) {}
+                window._tomSiswa = null;
+            }
+    
+            const el = document.getElementById('id_siswa');
+            if (!el || el.tomselect) return;
+    
+            window._tomSiswa = new TomSelect("#id_siswa", {
+                create: false,
+                placeholder: "Cari nama siswa atau NIS...",
+                valueField: 'id',
+                labelField: 'text',
+                searchField: ['text'],
+                preload: false,
+                load: function (query, callback) {
+                    if (query.length < 2) return callback();
+                    fetch('{{ route('siswa.search') }}?q=' + encodeURIComponent(query), {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(r => r.json())
+                    .then(data => callback(data))
+                    .catch(() => callback());
+                },
+                onChange: function (value) {
+                    const item = this.options[value];
+                    if (!item) {
+                        namaWali.value  = '';
+                        idWali.value    = '';
+                        namaKelas.value = '';
+                        return;
+                    }
+                    namaWali.value  = item.wali        || '';
+                    idWali.value    = item.idwalikelas || '';
+                    namaKelas.value = item.kelas        || '';
+                },
+                render: {
+                    option:     data => `<div class="py-1">${data.text}</div>`,
+                    item:       data => `<div>${data.text}</div>`,
+                    no_results: ()   => `<div class="py-2 px-3 text-sm text-gray-400">Siswa tidak ditemukan</div>`,
+                    loading:    ()   => `<div class="py-2 px-3 text-sm text-gray-400">Mencari...</div>`,
+                },
+            });
+        }
+    
+        initTomSelect();
+    
+        // Reinit setiap kali Livewire selesai navigasi ke halaman ini
+        document.addEventListener('livewire:navigated', function () {
+            if (document.getElementById('id_siswa')) {
+                initTomSelect();
+            }
         });
     
         // Jika ada old() value (setelah validasi gagal), isi kelas & wali
