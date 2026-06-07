@@ -29,7 +29,7 @@ class DashboardController extends Controller
                 'total_pengguna'  => Pengguna::count(),
                 'total_siswa'     => Siswa::count(),
                 'total_kelas'     => Kelas::count(),
-                'total_waliswa'   => WaliSiswa::count(),   // sebelumnya: total_walimurid
+                'total_walisiswa' => WaliSiswa::count(),  // sebelumnya: total_walimurid
                 'total_walikelas' => WaliKelas::count(),
             ];
 
@@ -239,12 +239,13 @@ class DashboardController extends Controller
 
         $kelengkapan = [];
 
+        $kelas = $kelas ?? null; 
         $view = match ($role) {
             'wali_siswa' => 'dashboard.wali-siswa',   // sebelumnya: orang-tua
             'wali_kelas' => 'dashboard.wali-kelas',
             default      => 'dashboard.guru-bk',
         };
 
-        return view($view, compact('stats', 'charts', 'role', 'kelengkapan'));
+        return view($view, compact('stats', 'charts', 'role', 'kelengkapan', 'kelas'));
     }
 }

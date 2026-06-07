@@ -16,6 +16,43 @@ class ExportData extends Component
     public string $type = '';
     public string $mode = 'template';
 
+    // ── Filter siswa ──
+    public string $filterTahunAjaran = '';
+    public string $filterKelas       = '';
+    public string $filterStatus      = '';
+
+    // ── Filter pengguna ──
+    public string $filterRole = '';
+
+    // ── Filter shared ──
+    public string $search = '';
+
+    public string $filterTingkat = '';
+    public string $filterJurusan = '';
+    public string $filterTahun   = '';
+    public string $filterWali    = '';
+
+    protected $listeners = [
+        'filter-changed'        => 'syncFilters',
+        'filter-pengguna-changed' => 'syncFiltersPengguna',
+        'filter-kelas-changed'  => 'syncFiltersKelas',
+    ];
+
+    public function syncFiltersKelas(array $filters): void
+    {
+        $this->filterTingkat = $filters['filterTingkat'] ?? '';
+        $this->filterJurusan = $filters['filterJurusan'] ?? '';
+        $this->filterTahun   = $filters['filterTahun']   ?? '';
+        $this->filterWali    = $filters['filterWali']    ?? '';
+        $this->search        = $filters['search']        ?? '';
+    }
+
+    public function syncFiltersPengguna(array $filters): void
+    {
+        $this->filterRole = $filters['filterRole'] ?? '';
+        $this->search     = $filters['search']     ?? '';
+    }
+
     public function exportAs(string $mode)
     {
         $this->mode = $mode;
@@ -34,12 +71,29 @@ class ExportData extends Component
         $isTemplate = $this->mode === 'template';
 
         return match ($this->type) {
-            'pengguna'   => new PenggunaExport($isTemplate),
+            'pengguna'   => new PenggunaExport(
+                templateOnly: $isTemplate,
+                filterRole: $this->filterRole ?: null,
+                search: $this->search     ?: null,
+            ),
             'wali_kelas' => new WaliKelasExport($isTemplate),
             'wali_siswa' => new WaliSiswaExport($isTemplate),
-            'kelas'      => new KelasExport($isTemplate),
-            'siswa'      => new SiswaExport($isTemplate),
-            default      => null,
+            'kelas' => new KelasExport(
+                templateOnly: $isTemplate,
+                filterTingkat: $this->filterTingkat ?: null,
+                filterJurusan: $this->filterJurusan ?: null,
+                filterTahun: $this->filterTahun   ?: null,
+                filterWali: $this->filterWali    ?: null,
+                search: $this->search        ?: null,
+            ),
+            'siswa'      => new SiswaExport(
+                templateOnly: $isTemplate,
+                filterTahunAjaran: $this->filterTahunAjaran ?: null,
+                filterKelas: $this->filterKelas       ?: null,
+                filterStatus: $this->filterStatus      ?: null,
+                search: $this->search            ?: null,
+            ),
+            default => null,
         };
     }
 

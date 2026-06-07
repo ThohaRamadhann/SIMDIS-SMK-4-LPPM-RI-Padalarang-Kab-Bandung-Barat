@@ -41,14 +41,41 @@ class Index extends Component
         'sortBy'            => ['except' => 'az'],
         'perPage'           => ['except' => 10],
     ];
+    
+    public function updatedFilterKelas(): void
+    {
+        $this->resetPage();
+        $this->dispatchFilterChanged();
+    }
 
-    public function updatingSearch()            { $this->resetPage(); }
-    public function updatingFilterKelas()       { $this->resetPage(); }
-    public function updatingFilterStatus()      { $this->resetPage(); }
-    public function updatingFilterTahunAjaran() { $this->resetPage(); }
-    public function updatingSortBy()            { $this->resetPage(); }
-    public function updatingPerPage()           { $this->resetPage(); }
-    public function updatingShowTrash()         { $this->resetPage(); }
+    public function updatedFilterStatus(): void
+    {
+        $this->resetPage();
+        $this->dispatchFilterChanged();
+    }
+
+    public function updatedFilterTahunAjaran(): void
+    {
+        $this->resetPage();
+        $this->dispatchFilterChanged();
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+        $this->dispatchFilterChanged();
+    }
+
+    private function dispatchFilterChanged(): void
+    {
+        $this->dispatch('filter-changed', [
+            'filterTahunAjaran' => $this->filterTahunAjaran,
+            'filterKelas'       => $this->filterKelas,
+            'filterStatus'      => $this->filterStatus,
+            'search'            => $this->search,
+        ]);
+    }
+
 
     public function resetForm()
     {
@@ -153,7 +180,7 @@ class Index extends Component
         if ($this->search) {
             $query->where(function ($q) {
                 $q->where('nama', 'like', '%' . $this->search . '%')
-                  ->orWhere('nis', 'like', '%' . $this->search . '%');
+                    ->orWhere('nis', 'like', '%' . $this->search . '%');
             });
         }
 
@@ -184,9 +211,9 @@ class Index extends Component
             'allKelas'        => Kelas::orderBy('nama_kelas')->get(),
             'trashCount'      => Siswa::onlyTrashed()->count(),
             'tahunAjaranList' => Kelas::select('tahun_ajaran')
-                                    ->distinct()
-                                    ->orderByDesc('tahun_ajaran')
-                                    ->pluck('tahun_ajaran'),
+                ->distinct()
+                ->orderByDesc('tahun_ajaran')
+                ->pluck('tahun_ajaran'),
         ]);
     }
 

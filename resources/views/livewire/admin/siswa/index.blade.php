@@ -1,10 +1,9 @@
-<div x-data="{ formOpen: false }"
-     @open-form.window="formOpen = true"
-     class="space-y-2">
+<div x-data="{ formOpen: false }" @open-form.window="formOpen = true" class="space-y-2">
 
     {{-- SUCCESS NOTIFICATION --}}
     @if (session()->has('success'))
-        <div class="flex items-center gap-3 bg-green-50 border border-green-200
+        <div
+            class="flex items-center gap-3 bg-green-50 border border-green-200
                    text-green-700 px-3 py-2 rounded-xl shadow-sm">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -14,14 +13,10 @@
     @endif
 
     {{-- ================= FORM ACCORDION ================= --}}
-    <div x-show="formOpen"
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 -translate-y-2"
-         x-transition:enter-end="opacity-100 translate-y-0"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100 translate-y-0"
-         x-transition:leave-end="opacity-0 -translate-y-2"
-         x-cloak>
+    <div x-show="formOpen" x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
+        x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0"
+        x-transition:leave-end="opacity-0 -translate-y-2" x-cloak>
         <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-3">
 
             <div class="flex items-center justify-between mb-3">
@@ -47,7 +42,9 @@
                     <input type="text" wire:model="nama" placeholder="Masukkan nama siswa"
                         class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
-                    @error('nama') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                    @error('nama')
+                        <span class="text-xs text-red-500">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div>
@@ -55,7 +52,9 @@
                     <input type="text" wire:model="nis" placeholder="Nomor Induk Siswa"
                         class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
-                    @error('nis') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                    @error('nis')
+                        <span class="text-xs text-red-500">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div>
@@ -68,7 +67,9 @@
                             <option value="{{ $k->id_kelas }}">{{ $k->nama_kelas }}</option>
                         @endforeach
                     </select>
-                    @error('id_kelas') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                    @error('id_kelas')
+                        <span class="text-xs text-red-500">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 {{-- Searchable dropdown Wali Siswa --}}
@@ -114,18 +115,20 @@
                         </div>
                         <div class="max-h-56 overflow-y-auto">
                             <template x-if="filteredWali.length === 0">
-                                <div class="px-3 py-4 text-sm text-gray-400 text-center">Wali siswa tidak ditemukan</div>
+                                <div class="px-3 py-4 text-sm text-gray-400 text-center">Wali siswa tidak ditemukan
+                                </div>
                             </template>
                             <template x-for="wali in filteredWali" :key="wali.id">
-                                <button type="button"
-                                    @click="selected = wali.id; open = false; search = '';"
+                                <button type="button" @click="selected = wali.id; open = false; search = '';"
                                     class="w-full px-3 py-2.5 text-left text-sm hover:bg-[#F0F4FB] transition border-b border-gray-50">
                                     <span x-text="wali.name"></span>
                                 </button>
                             </template>
                         </div>
                     </div>
-                    @error('id_walisiswa') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                    @error('id_walisiswa')
+                        <span class="text-xs text-red-500">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div>
@@ -198,8 +201,9 @@
                     <button @click="formOpen = !formOpen; if(!formOpen) $wire.resetForm()"
                         class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors"
                         :class="formOpen
-                            ? 'bg-[#F0F4FB] text-[#4A5E8A] border-[#E2EAF4] hover:bg-[#e2eaf7]'
-                            : 'bg-[#0D2D6B] text-white border-[#0D2D6B] hover:bg-[#163580]'">
+                            ?
+                            'bg-[#F0F4FB] text-[#4A5E8A] border-[#E2EAF4] hover:bg-[#e2eaf7]' :
+                            'bg-[#0D2D6B] text-white border-[#0D2D6B] hover:bg-[#163580]'">
                         <i class="fas text-xs" :class="formOpen ? 'fa-xmark' : 'fa-plus'"></i>
                         <span x-text="formOpen ? 'Tutup Form' : 'Tambah Siswa'"></span>
                     </button>
@@ -212,7 +216,8 @@
                     <i class="fas {{ $showTrash ? 'fa-arrow-left' : 'fa-trash-can' }}"></i>
                     {{ $showTrash ? 'Kembali' : 'Tong Sampah' }}
                     @if (!$showTrash && $trashCount > 0)
-                        <span class="ml-1 bg-red-500 text-white text-[10px] font-bold
+                        <span
+                            class="ml-1 bg-red-500 text-white text-[10px] font-bold
                                      px-1.5 py-0.5 rounded-full leading-none">
                             {{ $trashCount }}
                         </span>
@@ -242,18 +247,24 @@
                         </svg>
                         Export Data
                     </p>
-                    @livewire('admin.export-data', ['type' => 'siswa'])
+                    @livewire('admin.export-data', [
+                        'type' => 'siswa',
+                        'filterTahunAjaran' => $filterTahunAjaran,
+                        'filterKelas' => $filterKelas,
+                        'filterStatus' => $filterStatus,
+                        'search' => $search,
+                    ])
                 </div>
             </div>
 
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
                 <div class="col-span-2 relative">
-                    <input type="text" wire:model.live.debounce.300ms="search"
-                        placeholder="Cari nama atau NIS..."
+                    <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari nama atau NIS..."
                         class="w-full h-9 pl-8 pr-8 text-xs rounded-lg border border-gray-200
                                bg-gray-50 focus:bg-white focus:border-[#F5B800]
                                focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
-                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+                    <i
+                        class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
                     @if ($search)
                         <button wire:click="$set('search','')"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -350,7 +361,8 @@
 
                             <td class="px-3 py-2">
                                 <div class="flex items-center gap-2">
-                                    <div style="width:24px;height:24px;border-radius:50%;flex-shrink:0;
+                                    <div
+                                        style="width:24px;height:24px;border-radius:50%;flex-shrink:0;
                                                 background:linear-gradient(135deg,#0D2D6B,#163580);
                                                 color:#F5B800;font-size:10px;font-weight:700;
                                                 display:flex;align-items:center;justify-content:center;">
@@ -359,7 +371,8 @@
                                     <span class="font-semibold text-[#0D2D6B] text-xs">
                                         {{ $s->nama }}
                                         @if ($s->trashed())
-                                            <span style="font-size:10px;color:#DC2626;background:rgba(229,62,62,0.08);
+                                            <span
+                                                style="font-size:10px;color:#DC2626;background:rgba(229,62,62,0.08);
                                                          padding:1px 6px;border-radius:20px;margin-left:4px;font-weight:600;">
                                                 Dihapus
                                             </span>
@@ -375,7 +388,8 @@
                                     <div class="flex flex-col">
                                         <span class="font-medium text-[#0D2D6B]">{{ $s->kelas->nama_kelas }}</span>
                                         <span class="text-[11px] text-gray-700">
-                                            {{ $s->kelas->tingkat }} {{ $s->kelas->jurusan }} • {{ $s->kelas->tahun_ajaran }}
+                                            {{ $s->kelas->tingkat }} {{ $s->kelas->jurusan }} •
+                                            {{ $s->kelas->tahun_ajaran }}
                                         </span>
                                     </div>
                                 @else
@@ -389,7 +403,8 @@
                             </td>
 
                             <td class="px-3 py-2">
-                                <span class="text-[10px] font-semibold px-2 py-1 rounded-full
+                                <span
+                                    class="text-[10px] font-semibold px-2 py-1 rounded-full
                                     {{ $s->status === 'aktif' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500' }}">
                                     {{ ucfirst($s->status) }}
                                 </span>
@@ -407,9 +422,7 @@
                                         <i class="fas fa-trash"></i> Hapus
                                     </button>
                                 @else
-                                    <button
-                                        wire:click="edit({{ $s->id_siswa }})"
-                                        @click="$dispatch('open-form')"
+                                    <button wire:click="edit({{ $s->id_siswa }})" @click="$dispatch('open-form')"
                                         class="text-[#0D2D6B] text-xs font-semibold hover:text-[#163580] mr-2 transition">
                                         {{ $isEditingRow ? '✎ Diedit' : 'Edit' }}
                                     </button>
@@ -427,7 +440,8 @@
                     @empty
                         <tr>
                             <td colspan="7" class="text-center py-8 text-gray-400 text-xs">
-                                <i class="fas fa-{{ $showTrash ? 'trash' : 'user-graduate' }} block text-2xl mb-2 opacity-25"></i>
+                                <i
+                                    class="fas fa-{{ $showTrash ? 'trash' : 'user-graduate' }} block text-2xl mb-2 opacity-25"></i>
                                 {{ $showTrash ? 'Tong sampah kosong.' : 'Tidak ada siswa ditemukan.' }}
                             </td>
                         </tr>
@@ -458,7 +472,8 @@
                         @if ($page == $dataSiswa->currentPage())
                             <span class="simdis-page-btn simdis-page-active">{{ $page }}</span>
                         @else
-                            <button wire:click="gotoPage({{ $page }})" class="simdis-page-btn">{{ $page }}</button>
+                            <button wire:click="gotoPage({{ $page }})"
+                                class="simdis-page-btn">{{ $page }}</button>
                         @endif
                     @endforeach
 

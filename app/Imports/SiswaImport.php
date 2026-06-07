@@ -4,7 +4,7 @@ namespace App\Imports;
 
 use App\Models\Kelas;
 use App\Models\Siswa;
-use App\Models\WaliMurid;
+use App\Models\WaliSiswa;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -22,18 +22,18 @@ class SiswaImport implements
 
     public array $errors   = [];
     public int   $imported = 0;
-    public int   $updated  = 0; // ← tambah counter khusus update
+    public int   $updated  = 0;
 
     public function collection(Collection $rows)
     {
         foreach ($rows as $index => $row) {
-            // Cari wali murid via username pengguna
-            $waliMurid = WaliMurid::whereHas('pengguna', function ($q) use ($row) {
-                $q->where('username', $row['username_walimurid']);
+            // Cari wali siswa via username pengguna
+            $waliSiswa = WaliSiswa::whereHas('pengguna', function ($q) use ($row) {
+                $q->where('username', $row['username_walisiswa']);
             })->first();
 
-            if (!$waliMurid) {
-                $this->errors[] = "Baris " . ($index + 2) . ": Wali murid dengan username '{$row['username_walimurid']}' tidak ditemukan.";
+            if (!$waliSiswa) {
+                $this->errors[] = "Baris " . ($index + 2) . ": Wali siswa dengan username '{$row['username_walisiswa']}' tidak ditemukan.";
                 continue;
             }
 
@@ -59,16 +59,17 @@ class SiswaImport implements
                 }
 
                 $siswa->update([
-                    'id_walimurid' => $waliMurid->id_walimurid,
+                    'id_walisiswa' => $waliSiswa->id_walisiswa,
                     'id_kelas'     => $kelas->id_kelas,
                     'nama'         => $row['nama'],
                     'status'       => $row['status'] ?? 'aktif',
                 ]);
+                
 
                 $this->updated++;
             } else {
                 Siswa::create([
-                    'id_walimurid' => $waliMurid->id_walimurid,
+                    'id_walisiswa' => $waliSiswa->id_walisiswa,
                     'id_kelas'     => $kelas->id_kelas,
                     'nama'         => $row['nama'],
                     'nis'          => (string) $row['nis'],
@@ -85,7 +86,7 @@ class SiswaImport implements
         return [
             'nama'               => 'required|string|max:255',
             'nis'                => 'required|max:30',
-            'username_walimurid' => 'required|string',
+            'username_walisiswa' => 'required|string',
             'nama_kelas'         => 'required|string',
             'tahun_ajaran'       => 'required|string',
         ];
@@ -96,7 +97,7 @@ class SiswaImport implements
         return [
             'nama.required'               => 'Kolom nama wajib diisi.',
             'nis.required'                => 'Kolom NIS wajib diisi.',
-            'username_walimurid.required' => 'Kolom username_walimurid wajib diisi.',
+            'username_walisiswa.required' => 'Kolom username_walisiswa wajib diisi.',
             'nama_kelas.required'         => 'Kolom nama_kelas wajib diisi.',
             'tahun_ajaran.required'       => 'Kolom tahun_ajaran wajib diisi.',
         ];

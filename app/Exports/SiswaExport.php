@@ -26,12 +26,24 @@ class SiswaExport implements
 {
     protected bool $templateOnly;
     protected ?string $filterTahunAjaran;
+    protected ?string $filterKelas;
+    protected ?string $filterStatus;
+    protected ?string $search;
     protected int $totalRows = 0;
 
-    public function __construct(bool $templateOnly = false, ?string $filterTahunAjaran = null)
-    {
+
+    public function __construct(
+        bool $templateOnly = false,
+        ?string $filterTahunAjaran = null,
+        ?string $filterKelas = null,
+        ?string $filterStatus = null,
+        ?string $search = null,
+    ) {
         $this->templateOnly      = $templateOnly;
         $this->filterTahunAjaran = $filterTahunAjaran;
+        $this->filterKelas       = $filterKelas;
+        $this->filterStatus      = $filterStatus;
+        $this->search            = $search;
     }
 
     public function collection()
@@ -41,8 +53,26 @@ class SiswaExport implements
         $query = Siswa::with(['waliSiswa.pengguna', 'kelas']);
 
         if ($this->filterTahunAjaran) {
-            $query->whereHas('kelas', fn($q) =>
+            $query->whereHas(
+                'kelas',
+                fn($q) =>
                 $q->where('tahun_ajaran', $this->filterTahunAjaran)
+            );
+        }
+
+        if ($this->filterKelas) {
+            $query->where('id_kelas', $this->filterKelas);
+        }
+
+        if ($this->filterStatus) {
+            $query->where('status', $this->filterStatus);
+        }
+
+        if ($this->search) {
+            $query->where(
+                fn($q) =>
+                $q->where('nama', 'like', '%' . $this->search . '%')
+                    ->orWhere('nis', 'like', '%' . $this->search . '%')
             );
         }
 

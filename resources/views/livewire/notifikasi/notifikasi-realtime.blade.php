@@ -392,14 +392,6 @@ new class extends Component {
                 </button>
             </template>
         </div>
-
-        {{-- Footer --}}
-        <div class="px-4 py-3 border-t border-[#f0f4fb] bg-[#fafbff] flex-shrink-0">
-            <a href="{{ route('notifikasi.index') }}" wire:navigate @click="open = false"
-                class="block text-center text-xs font-semibold text-[#0D2D6B] hover:text-[#163580] transition-colors">
-                Lihat semua notifikasi →
-            </a>
-        </div>
     </aside>
 
     {{-- ══ MODAL DETAIL NOTIFIKASI ══ --}}

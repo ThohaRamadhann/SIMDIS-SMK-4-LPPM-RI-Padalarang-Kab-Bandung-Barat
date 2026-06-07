@@ -1,27 +1,22 @@
-<div x-data="{ formOpen: false }"
-     @open-form.window="formOpen = true"
-     class="space-y-3">
+<div x-data="{ formOpen: false }" @open-form.window="formOpen = true" class="space-y-3">
 
     {{-- FLASH MESSAGE --}}
     @if (session()->has('success'))
-        <div class="flex items-center gap-2 bg-green-50 border border-green-200
+        <div
+            class="flex items-center gap-2 bg-green-50 border border-green-200
                     text-green-700 px-3 py-2 rounded-xl text-sm">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
             <span class="font-medium">{{ session('success') }}</span>
         </div>
     @endif
 
     {{-- ================= FORM ACCORDION ================= --}}
-    <div x-show="formOpen"
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 -translate-y-2"
-         x-transition:enter-end="opacity-100 translate-y-0"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100 translate-y-0"
-         x-transition:leave-end="opacity-0 -translate-y-2"
-         x-cloak>
+    <div x-show="formOpen" x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
+        x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0"
+        x-transition:leave-end="opacity-0 -translate-y-2" x-cloak>
         <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-4">
 
             <div class="flex items-center justify-between mb-3">
@@ -47,7 +42,9 @@
                     <input type="text" wire:model.defer="nama_kelas" placeholder="Contoh: X TJA 1"
                         class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
-                    @error('nama_kelas') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                    @error('nama_kelas')
+                        <span class="text-xs text-red-500">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div>
@@ -60,7 +57,9 @@
                         <option value="XI">XI</option>
                         <option value="XII">XII</option>
                     </select>
-                    @error('tingkat') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                    @error('tingkat')
+                        <span class="text-xs text-red-500">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div>
@@ -69,12 +68,14 @@
                         class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
                         <option value="">-- Pilih --</option>
-                        <option value="Perhotelan">Perhotelan</option>
+                        <option value="Akomodasi Perhotelan">Akomodasi Perhotelan</option>
                         <option value="Rekayasa Perangkat Lunak">Rekayasa Perangkat Lunak</option>
                         <option value="Teknik Komputer Jaringan">Teknik Komputer Jaringan</option>
                         <option value="Teknik Bisnis Sepeda Motor">Teknik Bisnis Sepeda Motor</option>
                     </select>
-                    @error('jurusan') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                    @error('jurusan')
+                        <span class="text-xs text-red-500">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div>
@@ -82,48 +83,56 @@
                     <input type="text" wire:model.defer="tahun_ajaran" placeholder="Contoh: 2024/2025"
                         class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
-                    @error('tahun_ajaran') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                    @error('tahun_ajaran')
+                        <span class="text-xs text-red-500">{{ $message }}</span>
+                    @enderror
                 </div>
 
-                {{-- Wali Kelas Alpine Dropdown --}}
+                {{-- ===== Wali Kelas Alpine Dropdown — FIXED ===== --}}
                 <div x-data="{
                     open: false,
                     search: '',
-                    selected: @entangle('id_walikelas'),
+                    get walis() {
+                        return $wire.waliKelasOptions  {{-- reaktif, ikut update tiap Livewire re-render --}}
+                    },
                     get filteredWali() {
                         if (this.search === '') return this.walis
                         return this.walis.filter(w => w.name.toLowerCase().includes(this.search.toLowerCase()))
                     },
-                    walis: [
-                        @foreach($waliKelasList as $w) {
-                            id: {{ $w->id_walikelas }},
-                            name: '{{ addslashes(optional($w->pengguna)->name ?? '-') }}'
-                        },
-                        @endforeach
-                    ],
                     selectedName() {
-                        if (!this.selected) return '-- Pilih Wali Kelas (Opsional) --'
-                        const found = this.walis.find(w => w.id == this.selected)
+                        const val = this.$wire.id_walikelas
+                        if (!val && val !== 0) return '-- Pilih Wali Kelas (Opsional) --'
+                        const found = this.walis.find(w => String(w.id) === String(val))
                         return found ? found.name : '-- Pilih Wali Kelas (Opsional) --'
                     }
                 }" class="relative lg:col-span-2">
                     <label class="text-xs font-semibold text-[#0D2D6B]">Wali Kelas</label>
+
+                    {{-- Trigger button --}}
                     <button type="button" @click="open = !open"
                         class="mt-0.5 w-full h-10 px-3 rounded-lg border border-gray-200 bg-gray-50
                                text-left text-sm flex items-center justify-between hover:bg-white focus:border-[#F5B800] transition">
-                        <span class="truncate" :class="selected ? 'text-gray-700' : 'text-gray-400'" x-text="selectedName()"></span>
+                        <span class="truncate"
+                            :class="$wire.id_walikelas ? 'text-gray-700' : 'text-gray-400'"
+                            x-text="selectedName()"></span>
                         <div class="flex items-center gap-1 flex-shrink-0">
-                            <span x-show="selected" @click.stop="selected = ''; search = ''; open = false"
+                            {{-- Tombol clear --}}
+                            <span x-show="$wire.id_walikelas"
+                                @click.stop="$wire.id_walikelas = ''; search = ''; open = false"
                                 class="text-gray-300 hover:text-red-400 transition cursor-pointer p-0.5 rounded">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                        d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </span>
                             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7" />
                             </svg>
                         </div>
                     </button>
+
+                    {{-- Dropdown panel --}}
                     <div x-show="open" @click.outside="open = false" x-transition
                         class="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
                         style="display:none">
@@ -133,20 +142,26 @@
                                        focus:bg-white focus:border-[#F5B800] outline-none transition">
                         </div>
                         <div class="max-h-52 overflow-y-auto">
-                            <button type="button" @click="selected = ''; open = false; search = ''"
+                            {{-- Opsi kosong --}}
+                            <button type="button"
+                                @click="$wire.id_walikelas = ''; open = false; search = ''"
                                 class="w-full px-3 py-2.5 text-left text-sm text-gray-400 italic
                                        hover:bg-[#F0F4FB] transition border-b border-gray-50">
                                 Tidak ada wali kelas
                             </button>
+
                             <template x-if="filteredWali.length === 0">
                                 <div class="px-3 py-4 text-sm text-gray-400 text-center">
                                     <i class="fas fa-user-slash block text-lg mb-1 opacity-30"></i>
                                     Wali kelas tidak ditemukan
                                 </div>
                             </template>
+
                             <template x-for="wali in filteredWali" :key="wali.id">
-                                <button type="button" @click="selected = wali.id; open = false; search = ''"
-                                    class="w-full px-3 py-2.5 text-left text-sm hover:bg-[#F0F4FB] transition border-b border-gray-50 flex items-center gap-2">
+                                <button type="button"
+                                    @click="$wire.id_walikelas = wali.id; open = false; search = ''"
+                                    class="w-full px-3 py-2.5 text-left text-sm hover:bg-[#F0F4FB] transition border-b border-gray-50 flex items-center gap-2"
+                                    :class="String($wire.id_walikelas) === String(wali.id) ? 'bg-[#F0F4FB]' : ''">
                                     <div style="width:26px;height:26px;border-radius:50%;flex-shrink:0;
                                                 background:linear-gradient(135deg,#0D2D6B,#163580);
                                                 color:#F5B800;font-size:9px;font-weight:700;
@@ -158,6 +173,7 @@
                         </div>
                     </div>
                 </div>
+                {{-- ===== End Wali Kelas Dropdown ===== --}}
 
                 @if ($editingId)
                     <div class="sm:col-span-2 lg:col-span-3">
@@ -219,7 +235,8 @@
                     <i class="fas {{ $showTrash ? 'fa-arrow-left' : 'fa-trash-can' }}"></i>
                     {{ $showTrash ? 'Kembali' : 'Tong Sampah' }}
                     @if (!$showTrash && $trashCount > 0)
-                        <span class="ml-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                        <span
+                            class="ml-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
                             {{ $trashCount }}
                         </span>
                     @endif
@@ -233,7 +250,8 @@
                     <div>
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">
                             <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                             </svg>
                             Import Data
                         </p>
@@ -242,11 +260,19 @@
                     <div class="sm:border-l sm:border-gray-200 sm:pl-3">
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">
                             <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
                             Export Data
                         </p>
-                        @livewire('admin.export-data', ['type' => 'kelas'])
+                        @livewire('admin.export-data', [
+                            'type' => 'kelas',
+                            'filterTingkat' => $filterTingkat,
+                            'filterJurusan' => $filterJurusan,
+                            'filterTahun' => $filterTahun,
+                            'filterWali' => $filterWali,
+                            'search' => $search,
+                        ])
                     </div>
                 </div>
 
@@ -323,8 +349,7 @@
         @else
             @if ($trashCount > 0)
                 <div class="flex justify-end mb-3">
-                    <button wire:click="emptyTrash"
-                        wire:confirm="Hapus SEMUA data di tong sampah secara permanen?"
+                    <button wire:click="emptyTrash" wire:confirm="Hapus SEMUA data di tong sampah secara permanen?"
                         class="flex items-center gap-1 text-xs font-semibold px-3 py-1.5
                                bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition-colors">
                         <i class="fas fa-trash"></i> Kosongkan Semua
@@ -358,7 +383,8 @@
                             <td class="px-3 py-2">
                                 <span class="font-semibold text-[#0D2D6B] text-xs">{{ $k->nama_kelas }}</span>
                                 @if ($k->trashed())
-                                    <span style="font-size:10px;color:#DC2626;background:rgba(229,62,62,0.08);
+                                    <span
+                                        style="font-size:10px;color:#DC2626;background:rgba(229,62,62,0.08);
                                                  padding:1px 6px;border-radius:20px;margin-left:4px;font-weight:600;">Dihapus</span>
                                 @endif
                             </td>
@@ -376,7 +402,8 @@
                             <td class="px-3 py-2">
                                 @if (optional($k->waliKelas)->pengguna)
                                     <div class="flex items-center gap-1.5">
-                                        <div style="width:20px;height:20px;border-radius:50%;flex-shrink:0;
+                                        <div
+                                            style="width:20px;height:20px;border-radius:50%;flex-shrink:0;
                                                     background:linear-gradient(135deg,#0D2D6B,#163580);
                                                     color:#F5B800;font-size:9px;font-weight:700;
                                                     display:flex;align-items:center;justify-content:center;">
@@ -401,8 +428,7 @@
                                         <i class="fas fa-trash"></i> Hapus
                                     </button>
                                 @else
-                                    <button wire:click="edit({{ $k->id_kelas }})"
-                                        @click="$dispatch('open-form')"
+                                    <button wire:click="edit({{ $k->id_kelas }})" @click="$dispatch('open-form')"
                                         class="text-[#0D2D6B] text-xs font-semibold hover:text-[#163580] mr-2 transition">
                                         {{ $isEditingRow ? '✎ Diedit' : 'Edit' }}
                                     </button>
@@ -435,21 +461,26 @@
                 </span>
                 <div class="flex items-center gap-1">
                     @if ($kelas->onFirstPage())
-                        <span class="simdis-page-btn opacity-40 cursor-not-allowed select-none"><i class="fas fa-chevron-left text-xs"></i></span>
+                        <span class="simdis-page-btn opacity-40 cursor-not-allowed select-none"><i
+                                class="fas fa-chevron-left text-xs"></i></span>
                     @else
-                        <button wire:click="previousPage" class="simdis-page-btn"><i class="fas fa-chevron-left text-xs"></i></button>
+                        <button wire:click="previousPage" class="simdis-page-btn"><i
+                                class="fas fa-chevron-left text-xs"></i></button>
                     @endif
                     @foreach ($kelas->getUrlRange(max(1, $kelas->currentPage() - 2), min($kelas->lastPage(), $kelas->currentPage() + 2)) as $page => $url)
                         @if ($page == $kelas->currentPage())
                             <span class="simdis-page-btn simdis-page-active">{{ $page }}</span>
                         @else
-                            <button wire:click="gotoPage({{ $page }})" class="simdis-page-btn">{{ $page }}</button>
+                            <button wire:click="gotoPage({{ $page }})"
+                                class="simdis-page-btn">{{ $page }}</button>
                         @endif
                     @endforeach
                     @if ($kelas->hasMorePages())
-                        <button wire:click="nextPage" class="simdis-page-btn"><i class="fas fa-chevron-right text-xs"></i></button>
+                        <button wire:click="nextPage" class="simdis-page-btn"><i
+                                class="fas fa-chevron-right text-xs"></i></button>
                     @else
-                        <span class="simdis-page-btn opacity-40 cursor-not-allowed select-none"><i class="fas fa-chevron-right text-xs"></i></span>
+                        <span class="simdis-page-btn opacity-40 cursor-not-allowed select-none"><i
+                                class="fas fa-chevron-right text-xs"></i></span>
                     @endif
                 </div>
             </div>

@@ -1,10 +1,9 @@
-<div x-data="{ formOpen: false }"
-     @open-form.window="formOpen = true"
-     class="space-y-3">
+<div x-data="{ formOpen: false }" @open-form.window="formOpen = true" class="space-y-3">
 
     {{-- SUCCESS NOTIFICATION --}}
     @if (session()->has('success'))
-        <div class="flex items-center gap-3 bg-green-50 border border-green-200
+        <div
+            class="flex items-center gap-3 bg-green-50 border border-green-200
                    text-green-700 px-3 py-2 rounded-xl shadow-sm">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -14,14 +13,10 @@
     @endif
 
     {{-- ================= FORM ACCORDION ================= --}}
-    <div x-show="formOpen"
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 -translate-y-2"
-         x-transition:enter-end="opacity-100 translate-y-0"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100 translate-y-0"
-         x-transition:leave-end="opacity-0 -translate-y-2"
-         x-cloak>
+    <div x-show="formOpen" x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
+        x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0"
+        x-transition:leave-end="opacity-0 -translate-y-2" x-cloak>
         <div class="simdis-card">
 
             <div class="flex items-center justify-between mb-3">
@@ -44,25 +39,34 @@
                     <div>
                         <label class="simdis-label">Nama</label>
                         <input type="text" wire:model="name" placeholder="Masukkan nama" class="simdis-input">
-                        @error('name') <div class="simdis-error">{{ $message }}</div> @enderror
+                        @error('name')
+                            <div class="simdis-error">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div>
                         <label class="simdis-label">Username</label>
-                        <input type="text" wire:model="username" placeholder="Masukkan username" class="simdis-input">
-                        @error('username') <div class="simdis-error">{{ $message }}</div> @enderror
+                        <input type="text" wire:model="username" placeholder="Masukkan username"
+                            class="simdis-input">
+                        @error('username')
+                            <div class="simdis-error">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div>
                         <label class="simdis-label">Email</label>
                         <input type="email" wire:model="email" placeholder="Email opsional" class="simdis-input">
-                        @error('email') <div class="simdis-error">{{ $message }}</div> @enderror
+                        @error('email')
+                            <div class="simdis-error">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div>
                         <label class="simdis-label">Nomor Telepon</label>
                         <input type="text" wire:model="no_telpon" placeholder="08xxxxxxxxxx" class="simdis-input">
-                        @error('no_telpon') <div class="simdis-error">{{ $message }}</div> @enderror
+                        @error('no_telpon')
+                            <div class="simdis-error">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div>
@@ -73,14 +77,15 @@
                                 <option value="{{ $r->id_role }}">{{ $r->nama_role }}</option>
                             @endforeach
                         </select>
-                        @error('id_role') <div class="simdis-error">{{ $message }}</div> @enderror
+                        @error('id_role')
+                            <div class="simdis-error">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div x-data="{ showPw: false }">
                         <label class="simdis-label">Password</label>
                         <div class="relative">
-                            <input wire:model="password"
-                                :type="showPw ? 'text' : 'password'"
+                            <input wire:model="password" :type="showPw ? 'text' : 'password'"
                                 placeholder="{{ $editingId ? 'Kosongkan jika tidak diubah' : 'Masukkan password' }}"
                                 class="simdis-input pr-10">
                             <button type="button" @click="showPw = !showPw"
@@ -88,21 +93,24 @@
                                        text-gray-400 hover:text-gray-600 transition-colors"
                                 :title="showPw ? 'Sembunyikan' : 'Tampilkan'">
                                 <svg x-show="!showPw" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                    <circle cx="12" cy="12" r="3"/>
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                    <circle cx="12" cy="12" r="3" />
                                 </svg>
                                 <svg x-show="showPw" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                                    <line x1="1" y1="1" x2="23" y2="23"/>
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path
+                                        d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                                    <line x1="1" y1="1" x2="23" y2="23" />
                                 </svg>
                             </button>
                         </div>
-                        @error('password') <div class="simdis-error">{{ $message }}</div> @enderror
+                        @error('password')
+                            <div class="simdis-error">{{ $message }}</div>
+                        @enderror
                     </div>
 
                 </div>
@@ -114,13 +122,19 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label class="simdis-label">NUPTK</label>
-                                <input type="text" wire:model="nuptk" placeholder="Masukkan NUPTK" class="simdis-input">
-                                @error('nuptk') <div class="simdis-error">{{ $message }}</div> @enderror
+                                <input type="text" wire:model="nuptk" placeholder="Masukkan NUPTK"
+                                    class="simdis-input">
+                                @error('nuptk')
+                                    <div class="simdis-error">{{ $message }}</div>
+                                @enderror
                             </div>
                             <div>
                                 <label class="simdis-label">Jabatan</label>
-                                <input type="text" wire:model="jabatan" placeholder="Masukkan jabatan" class="simdis-input">
-                                @error('jabatan') <div class="simdis-error">{{ $message }}</div> @enderror
+                                <input type="text" wire:model="jabatan" placeholder="Masukkan jabatan"
+                                    class="simdis-input">
+                                @error('jabatan')
+                                    <div class="simdis-error">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -130,8 +144,11 @@
                 @if ($this->selectedRoleName === 'orang_tua')
                     <div class="pt-3 border-t">
                         <h4 class="simdis-section-title">Detail Wali Murid</h4>
-                        <input type="text" wire:model="hubungan" placeholder="Ayah / Ibu / Wali" class="simdis-input">
-                        @error('hubungan') <div class="simdis-error">{{ $message }}</div> @enderror
+                        <input type="text" wire:model="hubungan" placeholder="Ayah / Ibu / Wali"
+                            class="simdis-input">
+                        @error('hubungan')
+                            <div class="simdis-error">{{ $message }}</div>
+                        @enderror
                     </div>
                 @endif
 
@@ -140,7 +157,8 @@
                     <button type="submit" class="simdis-btn-primary">
                         {{ $editingId ? 'Update Pengguna' : 'Simpan Pengguna' }}
                     </button>
-                    <button type="button" wire:click="resetForm" @click="formOpen = false" class="simdis-btn-secondary">
+                    <button type="button" wire:click="resetForm" @click="formOpen = false"
+                        class="simdis-btn-secondary">
                         Batal
                     </button>
                 </div>
@@ -167,8 +185,9 @@
                     <button @click="formOpen = !formOpen; if(!formOpen) $wire.resetForm()"
                         class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors"
                         :class="formOpen
-                            ? 'bg-[#F0F4FB] text-[#4A5E8A] border-[#E2EAF4] hover:bg-[#e2eaf7]'
-                            : 'bg-[#0D2D6B] text-white border-[#0D2D6B] hover:bg-[#163580]'">
+                            ?
+                            'bg-[#F0F4FB] text-[#4A5E8A] border-[#E2EAF4] hover:bg-[#e2eaf7]' :
+                            'bg-[#0D2D6B] text-white border-[#0D2D6B] hover:bg-[#163580]'">
                         <i class="fas text-xs" :class="formOpen ? 'fa-xmark' : 'fa-plus'"></i>
                         <span x-text="formOpen ? 'Tutup Form' : 'Tambah Pengguna'"></span>
                     </button>
@@ -182,7 +201,8 @@
                     <i class="fas {{ $showTrash ? 'fa-arrow-left' : 'fa-trash-can' }}"></i>
                     {{ $showTrash ? 'Kembali' : 'Tong Sampah' }}
                     @if (!$showTrash && $trashCount > 0)
-                        <span class="ml-1 bg-red-500 text-white text-[10px] font-bold
+                        <span
+                            class="ml-1 bg-red-500 text-white text-[10px] font-bold
                                      px-1.5 py-0.5 rounded-full leading-none">
                             {{ $trashCount }}
                         </span>
@@ -212,7 +232,11 @@
                         </svg>
                         Export Data
                     </p>
-                    @livewire('admin.export-data', ['type' => 'pengguna'])
+                    @livewire('admin.export-data', [
+                        'type' => 'pengguna',
+                        'filterRole' => $filterRole,
+                        'search' => $search,
+                    ])
                 </div>
             </div>
 
@@ -222,7 +246,8 @@
                     <input type="text" wire:model.live.debounce.300ms="search"
                         placeholder="Cari nama atau username..." class="simdis-input pl-8"
                         style="height:36px; font-size:12px;">
-                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-[#9AAAC4] text-xs pointer-events-none"></i>
+                    <i
+                        class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-[#9AAAC4] text-xs pointer-events-none"></i>
                     @if ($search)
                         <button wire:click="$set('search','')"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -241,12 +266,14 @@
                 </div>
 
                 <div class="flex gap-2">
-                    <select wire:model.live="sortBy" class="simdis-select flex-1" style="height:36px;font-size:12px;">
+                    <select wire:model.live="sortBy" class="simdis-select flex-1"
+                        style="height:36px;font-size:12px;">
                         <option value="terbaru">Terbaru</option>
                         <option value="az">A → Z</option>
                         <option value="za">Z → A</option>
                     </select>
-                    <select wire:model.live="perPage" class="simdis-select" style="height:36px;font-size:12px;width:70px;">
+                    <select wire:model.live="perPage" class="simdis-select"
+                        style="height:36px;font-size:12px;width:70px;">
                         <option value="10">10</option>
                         <option value="15">15</option>
                         <option value="25">25</option>
@@ -293,7 +320,8 @@
 
                             <td>
                                 <div class="flex items-center gap-2">
-                                    <div style="width:26px;height:26px;border-radius:50%;
+                                    <div
+                                        style="width:26px;height:26px;border-radius:50%;
                                                 background:linear-gradient(135deg,#0D2D6B,#163580);
                                                 color:#F5B800;font-size:11px;font-weight:700;
                                                 display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -302,7 +330,8 @@
                                     <span style="font-weight:600;color:#0D2D6B;font-size:13px;">
                                         {{ $u->name }}
                                         @if ($u->trashed())
-                                            <span style="font-size:10px;color:#DC2626;font-weight:600;
+                                            <span
+                                                style="font-size:10px;color:#DC2626;font-weight:600;
                                                          background:rgba(229,62,62,0.08);padding:1px 6px;
                                                          border-radius:20px;margin-left:4px;">Dihapus</span>
                                         @endif
@@ -318,8 +347,8 @@
 
                             <td class="whitespace-nowrap">
                                 @if ($showTrash)
-                                    <button wire:click="restoreUser({{ $u->id_pengguna }})"
-                                        class="action-btn mr-2" style="color:#276749;">
+                                    <button wire:click="restoreUser({{ $u->id_pengguna }})" class="action-btn mr-2"
+                                        style="color:#276749;">
                                         <i class="fas fa-rotate-left"></i> Pulihkan
                                     </button>
                                     <button wire:click="forceDeleteUser({{ $u->id_pengguna }})"
@@ -328,10 +357,8 @@
                                         <i class="fas fa-trash"></i> Hapus
                                     </button>
                                 @else
-                                    <button
-                                        wire:click="editUser({{ $u->id_pengguna }})"
-                                        @click="$dispatch('open-form')"
-                                        class="action-btn action-edit mr-3">
+                                    <button wire:click="editUser({{ $u->id_pengguna }})"
+                                        @click="$dispatch('open-form')" class="action-btn action-edit mr-3">
                                         {{ $isEditing ? '✎ Diedit' : 'Edit' }}
                                     </button>
                                     @if (!$isEditing)
@@ -347,7 +374,8 @@
                     @empty
                         <tr>
                             <td colspan="5" class="text-center py-8" style="color:#9AAAC4;font-size:13px;">
-                                <i class="fas fa-{{ $showTrash ? 'trash' : 'users-slash' }} block text-2xl mb-2 opacity-25"></i>
+                                <i
+                                    class="fas fa-{{ $showTrash ? 'trash' : 'users-slash' }} block text-2xl mb-2 opacity-25"></i>
                                 {{ $showTrash ? 'Tong sampah kosong.' : 'Tidak ada pengguna ditemukan.' }}
                             </td>
                         </tr>

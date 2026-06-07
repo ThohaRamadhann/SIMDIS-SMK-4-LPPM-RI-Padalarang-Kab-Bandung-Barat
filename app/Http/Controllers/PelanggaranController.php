@@ -26,14 +26,55 @@ class PelanggaranController extends Controller
         return view('pelanggaran.index');
     }
 
+    // ── Search Siswa (AJAX untuk TomSelect) ───────────────────────────────
+    public function searchSiswa(Request $request)
+    {
+        $q = trim($request->input('q', ''));
+
+        $siswa = Siswa::with(['kelas.waliKelas.pengguna'])
+            ->where(function ($query) use ($q) {
+                $query->where('nama', 'like', "%{$q}%")
+                      ->orWhere('nis',  'like', "%{$q}%");
+            })
+            ->orderBy('nama')
+            ->limit(30)
+            ->get()
+            ->map(fn($s) => [
+                'id'          => $s->id_siswa,
+                'text'        => $s->nama . ' — ' . $s->nis,
+                'kelas'       => $s->kelas->nama_kelas ?? '',
+                'wali'        => $s->kelas?->waliKelas?->pengguna?->name ?? '-',
+                'idwalikelas' => $s->kelas?->waliKelas?->id_walikelas ?? '',
+            ]);
+
+        return response()->json($siswa);
+    }
+
     // ── Create ────────────────────────────────────────────────────────────
     public function create()
     {
-        $siswa            = Siswa::with('kelas')->orderBy('nama')->get();
         $waliKelas        = WaliKelas::with('pengguna')->get();
-        $jenisPelanggaran = JenisPelanggaran::orderBy('nama_pelanggaran')->get();
+        $jenisPelanggaran = JenisPelanggaran::orderByRaw("
+            CASE tingkat_pelanggaran
+                WHEN 'Ringan' THEN 1
+                WHEN 'Sedang' THEN 2
+                WHEN 'Berat'  THEN 3
+                ELSE 4
+            END
+        ")->orderBy('nama_pelanggaran')->get();
 
-        return view('pelanggaran.create', compact('siswa', 'waliKelas', 'jenisPelanggaran'));
+        // Untuk old() support saat validasi gagal
+        $selectedSiswa = null;
+        if (old('id_siswa')) {
+            $selectedSiswa = Siswa::with(['kelas.waliKelas.pengguna'])
+                ->find(old('id_siswa'));
+        }
+
+        return view('pelanggaran.create', compact(
+            'waliKelas',
+            'jenisPelanggaran',
+            'selectedSiswa'
+        ));
     }
 
     // ── Store ─────────────────────────────────────────────────────────────
@@ -75,7 +116,7 @@ class PelanggaranController extends Controller
             'siswa.waliSiswa.pengguna',
             'waliKelas.pengguna',
             'jenisPelanggaran',
-        ]);        
+        ]);
 
         LogAktivitas::catat(
             aksi: 'tambah_pelanggaran',
@@ -95,15 +136,25 @@ class PelanggaranController extends Controller
     // ── Edit ──────────────────────────────────────────────────────────────
     public function edit(Pelanggaran $pelanggaran)
     {
-        $siswa            = Siswa::with('kelas')->orderBy('nama')->get();
         $waliKelas        = WaliKelas::with('pengguna')->get();
-        $jenisPelanggaran = JenisPelanggaran::orderBy('nama_pelanggaran')->get();
+        $jenisPelanggaran = JenisPelanggaran::orderByRaw("
+            CASE tingkat_pelanggaran
+                WHEN 'Ringan' THEN 1
+                WHEN 'Sedang' THEN 2
+                WHEN 'Berat'  THEN 3
+                ELSE 4
+            END
+        ")->orderBy('nama_pelanggaran')->get();
+
+        // Muat siswa yang sedang diedit untuk ditampilkan di TomSelect
+        $selectedSiswa = Siswa::with(['kelas.waliKelas.pengguna'])
+            ->find($pelanggaran->id_siswa);
 
         return view('pelanggaran.edit', compact(
             'pelanggaran',
-            'siswa',
             'waliKelas',
-            'jenisPelanggaran'
+            'jenisPelanggaran',
+            'selectedSiswa'
         ));
     }
 

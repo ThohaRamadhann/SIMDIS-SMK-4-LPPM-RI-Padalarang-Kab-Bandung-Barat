@@ -31,21 +31,21 @@
                 @csrf
 
                 {{-- SISWA --}}
-                <div>
-                    <label class="text-xs font-semibold text-[#0D2D6B]">Siswa</label>
-                    <select name="id_siswa" id="id_siswa" class="mt-0.5 w-full">
-                        <option value="">-- Pilih Siswa --</option>
-                        @foreach ($siswa as $s)
-                            <option value="{{ $s->id_siswa }}"
-                                data-kelas="{{ $s->kelas->nama_kelas ?? '' }}"
-                                data-wali="{{ $s->kelas?->waliKelas?->pengguna?->name ?? '-' }}"
-                                data-idwalikelas="{{ $s->kelas?->waliKelas?->id_walikelas ?? '' }}"
-                                {{ old('id_siswa') == $s->id_siswa ? 'selected' : '' }}>
-                                {{ $s->nama }} - {{ $s->nis }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+<div>
+    <label class="text-xs font-semibold text-[#0D2D6B]">Siswa</label>
+    <select name="id_siswa" id="id_siswa" class="mt-0.5 w-full">
+        <option value="">-- Cari nama atau NIS siswa --</option>
+        @if(old('id_siswa') && $selectedSiswa)
+            <option value="{{ $selectedSiswa->id_siswa }}"
+                data-kelas="{{ $selectedSiswa->kelas->nama_kelas ?? '' }}"
+                data-wali="{{ $selectedSiswa->kelas?->waliKelas?->pengguna?->name ?? '-' }}"
+                data-idwalikelas="{{ $selectedSiswa->kelas?->waliKelas?->id_walikelas ?? '' }}"
+                selected>
+                {{ $selectedSiswa->nama }} — {{ $selectedSiswa->nis }}
+            </option>
+        @endif
+    </select>
+</div>
 
                 {{-- KELAS --}}
                 <div>
@@ -250,39 +250,29 @@
             const btn     = document.getElementById('btn-simpan');
             const text    = document.getElementById('btn-simpan-text');
             const loading = document.getElementById('btn-simpan-loading');
-
-            btn.disabled           = true;
-            text.style.display     = 'none';
-            loading.style.display  = 'inline-flex';
+    
+            btn.disabled          = true;
+            text.style.display    = 'none';
+            loading.style.display = 'inline-flex';
         });
-
-        // ── SISWA → KELAS & WALI KELAS ───────────────────────────────────
-        const siswaSelect  = document.getElementById('id_siswa');
-        const namaWali     = document.getElementById('nama_walikelas');
-        const idWali       = document.getElementById('id_walikelas');
-        const namaKelas    = document.getElementById('nama_kelas');
-
-        function updateDataSiswa() {
-            const sel = siswaSelect.options[siswaSelect.selectedIndex];
-            namaWali.value  = sel.getAttribute('data-wali') || '';
-            idWali.value    = sel.getAttribute('data-idwalikelas') || '';
-            namaKelas.value = (sel.getAttribute('data-kelas') || '').trim();
-        }
-
-        siswaSelect.addEventListener('change', updateDataSiswa);
-
+    
+        // ── REFERENSI ELEMEN KELAS & WALI ────────────────────────────────
+        const namaWali  = document.getElementById('nama_walikelas');
+        const idWali    = document.getElementById('id_walikelas');
+        const namaKelas = document.getElementById('nama_kelas');
+    
         // ── CUSTOM DROPDOWN JENIS PELANGGARAN ────────────────────────────
-        const trigger      = document.getElementById('dropdown_trigger');
-        const dropLabel    = document.getElementById('dropdown_label');
-        const dropList     = document.getElementById('dropdown_list');
-        const dropChevron  = document.getElementById('dropdown_chevron');
-        const dropWrap     = document.getElementById('custom_dropdown_wrap');
-        const hiddenJenis  = document.getElementById('id_jenispelanggaran_hidden');
-        const badgeWrap    = document.getElementById('badge_wrap');
-        const badgeLabel   = document.getElementById('badge_label');
-        const searchInput  = document.getElementById('dropdown_search');
-        const dropEmpty    = document.getElementById('dropdown_empty');
-
+        const trigger     = document.getElementById('dropdown_trigger');
+        const dropLabel   = document.getElementById('dropdown_label');
+        const dropList    = document.getElementById('dropdown_list');
+        const dropChevron = document.getElementById('dropdown_chevron');
+        const dropWrap    = document.getElementById('custom_dropdown_wrap');
+        const hiddenJenis = document.getElementById('id_jenispelanggaran_hidden');
+        const badgeWrap   = document.getElementById('badge_wrap');
+        const badgeLabel  = document.getElementById('badge_label');
+        const searchInput = document.getElementById('dropdown_search');
+        const dropEmpty   = document.getElementById('dropdown_empty');
+    
         const badgeCfg = {
             'Ringan': {
                 cls: 'bg-green-100 text-green-800',
@@ -297,7 +287,7 @@
                 badgeHtml: '<span class="flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 text-red-800">Berat</span>'
             },
         };
-
+    
         function openDropdown() {
             dropList.classList.remove('hidden');
             dropChevron.style.transform = 'rotate(180deg)';
@@ -305,26 +295,26 @@
             searchInput.dispatchEvent(new Event('input'));
             setTimeout(() => searchInput.focus(), 50);
         }
-
+    
         function closeDropdown() {
             dropList.classList.add('hidden');
             dropChevron.style.transform = 'rotate(0deg)';
         }
-
+    
         trigger.addEventListener('click', function (e) {
             e.stopPropagation();
             dropList.classList.contains('hidden') ? openDropdown() : closeDropdown();
         });
-
+    
         document.addEventListener('click', function (e) {
             if (!dropWrap.contains(e.target)) closeDropdown();
         });
-
+    
         searchInput.addEventListener('input', function () {
             const keyword = this.value.toLowerCase().trim();
             const items   = document.querySelectorAll('#dropdown_scroll .dropdown-item');
             let visibleCount = 0;
-
+    
             items.forEach(item => {
                 const nama = (item.dataset.nama || '').toLowerCase();
                 if (nama === '' || nama.includes(keyword)) {
@@ -334,17 +324,17 @@
                     item.classList.add('hidden');
                 }
             });
-
+    
             dropEmpty.classList.toggle('hidden', visibleCount > 0);
         });
-
+    
         function selectItem(item) {
             const val     = item.getAttribute('data-value');
             const tingkat = item.getAttribute('data-tingkat');
             const nama    = item.getAttribute('data-nama') || '';
-
+    
             hiddenJenis.value = val;
-
+    
             if (!val) {
                 dropLabel.innerHTML = '<span class="text-gray-400 truncate">-- Pilih Jenis Pelanggaran --</span>';
                 badgeWrap.classList.add('hidden');
@@ -353,39 +343,39 @@
                 dropLabel.innerHTML =
                     '<span class="flex-1 min-w-0 truncate">' + nama + '</span>' +
                     (cfg ? cfg.badgeHtml : '');
-
+    
                 if (cfg) {
                     badgeLabel.textContent = '● ' + tingkat;
-                    badgeLabel.className =
+                    badgeLabel.className   =
                         'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ' + cfg.cls;
                     badgeWrap.classList.remove('hidden');
                 } else {
                     badgeWrap.classList.add('hidden');
                 }
             }
-
+    
             closeDropdown();
         }
-
+    
         document.querySelectorAll('.dropdown-item').forEach(function (item) {
             item.addEventListener('click', function () {
                 selectItem(this);
             });
         });
-
+    
         (function () {
             const oldVal = hiddenJenis.value;
             if (!oldVal) return;
             const match = document.querySelector('.dropdown-item[data-value="' + oldVal + '"]');
             if (match) selectItem(match);
         })();
-
+    
         // ── WAKTU KEJADIAN ───────────────────────────────────────────────
         const wktTanggal = document.getElementById('wkt_tanggal');
         const wktJam     = document.getElementById('wkt_jam');
         const wktMenit   = document.getElementById('wkt_menit');
         const wktHidden  = document.getElementById('waktu_kejadian_hidden');
-
+    
         @if (old('waktu_kejadian'))
             (function () {
                 try {
@@ -400,22 +390,63 @@
                 } catch (e) { /* silent */ }
             })();
         @endif
-
+    
         document.getElementById('form_pelanggaran').addEventListener('submit', function () {
             if (wktTanggal.value) {
                 wktHidden.value = wktTanggal.value + 'T' + wktJam.value + ':' + wktMenit.value;
             }
         });
-
-        // ── INIT ─────────────────────────────────────────────────────────
-        window.addEventListener('load', updateDataSiswa);
-
-        new TomSelect("#id_siswa", {
+    
+        // ── INIT TOMSELECT (AJAX) ────────────────────────────────────────
+        const tomSiswa = new TomSelect("#id_siswa", {
             create: false,
             placeholder: "Cari nama siswa atau NIS...",
+            valueField: 'id',
+            labelField: 'text',
             searchField: ['text'],
-            maxOptions: 200,
+            preload: false,
+            load: function (query, callback) {
+                if (query.length < 2) return callback();
+                fetch('{{ route('siswa.search') }}?q=' + encodeURIComponent(query), {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(r => r.json())
+                .then(data => callback(data))
+                .catch(() => callback());
+            },
+            onChange: function (value) {
+                const item = this.options[value];
+                if (!item) {
+                    namaWali.value  = '';
+                    idWali.value    = '';
+                    namaKelas.value = '';
+                    return;
+                }
+                namaWali.value  = item.wali        || '';
+                idWali.value    = item.idwalikelas || '';
+                namaKelas.value = item.kelas        || '';
+            },
+            render: {
+                option:     data => `<div class="py-1">${data.text}</div>`,
+                item:       data => `<div>${data.text}</div>`,
+                no_results: ()   => `<div class="py-2 px-3 text-sm text-gray-400">Siswa tidak ditemukan</div>`,
+                loading:    ()   => `<div class="py-2 px-3 text-sm text-gray-400">Mencari...</div>`,
+            },
         });
+    
+        // Jika ada old() value (setelah validasi gagal), isi kelas & wali
+        @if (old('id_siswa') && $selectedSiswa)
+            (function () {
+                const s = {
+                    kelas:       '{{ addslashes($selectedSiswa->kelas->nama_kelas ?? '') }}',
+                    wali:        '{{ addslashes($selectedSiswa->kelas?->waliKelas?->pengguna?->name ?? '-') }}',
+                    idwalikelas: '{{ $selectedSiswa->kelas?->waliKelas?->id_walikelas ?? '' }}',
+                };
+                namaWali.value  = s.wali;
+                idWali.value    = s.idwalikelas;
+                namaKelas.value = s.kelas;
+            })();
+        @endif
     </script>
 
 </x-app-layout>

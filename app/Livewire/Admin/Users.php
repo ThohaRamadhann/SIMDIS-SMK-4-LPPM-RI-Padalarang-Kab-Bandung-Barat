@@ -37,11 +37,29 @@ class Users extends Component
         'perPage'    => ['except' => 10],
     ];
 
-    public function updatingSearch()     { $this->resetPage(); }
-    public function updatingFilterRole() { $this->resetPage(); }
-    public function updatingSortBy()     { $this->resetPage(); }
-    public function updatingPerPage()    { $this->resetPage(); }
-    public function updatingShowTrash()  { $this->resetPage(); }
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+        $this->dispatchFilterChanged();
+    }
+    
+    public function updatedFilterRole(): void
+    {
+        $this->resetPage();
+        $this->dispatchFilterChanged();
+    }
+    
+    private function dispatchFilterChanged(): void
+    {
+        $this->dispatch('filter-pengguna-changed', [
+            'filterRole' => $this->filterRole,
+            'search'     => $this->search,
+        ]);
+    }
+    
+    public function updatingSortBy()    { $this->resetPage(); }
+    public function updatingPerPage()   { $this->resetPage(); }
+    public function updatingShowTrash() { $this->resetPage(); }
 
     public function getSelectedRoleNameProperty()
     {

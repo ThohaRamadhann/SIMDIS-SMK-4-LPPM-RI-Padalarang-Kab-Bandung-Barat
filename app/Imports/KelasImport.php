@@ -62,7 +62,7 @@ class KelasImport implements
         return [
             'tingkat'      => 'required|string',
             'nama_kelas'   => 'required|string',
-            'jurusan' => 'required|in:Perhotelan,Rekayasa Perangkat Lunak,Teknik Komputer Jaringan,Teknik Bisnis Sepeda Motor',
+            'jurusan' => 'required|in:Akomodasi Perhotelan,Rekayasa Perangkat Lunak,Teknik Komputer Jaringan,Teknik Bisnis Sepeda Motor',
             'tahun_ajaran' => 'required|string',
         ];
     }

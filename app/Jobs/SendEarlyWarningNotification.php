@@ -72,8 +72,6 @@ class SendEarlyWarningNotification implements ShouldQueue
             $penerima->push($waliKelas);
         }
 
-        // ✅ FIX: waliSiswa sudah pasti ter-load karena eager load
-        // di atas sudah include 'siswa.waliSiswa.pengguna'
         $orangTua = optional($siswa->waliSiswa)->pengguna ?? null;
         if ($orangTua) {
             $penerima->push($orangTua);
@@ -116,8 +114,6 @@ class SendEarlyWarningNotification implements ShouldQueue
 
     private function kirimWhatsApp($siswa, int $total, string $tingkat): void
     {
-        // ✅ FIX: Gunakan loadMissing agar relasi pasti ada
-        // tanpa query ulang jika sudah ter-load
         $siswa->loadMissing(['waliSiswa.pengguna', 'kelas']);
 
         $orangTuaPengguna = optional($siswa->waliSiswa)->pengguna ?? null;

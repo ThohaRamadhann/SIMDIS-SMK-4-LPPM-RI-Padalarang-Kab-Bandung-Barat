@@ -22,6 +22,9 @@ class Index extends Component
     public $id_walikelas = '';
     public $editingId    = null;
 
+    // ── Wali kelas options (reaktif ke Alpine) ──
+    public $waliKelasOptions = [];
+
     // ── Search, filter, sort, pagination, trash ──
     public $search        = '';
     public $filterTingkat = '';
@@ -42,14 +45,82 @@ class Index extends Component
         'perPage'       => ['except' => 10],
     ];
 
-    public function updatingSearch()        { $this->resetPage(); }
-    public function updatingFilterTingkat() { $this->resetPage(); }
-    public function updatingFilterJurusan() { $this->resetPage(); }
-    public function updatingFilterTahun()   { $this->resetPage(); }
-    public function updatingFilterWali()    { $this->resetPage(); }
-    public function updatingSortBy()        { $this->resetPage(); }
-    public function updatingPerPage()       { $this->resetPage(); }
-    public function updatingShowTrash()     { $this->resetPage(); }
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+        $this->dispatchFilterChanged();
+    }
+    public function updatedFilterTingkat(): void
+    {
+        $this->resetPage();
+        $this->dispatchFilterChanged();
+    }
+    public function updatedFilterJurusan(): void
+    {
+        $this->resetPage();
+        $this->dispatchFilterChanged();
+    }
+    public function updatedFilterTahun(): void
+    {
+        $this->resetPage();
+        $this->dispatchFilterChanged();
+    }
+    public function updatedFilterWali(): void
+    {
+        $this->resetPage();
+        $this->dispatchFilterChanged();
+    }
+
+    private function dispatchFilterChanged(): void
+    {
+        $this->dispatch('filter-kelas-changed', [
+            'filterTingkat' => $this->filterTingkat,
+            'filterJurusan' => $this->filterJurusan,
+            'filterTahun'   => $this->filterTahun,
+            'filterWali'    => $this->filterWali,
+            'search'        => $this->search,
+        ]);
+    }
+
+    public function updatingSortBy()
+    {
+        $this->resetPage();
+    }
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
+    public function updatingShowTrash()
+    {
+        $this->resetPage();
+    }
+
+    // ── Helper: build waliKelasOptions berdasarkan editingId saat ini ──
+    private function buildWaliKelasOptions(): void
+    {
+        $currentWaliId = $this->editingId
+            ? Kelas::where('id_kelas', $this->editingId)->value('id_walikelas')
+            : null;
+
+        $sudahDipakai = Kelas::whereNotNull('id_walikelas')
+            ->when($this->editingId, fn($q) => $q->where('id_kelas', '!=', $this->editingId))
+            ->pluck('id_walikelas');
+
+        $this->waliKelasOptions = WaliKelas::with('pengguna')
+            ->where(function ($q) use ($sudahDipakai, $currentWaliId) {
+                $q->whereNotIn('id_walikelas', $sudahDipakai);
+                if ($currentWaliId) {
+                    $q->orWhere('id_walikelas', $currentWaliId);
+                }
+            })
+            ->get()
+            ->map(fn($w) => [
+                'id'   => $w->id_walikelas,
+                'name' => optional($w->pengguna)->name ?? '-',
+            ])
+            ->values()
+            ->toArray();
+    }
 
     // ── Reset form ──
     public function resetForm(): void
@@ -82,24 +153,21 @@ class Index extends Component
             'nama_kelas'   => 'required|string|max:100',
             'tingkat'      => ['required', 'string', Rule::in(['X', 'XI', 'XII'])],
             'jurusan'      => ['required', 'string', Rule::in([
-                'Perhotelan',
+                'Akomodasi Perhotelan',
                 'Rekayasa Perangkat Lunak',
                 'Teknik Komputer Jaringan',
                 'Teknik Bisnis Sepeda Motor',
             ])],
             'tahun_ajaran' => 'required|string|max:20',
-
-            // Unique: 1 wali kelas hanya boleh mengampu 1 kelas
-            // Saat edit, ignore kelas yang sedang diedit
             'id_walikelas' => [
                 'nullable',
                 Rule::unique('kelas', 'id_walikelas')
                     ->ignore($this->editingId, 'id_kelas')
-                    ->whereNull('deleted_at'), // abaikan kelas yang sudah dihapus (soft delete)
+                    ->whereNull('deleted_at'),
             ],
         ], [
-            'tingkat.in'      => 'Tingkat harus X, XI, atau XII.',
-            'jurusan.in'      => 'Jurusan tidak valid.',
+            'tingkat.in'          => 'Tingkat harus X, XI, atau XII.',
+            'jurusan.in'          => 'Jurusan tidak valid.',
             'id_walikelas.unique' => 'Wali kelas ini sudah mengampu kelas lain. Pilih wali kelas yang berbeda.',
         ]);
 
@@ -133,6 +201,9 @@ class Index extends Component
         $this->jurusan      = $k->jurusan;
         $this->tahun_ajaran = $k->tahun_ajaran;
         $this->id_walikelas = $k->id_walikelas;
+
+        // Rebuild options agar wali yang mengampu kelas ini ikut muncul
+        $this->buildWaliKelasOptions();
     }
 
     // ── Soft Delete ──
@@ -204,30 +275,23 @@ class Index extends Component
         $jurusanOptions = Kelas::select('jurusan')->distinct()->orderBy('jurusan')->pluck('jurusan');
         $tahunOptions   = Kelas::select('tahun_ajaran')->distinct()->orderByDesc('tahun_ajaran')->pluck('tahun_ajaran');
 
-        // ── Wali kelas yang sudah mengampu kelas aktif lain (kecuali kelas yang sedang diedit) ──
-        $sudahDipakai = Kelas::whereNotNull('id_walikelas')
-            ->when($this->editingId, fn($q) => $q->where('id_kelas', '!=', $this->editingId))
-            ->pluck('id_walikelas');
-
-        // Hanya tampilkan wali yang belum mengampu kelas manapun
-        // + wali dari kelas yang sedang diedit (agar tetap muncul di dropdown)
-        $waliKelasList = WaliKelas::with('pengguna')
-            ->whereNotIn('id_walikelas', $sudahDipakai)
-            ->get();
+        // Build waliKelasOptions kalau belum ada (misal saat pertama load / tambah baru)
+        if (empty($this->waliKelasOptions)) {
+            $this->buildWaliKelasOptions();
+        }
 
         return view('livewire.admin.kelas.index', [
             'kelas'            => $query->paginate($this->perPage),
-            'waliKelasList'    => $waliKelasList,
             'trashCount'       => Kelas::onlyTrashed()->count(),
             'tingkatOptions'   => $tingkatOptions,
             'jurusanOptions'   => $jurusanOptions,
             'tahunOptions'     => $tahunOptions,
             'hasActiveFilters' => (bool) ($this->search || $this->filterTingkat
-                                  || $this->filterJurusan || $this->filterTahun
-                                  || $this->filterWali),
+                || $this->filterJurusan || $this->filterTahun
+                || $this->filterWali),
         ]);
     }
 
     #[On('refresh')]
-public function refreshData(): void {}
+    public function refreshData(): void {}
 }

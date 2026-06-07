@@ -32,10 +32,22 @@ class Index extends Component
     public bool $confirmForceDelete = false;
     public $forceDeleteId           = null;
 
-    public function updatingSearch(): void        { $this->resetPage(); }
-    public function updatingFilterTingkat(): void { $this->resetPage(); }
-    public function updatingPerPage(): void       { $this->resetPage(); }
-    public function updatingShowTrash(): void     { $this->resetPage(); }
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+    public function updatingFilterTingkat(): void
+    {
+        $this->resetPage();
+    }
+    public function updatingPerPage(): void
+    {
+        $this->resetPage();
+    }
+    public function updatingShowTrash(): void
+    {
+        $this->resetPage();
+    }
 
     // ── Validasi ───────────────────────────────────────────────────────
     protected function rules(): array
@@ -109,9 +121,11 @@ class Index extends Component
         );
 
         $this->showModal = false;
-        session()->flash('success', $isEdit
-            ? 'Jenis pelanggaran berhasil diperbarui.'
-            : 'Jenis pelanggaran berhasil ditambahkan.'
+        session()->flash(
+            'success',
+            $isEdit
+                ? 'Jenis pelanggaran berhasil diperbarui.'
+                : 'Jenis pelanggaran berhasil ditambahkan.'
         );
     }
 
@@ -197,17 +211,26 @@ class Index extends Component
         $trashCount = JenisPelanggaran::onlyTrashed()->count();
 
         $data = JenisPelanggaran::query()
-            ->when($this->showTrash,
-                fn ($q) => $q->onlyTrashed(),
-                fn ($q) => $q
-                    ->when($this->search, fn ($q) =>
+            ->when(
+                $this->showTrash,
+                fn($q) => $q->onlyTrashed(),
+                fn($q) => $q
+                    ->when(
+                        $this->search,
+                        fn($q) =>
                         $q->where('nama_pelanggaran', 'like', '%' . $this->search . '%')
                     )
-                    ->when($this->filterTingkat, fn ($q) =>
+                    ->when(
+                        $this->filterTingkat,
+                        fn($q) =>
                         $q->where('tingkat_pelanggaran', $this->filterTingkat)
                     )
             )
-            ->orderBy('tingkat_pelanggaran')
+            ->orderByRaw("CASE tingkat_pelanggaran
+            WHEN 'Ringan' THEN 1
+            WHEN 'Sedang' THEN 2
+            WHEN 'Berat'  THEN 3
+            ELSE 4 END")
             ->orderBy('nama_pelanggaran')
             ->paginate($this->perPage);
 

@@ -37,6 +37,12 @@
             <div>
                 <p class="text-sm text-[#4A5E8A]">Selamat datang kembali,</p>
                 <h3 class="text-xl font-bold text-[#0D2D6B]">{{ auth()->user()->name }} 👋</h3>
+                @if ($kelas)
+                    <div class="mt-1 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
+                                bg-[#e8f0fe] text-[#0D2D6B] text-xs font-semibold">
+                        🏫 Wali Kelas {{ $kelas->nama_kelas }}
+                    </div>
+                @endif
             </div>
             <span class="text-xs text-[#718096] hidden sm:block">
                 {{ now()->translatedFormat('l, d F Y') }}
