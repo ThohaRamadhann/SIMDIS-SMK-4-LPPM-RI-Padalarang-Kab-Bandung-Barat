@@ -59,11 +59,12 @@ new class extends Component {
             ->where('status', 'terkirim')
             ->with(['pengguna.role'])
             ->get()
+            ->unique('id_pengguna') // ✅ cegah duplikat
             ->map(function ($n) {
                 $namaPengguna = optional($n->pengguna)->name ?? '-';
                 $roleName = optional(optional($n->pengguna)->role)->nama_role ?? '-';
                 $labelRole = match ($roleName) {
-                    'orang_tua' => 'Orang Tua',
+                    'wali_siswa' => 'Wali Siswa',
                     'wali_kelas' => 'Wali Kelas',
                     'guru_bk' => 'Guru BK',
                     default => ucfirst(str_replace('_', ' ', $roleName)),
@@ -76,6 +77,7 @@ new class extends Component {
                     'read_at' => optional($n->read_at)?->toDateTimeString(),
                 ];
             })
+            ->values() // ✅ reset index setelah unique
             ->toArray();
     }
 
@@ -180,32 +182,32 @@ new class extends Component {
     roleUser: '{{ $roleUser }}',
 
     init() {
-        // Sync awal
         window.dispatchEvent(new CustomEvent('notif-count-update', { detail: { count: this.unreadCount } }));
 
         window.addEventListener('open-notif-sidebar', () => this.open = true);
 
         const userId = {{ auth()->user()->id_pengguna }};
         window.Echo.private('notifikasi.' + userId)
-            .listen('.NotifikasiBaru', () => {
-                this.playSound();
-                this.unreadCount++;
-                window.dispatchEvent(new CustomEvent('notif-count-update', {
-                    detail: { count: this.unreadCount }
-                }));
-                setTimeout(() => {
-                    $wire.refreshNotifikasi();
-                }, 800);
-            });
+            .listen('.NotifikasiBaru', (e) => {
+                const notif = e.notifikasi;
 
-        // Sync data Alpine dari Livewire setelah refresh
-        $wire.on('notifikasi-refreshed', () => {
-            this.notifikasis = $wire.notifikasis;
-            this.unreadCount = $wire.unreadCount;
-            window.dispatchEvent(new CustomEvent('notif-count-update', {
-                detail: { count: this.unreadCount }
-            }));
-        });
+                // ✅ Deduplikasi status_penerima sebelum masuk ke state
+                if (notif.status_penerima && notif.status_penerima.length > 0) {
+                    const seen = new Set();
+                    notif.status_penerima = notif.status_penerima.filter(p => {
+                        if (seen.has(p.nama)) return false;
+                        seen.add(p.nama);
+                        return true;
+                    });
+                }
+
+                this.notifikasis.unshift(notif);
+                if (this.notifikasis.length > 10)
+                    this.notifikasis = this.notifikasis.slice(0, 10);
+                this.unreadCount++;
+                window.dispatchEvent(new CustomEvent('notif-count-update', { detail: { count: this.unreadCount } }));
+                this.playSound();
+            });
     },
 
     playSound() {
@@ -292,10 +294,10 @@ new class extends Component {
     },
 
     roleColor(role) {
-        if (role === 'Orang Tua') return { bg: '#f3e8ff', text: '#7e22ce' };
-        if (role === 'Wali Kelas') return { bg: '#dbeafe', text: '#1d4ed8' };
-        if (role === 'Guru BK') return { bg: '#ccfbf1', text: '#0f766e' };
-        return { bg: '#f3f4f6', text: '#374151' };
+         if (role === 'Orang Tua') return { bg: '#f3e8ff', text: '#7e22ce' };
+    if (role === 'Wali Kelas') return { bg: '#dbeafe', text: '#1d4ed8' };
+    if (role === 'Guru BK') return { bg: '#ccfbf1', text: '#0f766e' };
+    return { bg: '#f3f4f6', text: '#374151' };
     }
 }" @keydown.escape.window="showDetail ? closeDetail() : open = false">
 

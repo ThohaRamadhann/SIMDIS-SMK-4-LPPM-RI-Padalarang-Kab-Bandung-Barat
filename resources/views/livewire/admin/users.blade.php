@@ -141,7 +141,7 @@
                 @endif
 
                 {{-- DETAIL ORTU --}}
-                @if ($this->selectedRoleName === 'orang_tua')
+                @if ($this->selectedRoleName === 'wali_siswa')
                     <div class="pt-3 border-t">
                         <h4 class="simdis-section-title">Detail Wali Murid</h4>
                         <input type="text" wire:model="hubungan" placeholder="Ayah / Ibu / Wali"

@@ -16,7 +16,7 @@ class PelanggaranPolicy
     public function viewAny(Pengguna $user): bool
     {
         return in_array($user->role->nama_role, [
-            'admin', 'guru_bk', 'wali_kelas', 'wali_siswa', // wali_siswa = orang_tua lama
+            'admin', 'guru_bk', 'wali_kelas', 'wali_siswa', // wali_siswa = wali_siswa lama
         ]);
     }
 

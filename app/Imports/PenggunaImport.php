@@ -70,8 +70,8 @@ class PenggunaImport implements
                 'password'  => Hash::make($row['password']),
             ]);
 
-            // Role: orang_tua → buat entri wali siswa
-            if ($role->nama_role === 'orang_tua') {
+            // Role: wali_siswa → buat entri wali siswa
+            if ($role->nama_role === 'wali_siswa') {
                 if (empty($row['hubungan'])) {
                     $this->errors[] = "Baris " . ($index + 2) . ": Hubungan wajib diisi untuk role orang tua.";
                     $user->delete();

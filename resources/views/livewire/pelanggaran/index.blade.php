@@ -109,7 +109,7 @@
     <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-4">
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
 
-            @if ($role !== 'orang_tua')
+            @if ($role !== 'wali_siswa')
                 <div class="xl:col-span-2">
                     <input type="text" wire:model.live="search" placeholder="Cari nama siswa / NIS..."
                         class="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm

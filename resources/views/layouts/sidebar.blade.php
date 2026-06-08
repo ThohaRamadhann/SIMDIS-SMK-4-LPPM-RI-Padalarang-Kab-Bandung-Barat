@@ -195,7 +195,7 @@
                 'admin'       => 'Admin',
                 'guru_bk'     => 'Guru BK',
                 'wali_kelas'  => 'Wali Kelas',
-                'wali_siswa'  => 'Wali Siswa',   // sebelumnya: orang_tua
+                'wali_siswa'  => 'Wali Siswa',   // sebelumnya: wali_siswa
                 default       => str_replace('_', ' ', $role),
             };
         @endphp
@@ -230,7 +230,7 @@
             - guru_bk  → lihat semua
             - wali_kelas → lihat sesuai kelas
             - wali_siswa → lihat hanya anak sendiri (scope di controller/livewire)
-            (sebelumnya role ini bernama orang_tua)
+            (sebelumnya role ini bernama wali_siswa)
         --}}
         @if (in_array($role, ['guru_bk', 'wali_kelas', 'wali_siswa']))
             <a href="{{ route('pelanggaran.index') }}" wire:navigate

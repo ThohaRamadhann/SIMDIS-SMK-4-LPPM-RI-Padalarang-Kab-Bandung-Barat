@@ -105,7 +105,7 @@ class Index extends Component
         if ($role === 'wali_kelas') {
             $idKelasAmpu = optional($user->waliKelas)->kelas?->id_kelas;
             abort_if($siswa->id_kelas !== $idKelasAmpu, 403);
-        } elseif ($role === 'orang_tua') {
+        } elseif ($role === 'wali_siswa') {
             $idWaliSiswa = optional($user->waliSiswa)->id_walisiswa;
             abort_if($siswa->id_walisiswa !== $idWaliSiswa, 403);
         }
@@ -141,12 +141,12 @@ class Index extends Component
         if ($role === 'wali_kelas') {
             $idKelasAmpu = optional($user->waliKelas)->kelas?->id_kelas;
             $query->where('id_kelas', $idKelasAmpu);
-        } elseif ($role === 'orang_tua') {
+        } elseif ($role === 'wali_siswa') {
             $idWaliSiswa = optional($user->waliSiswa)->id_walisiswa;
             $query->where('id_walisiswa', $idWaliSiswa);
         }
 
-        if ($this->search && $role !== 'orang_tua') {
+        if ($this->search && $role !== 'wali_siswa') {
             $query->where(
                 fn($q) => $q->where('nama', 'like', '%' . $this->search . '%')
                     ->orWhere('nis', 'like', '%' . $this->search . '%')

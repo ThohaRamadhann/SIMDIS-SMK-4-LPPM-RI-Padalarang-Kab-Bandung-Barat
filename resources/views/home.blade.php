@@ -551,7 +551,7 @@
                 <span class="stat-label">Monitoring Aktif</span>
             </div>
             <div class="stat-item">
-                <span class="stat-num">3+</span>
+                <span class="stat-num">4</span>
                 <span class="stat-label">Peran Pengguna</span>
             </div>
             <div class="stat-item">

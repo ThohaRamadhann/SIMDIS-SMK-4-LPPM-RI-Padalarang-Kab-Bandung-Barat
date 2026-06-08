@@ -157,7 +157,7 @@ class Index extends Component
         };
 
         $penggunaList = Pengguna::whereHas('role', function ($q) {
-            $q->where('nama_role', 'orang_tua');
+            $q->where('nama_role', 'wali_siswa');
         })->orderBy('name')->get();
 
         if ($this->isEdit && $this->id_pengguna) {

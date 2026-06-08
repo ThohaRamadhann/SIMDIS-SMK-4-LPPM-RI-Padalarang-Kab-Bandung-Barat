@@ -106,7 +106,7 @@ class Users extends Component
             $rules['jabatan'] = 'required|string|max:100';
         }
 
-        if ($roleName === 'orang_tua') {
+        if ($roleName === 'wali_siswa') {
             $rules['hubungan'] = 'required|string|max:50';
         }
 
@@ -190,7 +190,7 @@ class Users extends Component
                 ['nuptk' => $this->nuptk, 'jabatan' => $this->jabatan]
             );
             $pengguna->waliSiswa()->delete();
-        } elseif ($roleName === 'orang_tua') {
+        } elseif ($roleName === 'wali_siswa') {
             WaliSiswa::updateOrCreate(
                 ['id_pengguna' => $pengguna->id_pengguna],
                 ['hubungan' => $this->hubungan]

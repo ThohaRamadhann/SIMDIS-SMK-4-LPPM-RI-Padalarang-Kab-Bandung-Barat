@@ -57,9 +57,9 @@ new #[Layout('layouts.app')] class extends Component {
                     $q2->where('modul', 'pelanggaran')->whereIn('id_referensi', $idPelanggaranDiKelas);
                 });
             });
-        } elseif ($this->roleUser === 'orang_tua') {
-            $waliMurid = auth()->user()->waliMurid;
-            $idSiswa = $waliMurid?->siswa->pluck('id_siswa')->toArray() ?? [];
+        } elseif ($this->roleUser === 'wali_siswa') {
+            $waliSiswa = auth()->user()->waliSiswa; //
+            $idSiswa = $waliSiswa?->siswa->pluck('id_siswa')->toArray() ?? [];
             $idPelanggaran = \App\Models\Pelanggaran::whereIn('id_siswa', $idSiswa)->pluck('id_pelanggaran')->toArray();
 
             $query->where('modul', 'pelanggaran')->whereIn('id_referensi', $idPelanggaran);
@@ -196,7 +196,7 @@ new #[Layout('layouts.app')] class extends Component {
                             <th class="text-left px-4 py-3 text-xs font-bold text-[#0D2D6B] uppercase tracking-wide">
                                 Pengguna</th>
                         @endif
-                        @if (in_array($roleUser, ['wali_kelas', 'orang_tua']))
+                        @if (in_array($roleUser, ['wali_kelas', 'wali_siswa']))
                             <th class="text-left px-4 py-3 text-xs font-bold text-[#0D2D6B] uppercase tracking-wide">
                                 Dicatat Oleh</th>
                         @endif
@@ -215,7 +215,7 @@ new #[Layout('layouts.app')] class extends Component {
                             <td class="px-4 py-3 text-gray-600 whitespace-nowrap">
                                 {{ $log->waktu->format('d/m/Y H:i:s') }}
                             </td>
-                            @if ($roleUser === 'admin' || in_array($roleUser, ['wali_kelas', 'orang_tua']))
+                            @if ($roleUser === 'admin' || in_array($roleUser, ['wali_kelas', 'wali_siswa']))
                                 <td class="px-4 py-3">
                                     <div class="font-semibold text-[#0D2D6B]">{{ optional($log->pengguna)->name }}</div>
                                     <div class="text-xs text-gray-400">

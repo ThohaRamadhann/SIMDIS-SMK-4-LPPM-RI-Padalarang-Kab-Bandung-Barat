@@ -11,11 +11,16 @@
             box-sizing: border-box;
         }
 
+        @page {
+            margin: 0;
+        }
+
         body {
             font-family: 'Times New Roman', Times, serif;
             font-size: 11px;
             color: #111;
             background: #fff;
+            padding: 20px 30px;
         }
 
         /* ── KOP SURAT ── */
@@ -99,40 +104,9 @@
             color: #555;
             margin-top: 3px;
         }
-
-        .judul-garis {
-            width: 60px;
-            height: 3px;
-            background: #F5B800;
-            margin: 6px auto 0;
-            border-radius: 2px;
-        }
-
-        /* ── META INFO ── */
-        .meta-wrap {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            font-size: 10px;
-            color: #444;
-        }
-
-        .meta-left {
-            line-height: 1.7;
-        }
-
-        .meta-right {
-            text-align: right;
-            line-height: 1.7;
-        }
-
         .meta-label {
             font-weight: bold;
             color: #0D2D6B;
-        }
-
-        .filter-pills {
-            margin-top: 4px;
         }
 
         .filter-pill {
@@ -151,7 +125,7 @@
         .tabel-pelanggaran {
             width: 100%;
             border-collapse: collapse;
-            font-size: 10px;
+            font-size: 9px;
         }
 
         .tabel-pelanggaran thead tr {
@@ -160,10 +134,10 @@
         }
 
         .tabel-pelanggaran thead th {
-            padding: 7px 8px;
+            padding: 6px 5px;
             text-align: center;
             font-weight: bold;
-            font-size: 9.5px;
+            font-size: 8.5px;
             letter-spacing: 0.03em;
             border: 1px solid #0a2458;
         }
@@ -181,7 +155,7 @@
         }
 
         .tabel-pelanggaran tbody td {
-            padding: 6px 8px;
+            padding: 5px 5px;
             border: 1px solid #d8e4f5;
             vertical-align: middle;
             color: #222;
@@ -194,26 +168,24 @@
         /* Badge tingkat */
         .badge {
             display: inline-block;
-            padding: 1px 7px;
+            padding: 1px 6px;
             border-radius: 4px;
-            font-size: 9px;
+            font-size: 8px;
             font-weight: bold;
         }
 
         .badge-ringan  { background: #d1fae5; color: #065f46; }
         .badge-sedang  { background: #fef3c7; color: #92400e; }
         .badge-berat   { background: #fee2e2; color: #991b1b; }
-
-        /* Badge status */
         .badge-belum   { background: #fee2e2; color: #991b1b; }
         .badge-proses  { background: #fef3c7; color: #92400e; }
         .badge-selesai { background: #d1fae5; color: #065f46; }
 
-        /* ── FOOTER ── */
-        .footer {
-            margin-top: 20px;
-            font-size: 9.5px;
-            color: #666;
+        .no-data {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-style: italic;
         }
 
         .footer-flex {
@@ -231,12 +203,6 @@
             vertical-align: top;
         }
 
-        .ttd-label {
-            font-size: 10px;
-            color: #333;
-            margin-bottom: 50px;
-        }
-
         .ttd-nama {
             font-size: 10.5px;
             font-weight: bold;
@@ -250,38 +216,6 @@
         .ttd-jabatan {
             font-size: 9.5px;
             color: #555;
-        }
-
-        /* ── SUMMARY BOX ── */
-        .summary-wrap {
-            margin-bottom: 14px;
-        }
-
-        .summary-table {
-            border-collapse: collapse;
-            font-size: 10px;
-        }
-
-        .summary-table td {
-            padding: 3px 12px 3px 0;
-            color: #333;
-        }
-
-        .summary-num {
-            font-size: 13px;
-            font-weight: bold;
-            color: #0D2D6B;
-        }
-
-        .summary-num.red    { color: #dc2626; }
-        .summary-num.yellow { color: #d97706; }
-        .summary-num.green  { color: #059669; }
-
-        .no-data {
-            text-align: center;
-            padding: 30px;
-            color: #999;
-            font-style: italic;
         }
     </style>
 </head>
@@ -317,7 +251,6 @@
     <div class="judul-wrap">
         <div class="judul-laporan">Laporan Data Pelanggaran Siswa</div>
         <div class="judul-sub">Sistem Informasi Manajemen Disiplin Siswa (SIMDIS)</div>
-        <div class="judul-garis"></div>
     </div>
 
     {{-- ===== META INFO ===== --}}
@@ -337,7 +270,6 @@
                 @endif
             </td>
             <td style="vertical-align:top;width:45%;text-align:right;">
-                {{-- Ringkasan per tingkat --}}
                 @php
                     $ringan  = $pelanggarans->filter(fn($p) => ($p->jenisPelanggaran->tingkat_pelanggaran ?? '') === 'Ringan')->count();
                     $sedang  = $pelanggarans->filter(fn($p) => ($p->jenisPelanggaran->tingkat_pelanggaran ?? '') === 'Sedang')->count();
@@ -381,18 +313,18 @@
         <table class="tabel-pelanggaran">
             <thead>
                 <tr>
-                    <th style="width:28px;">No</th>
-                    <th class="text-left" style="width:130px;">Nama Siswa</th>
-                    <th style="width:70px;">NIS</th>
-                    <th style="width:60px;">Kelas</th>
-                    <th style="width:90px;">Jurusan</th>
-                    <th style="width:70px;">Tahun Ajaran</th>
-                    <th class="text-left" style="width:120px;">Wali Kelas</th>
-                    <th class="text-left" style="width:140px;">Jenis Pelanggaran</th>
-                    <th style="width:55px;">Tingkat</th>
-                    <th style="width:80px;">Status</th>
-                    <th style="width:90px;">Waktu Kejadian</th>
-                    <th style="width:90px;">Tgl Pembinaan</th>
+                    <th style="width:24px;">No</th>
+                    <th class="text-left" style="width:110px;">Nama Siswa</th>
+                    <th style="width:60px;">NIS</th>
+                    <th style="width:55px;">Kelas</th>
+                    <th style="width:80px;">Jurusan</th>
+                    <th style="width:60px;">Tahun Ajaran</th>
+                    <th class="text-left" style="width:100px;">Wali Kelas</th>
+                    <th class="text-left" style="width:120px;">Jenis Pelanggaran</th>
+                    <th style="width:48px;">Tingkat</th>
+                    <th style="width:48px;">Status</th>
+                    <th style="width:80px;">Waktu Kejadian</th>
+                    <th style="width:75px;">Tgl Pembinaan</th>
                 </tr>
             </thead>
             <tbody>
@@ -464,7 +396,7 @@
                 </div>
             </td>
             <td class="footer-right">
-                <div class="ttd-label">
+                <div style="font-size:10px;color:#333;">
                     Padalarang, {{ now()->translatedFormat('d F Y') }}<br>
                     Guru Bimbingan Konseling
                 </div>

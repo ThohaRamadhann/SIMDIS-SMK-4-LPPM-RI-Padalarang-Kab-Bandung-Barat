@@ -29,10 +29,6 @@ class NotifikasiBaru implements ShouldBroadcastNow
         return 'NotifikasiBaru';
     }
 
-    /**
-     * Kirim data lengkap ke frontend — konsisten dengan loadNotifikasi()
-     * di navigation.blade.php agar tampilan realtime sama dengan setelah refresh
-     */
     public function broadcastWith(): array
     {
         $notif = $this->notifikasi->load([
@@ -40,18 +36,18 @@ class NotifikasiBaru implements ShouldBroadcastNow
             'pelanggaran.jenisPelanggaran',
         ]);
 
-        // Ambil status penerima — sama persis dengan getStatusPenerima() di blade
         $statusPenerima = [];
         if ($notif->id_pelanggaran) {
             $statusPenerima = Notifikasi::where('id_pelanggaran', $notif->id_pelanggaran)
                 ->where('status', 'terkirim')
                 ->with(['pengguna.role'])
                 ->get()
+                ->unique('id_pengguna') // ✅ fix duplikat dari sumber
                 ->map(function ($n) {
                     $namaPengguna = optional($n->pengguna)->name ?? '-';
                     $roleName     = optional(optional($n->pengguna)->role)->nama_role ?? '-';
                     $labelRole    = match ($roleName) {
-                        'orang_tua'  => 'Orang Tua',
+                        'wali_siswa' => 'Wali Siswa',
                         'wali_kelas' => 'Wali Kelas',
                         'guru_bk'    => 'Guru BK',
                         default      => ucfirst(str_replace('_', ' ', $roleName)),
@@ -64,13 +60,14 @@ class NotifikasiBaru implements ShouldBroadcastNow
                         'read_at' => optional($n->read_at)?->toDateTimeString(),
                     ];
                 })
+                ->values() // ✅ reset index setelah unique
                 ->toArray();
         }
 
         return [
             'notifikasi' => [
                 'id_notifikasi'    => $notif->id_notifikasi,
-                'id_pelanggaran'   => $notif->id_pelanggaran,  // ← tambah ini juga
+                'id_pelanggaran'   => $notif->id_pelanggaran,
                 'isi_pesan'        => $notif->isi_pesan,
                 'jenis_notifikasi' => $notif->jenis_notifikasi,
                 'waktu_dikirim'    => $notif->waktu_dikirim?->toDateTimeString(),
@@ -84,7 +81,7 @@ class NotifikasiBaru implements ShouldBroadcastNow
                 'waktu_kejadian'   => optional(optional($notif->pelanggaran)->waktu_kejadian)?->toDateTimeString() ?? null,
                 'deskripsi'        => optional($notif->pelanggaran)->deskripsi ?? null,
                 'status_pembinaan' => optional($notif->pelanggaran)->status_pembinaan ?? null,
-                'status_penerima'  => $statusPenerima,  // ← ini yang kurang
+                'status_penerima'  => $statusPenerima,
             ],
         ];
     }

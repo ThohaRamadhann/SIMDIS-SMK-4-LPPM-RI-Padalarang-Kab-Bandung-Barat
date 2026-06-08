@@ -253,7 +253,7 @@ class Index extends Component
 
         if ($role === 'wali_kelas') {
             $query->where('id_walikelas', optional($user->waliKelas)->id_walikelas);
-        } elseif ($role === 'orang_tua') {
+        } elseif ($role === 'wali_siswa') {
             $query->whereHas('siswa', function ($q) use ($user) {
                 $q->where('id_walisiswa', optional($user->waliSiswa)->id_walisiswa);
             });

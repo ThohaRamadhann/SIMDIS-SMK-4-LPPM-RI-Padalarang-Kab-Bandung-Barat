@@ -194,8 +194,7 @@ class PelanggaranController extends Controller
             $pelanggaran->id_siswa != $request->id_siswa ||
             $pelanggaran->id_walikelas != $request->id_walikelas ||
             $pelanggaran->id_jenispelanggaran != $request->id_jenispelanggaran ||
-            $pelanggaran->waktu_kejadian != $waktuKejadian ||
-            $pelanggaran->deskripsi != $request->deskripsi;
+            $pelanggaran->waktu_kejadian != $waktuKejadian;
 
         $pelanggaran->update([
             'id_siswa'            => $request->id_siswa,
