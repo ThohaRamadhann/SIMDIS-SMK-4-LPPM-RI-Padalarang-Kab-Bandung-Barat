@@ -8,6 +8,8 @@
 
     <title>{{ config('app.name', 'SIMDIS') }}</title>
 
+    <link rel="icon" type="images/png" href="{{ asset('images/logo_simdis.png') }}">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     {{-- TOM SELECT --}}

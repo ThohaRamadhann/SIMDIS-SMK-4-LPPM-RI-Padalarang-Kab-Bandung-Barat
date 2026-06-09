@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="SIMDIS - Sistem Informasi Disiplin Siswa SMK 4 LPPM RI Padalarang">
     <title>SIMDIS - Sistem Informasi Disiplin Siswa</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo_simdis.png') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
