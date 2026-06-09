@@ -9,7 +9,13 @@ use App\Http\Controllers\SuratPanggilanController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
+// Redirect root ke halaman-awal
 Route::get('/', function () {
+    return redirect()->route('home');
+});
+
+// Halaman utama
+Route::get('/halaman-awal', function () {
     return view('home');
 })->name('home');
 
@@ -69,13 +75,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/monitoring',  function () {
             return view('monitoring.index');
         })->name('monitoring.index');
+
     });
 
     // ── NOTIFIKASI (semua role login) ───────────────────────────────────────
     Route::prefix('notifikasi')->name('notifikasi.')->group(function () {
-        Route::get('/',                   [NotifikasiController::class, 'index'])->name('index');
-        Route::post('/{notifikasi}/read', [NotifikasiController::class, 'markAsRead'])->name('read');
-        Route::post('/read-all',          [NotifikasiController::class, 'markAllRead'])->name('read-all');
+        Route::get('/',                              [NotifikasiController::class, 'index'])->name('index');
+        Route::post('/{notifikasi}/read',            [NotifikasiController::class, 'markAsRead'])->name('read');
+        Route::post('/read-all',                     [NotifikasiController::class, 'markAllRead'])->name('read-all');
+        Route::get('/{notifikasi}/status-penerima',  [NotifikasiController::class, 'statusPenerima'])->name('status-penerima');
+        // hapus route detail yang lama kalau tidak dipakai
     });
 
     // ── LOG AKTIVITAS (semua role login) ────────────────────────────────────

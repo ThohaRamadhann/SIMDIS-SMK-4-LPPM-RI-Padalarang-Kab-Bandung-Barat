@@ -28,21 +28,38 @@ class PenggunaImport implements
     public function collection(Collection $rows)
     {
         foreach ($rows as $index => $row) {
+            $rowNum   = $index + 2;
+            $rowArray = $row->toArray();
 
-            $roleName = strtolower(trim($row['role']));
+            // ── Role ──
+            $roleName = strtolower(trim($row['role'] ?? ''));
             $roleName = str_replace(' ', '_', $roleName);
 
             $role = Role::where('nama_role', $roleName)->first();
-            if (!$role) {
-                $this->errors[] = "Baris " . ($index + 2) . ": Role '{$row['role']}' tidak ditemukan.";
+            if (! $role) {
+                $this->errors[] = "Baris {$rowNum}: Role '{$row['role']}' tidak ditemukan.";
                 continue;
             }
 
+            // ── Username unik ──
             if (Pengguna::where('username', $row['username'])->exists()) {
-                $this->errors[] = "Baris " . ($index + 2) . ": Username '{$row['username']}' sudah digunakan.";
+                $this->errors[] = "Baris {$rowNum}: Username '{$row['username']}' sudah digunakan.";
                 continue;
             }
 
+            // ── Email unik (kalau diisi) ──
+            if (! empty($row['email'])) {
+                if (! filter_var($row['email'], FILTER_VALIDATE_EMAIL)) {
+                    $this->errors[] = "Baris {$rowNum}: Format email tidak valid.";
+                    continue;
+                }
+                if (Pengguna::where('email', $row['email'])->exists()) {
+                    $this->errors[] = "Baris {$rowNum}: Email '{$row['email']}' sudah digunakan oleh akun lain.";
+                    continue;
+                }
+            }
+
+            // ── Nomor telepon ──
             $phone = isset($row['no_telpon'])
                 ? preg_replace('/[^0-9]/', '', (string) $row['no_telpon'])
                 : null;
@@ -51,43 +68,69 @@ class PenggunaImport implements
                 if (substr($phone, 0, 1) === '0') {
                     $phone = '62' . substr($phone, 1);
                 }
-                if (!str_starts_with($phone, '62')) {
-                    $this->errors[] = "Baris " . ($index + 2) . ": Nomor telepon harus diawali 62 atau 0.";
+                if (! str_starts_with($phone, '62')) {
+                    $this->errors[] = "Baris {$rowNum}: Nomor telepon harus diawali 62 atau 0.";
                     continue;
                 }
                 if (strlen($phone) < 10 || strlen($phone) > 15) {
-                    $this->errors[] = "Baris " . ($index + 2) . ": Nomor telepon tidak valid.";
+                    $this->errors[] = "Baris {$rowNum}: Nomor telepon tidak valid.";
                     continue;
                 }
             }
 
+            // ── Validasi khusus wali_kelas ──
+            if ($roleName === 'wali_kelas') {
+                $nuptk = preg_replace('/[^0-9]/', '', (string) ($row['nuptk'] ?? ''));
+                if (empty($nuptk)) {
+                    $this->errors[] = "Baris {$rowNum}: Kolom NUPTK wajib diisi untuk role Wali Kelas.";
+                    continue;
+                }
+                if (strlen($nuptk) !== 16) {
+                    $this->errors[] = "Baris {$rowNum}: NUPTK harus berupa angka 16 digit.";
+                    continue;
+                }
+                if (WaliKelas::where('nuptk', $nuptk)->exists()) {
+                    $this->errors[] = "Baris {$rowNum}: NUPTK '{$nuptk}' sudah terdaftar pada pengguna lain.";
+                    continue;
+                }
+                if (empty($row['jabatan'])) {
+                    $this->errors[] = "Baris {$rowNum}: Kolom jabatan wajib diisi untuk role Wali Kelas.";
+                    continue;
+                }
+            }
+
+            // ── Validasi khusus wali_siswa ──
+            if ($roleName === 'wali_siswa') {
+                if (empty($row['hubungan'])) {
+                    $this->errors[] = "Baris {$rowNum}: Kolom hubungan wajib diisi untuk role Wali Siswa.";
+                    continue;
+                }
+            }
+
+            // ── Buat pengguna ──
             $user = Pengguna::create([
                 'id_role'   => $role->id_role,
                 'name'      => $row['name'],
                 'username'  => $row['username'],
-                'email'     => $row['email'] ?? null,
+                'email'     => ! empty($row['email']) ? $row['email'] : null,
                 'no_telpon' => $phone,
                 'password'  => Hash::make($row['password']),
             ]);
 
-            // Role: wali_siswa → buat entri wali siswa
-            if ($role->nama_role === 'wali_siswa') {
-                if (empty($row['hubungan'])) {
-                    $this->errors[] = "Baris " . ($index + 2) . ": Hubungan wajib diisi untuk role orang tua.";
-                    $user->delete();
-                    continue;
-                }
+            // ── Buat entri wali_siswa ──
+            if ($roleName === 'wali_siswa') {
                 WaliSiswa::create([
                     'id_pengguna' => $user->id_pengguna,
                     'hubungan'    => trim($row['hubungan']),
                 ]);
             }
 
-            // Role: guru_bk / wali_kelas
-            if (in_array($role->nama_role, ['guru_bk', 'wali_kelas'])) {
+            // ── Buat entri wali_kelas / guru_bk ──
+            if (in_array($roleName, ['guru_bk', 'wali_kelas'])) {
+                $nuptk = preg_replace('/[^0-9]/', '', (string) ($row['nuptk'] ?? ''));
                 WaliKelas::create([
                     'id_pengguna' => $user->id_pengguna,
-                    'nuptk'       => isset($row['nuptk']) ? (string) $row['nuptk'] : null,
+                    'nuptk'       => $nuptk ?: null,
                     'jabatan'     => $row['jabatan'] ?? null,
                 ]);
             }
@@ -103,11 +146,11 @@ class PenggunaImport implements
             'username'  => 'required|string|max:255',
             'role'      => 'required|string',
             'password'  => 'required|string|min:6',
-            'email'     => 'nullable|email',
+            'email'     => 'nullable|email|max:255',
             'no_telpon' => 'nullable',
-            'hubungan'  => 'nullable|string',
-            'nuptk'     => 'nullable|max:30',
-            'jabatan'   => 'nullable|string|max:255',
+            'hubungan'  => 'nullable|string|max:50',
+            'nuptk'     => 'nullable',
+            'jabatan'   => 'nullable|string|max:100',
         ];
     }
 
@@ -120,7 +163,6 @@ class PenggunaImport implements
             'password.required' => 'Kolom password wajib diisi.',
             'password.min'      => 'Password minimal 6 karakter.',
             'email.email'       => 'Format email tidak valid.',
-            'nuptk.max'         => 'NUPTK terlalu panjang.',
         ];
     }
 }

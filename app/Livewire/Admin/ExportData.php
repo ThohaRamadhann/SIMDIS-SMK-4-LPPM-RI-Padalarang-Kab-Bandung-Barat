@@ -41,6 +41,7 @@ class ExportData extends Component
     public function syncFiltersKelas(array $filters): void
     {
         $this->filterTingkat = $filters['filterTingkat'] ?? '';
+        $this->filterKelas       = $filters['filterKelas']       ?? '';
         $this->filterJurusan = $filters['filterJurusan'] ?? '';
         $this->filterTahun   = $filters['filterTahun']   ?? '';
         $this->filterWali    = $filters['filterWali']    ?? '';
@@ -51,6 +52,14 @@ class ExportData extends Component
     {
         $this->filterRole = $filters['filterRole'] ?? '';
         $this->search     = $filters['search']     ?? '';
+    }
+
+    public function syncFilters(array $filters): void
+    {
+        $this->filterTahunAjaran = $filters['filterTahunAjaran'] ?? '';
+        $this->filterKelas       = $filters['filterKelas']       ?? '';
+        $this->filterStatus      = $filters['filterStatus']      ?? '';
+        $this->search            = $filters['search']            ?? '';
     }
 
     public function exportAs(string $mode)

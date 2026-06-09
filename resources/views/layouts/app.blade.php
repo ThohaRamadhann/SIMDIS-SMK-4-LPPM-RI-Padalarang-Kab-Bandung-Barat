@@ -93,10 +93,7 @@
     {{-- ── Global Loading Indicator ── --}}
     <div x-data="{ loading: false }" x-on:livewire:navigate.window="loading = true"
         x-on:livewire:navigated.window="loading = false">
-        {{-- Loading bar atas --}}
         <div x-show="loading" x-cloak class="simdis-loading-bar"></div>
-
-        {{-- Overlay + spinner tengah --}}
         <div x-show="loading" x-cloak class="simdis-loading-overlay">
             <div class="simdis-loading-spinner"></div>
         </div>
@@ -115,8 +112,8 @@
             @auth
                 <aside x-cloak :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
                     class="fixed lg:relative z-50 lg:translate-x-0
-        w-64 flex-shrink-0 h-full overflow-hidden
-        transition-transform duration-300 ease-in-out"
+                           w-64 flex-shrink-0 h-full overflow-hidden
+                           transition-transform duration-300 ease-in-out"
                     style="background-color: #091E4A;">
                     @include('layouts.sidebar')
                 </aside>
@@ -136,6 +133,25 @@
     </div>
 
     @livewireScripts
+
+    {{-- Prevent back button setelah logout --}}
+    <script>
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted) {
+                fetch('/dashboard', {
+                    method: 'HEAD',
+                    credentials: 'same-origin'
+                }).then(function (res) {
+                    if (res.redirected || res.url.includes('login')) {
+                        window.location.replace('/login');
+                    }
+                }).catch(function () {
+                    window.location.replace('/login');
+                });
+            }
+        });
+    </script>
+
 </body>
 
 </html>

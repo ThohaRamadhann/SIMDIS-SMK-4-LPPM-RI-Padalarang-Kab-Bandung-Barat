@@ -74,7 +74,9 @@
                         <select wire:model.live="id_role" class="simdis-select">
                             <option value="">-- Pilih Role --</option>
                             @foreach ($roles as $r)
-                                <option value="{{ $r->id_role }}">{{ $r->nama_role }}</option>
+                                <option value="{{ $r->id_role }}">
+                                    {{ ucwords(str_replace('_', ' ', $r->nama_role)) }}
+                                </option>
                             @endforeach
                         </select>
                         @error('id_role')
@@ -260,7 +262,9 @@
                     <select wire:model.live="filterRole" class="simdis-select" style="height:36px;font-size:12px;">
                         <option value="">Semua Role</option>
                         @foreach ($roles as $r)
-                            <option value="{{ $r->id_role }}">{{ $r->nama_role }}</option>
+                            <option value="{{ $r->id_role }}">
+                                {{ ucwords(str_replace('_', ' ', $r->nama_role)) }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -342,7 +346,9 @@
                             <td style="color:#4A5E8A;font-size:12px;">{{ $u->username }}</td>
 
                             <td>
-                                <span class="badge-role">{{ optional($u->role)->nama_role ?? '-' }}</span>
+                                <span class="badge-role">
+                                    {{ ucwords(str_replace('_', ' ', optional($u->role)->nama_role ?? '-')) }}
+                                </span>
                             </td>
 
                             <td class="whitespace-nowrap">

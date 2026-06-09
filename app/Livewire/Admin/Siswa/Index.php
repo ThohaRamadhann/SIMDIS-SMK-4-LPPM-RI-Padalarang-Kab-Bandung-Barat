@@ -41,7 +41,7 @@ class Index extends Component
         'sortBy'            => ['except' => 'az'],
         'perPage'           => ['except' => 10],
     ];
-    
+
     public function updatedFilterKelas(): void
     {
         $this->resetPage();
@@ -75,7 +75,6 @@ class Index extends Component
             'search'            => $this->search,
         ]);
     }
-
 
     public function resetForm()
     {
@@ -206,9 +205,9 @@ class Index extends Component
 
         return view('livewire.admin.siswa.index', [
             'dataSiswa'       => $query->paginate($this->perPage),
-            'kelas'           => Kelas::orderBy('nama_kelas')->get(),
+            'kelas'           => Kelas::orderBy('tingkat')->orderBy('nama_kelas')->get(),
             'wali'            => WaliSiswa::with('pengguna')->orderBy('id_walisiswa')->get(),
-            'allKelas'        => Kelas::orderBy('nama_kelas')->get(),
+            'allKelas'        => Kelas::orderBy('tingkat')->orderBy('nama_kelas')->get(),
             'trashCount'      => Siswa::onlyTrashed()->count(),
             'tahunAjaranList' => Kelas::select('tahun_ajaran')
                 ->distinct()

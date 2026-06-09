@@ -61,7 +61,7 @@ class SendEarlyWarningNotification implements ShouldQueue
             return;
         }
 
-        // ── Kumpulkan penerima notif bell ──
+        // ── Kumpulkan penerima ──
         $penerima = collect();
 
         $guruBK = Pengguna::whereHas('role', fn($q) => $q->where('nama_role', 'guru_bk'))->get();
@@ -79,7 +79,9 @@ class SendEarlyWarningNotification implements ShouldQueue
 
         $penerima = $penerima->unique('id_pengguna');
 
-        // ── Update pending → terkirim + broadcast realtime ──
+        // ── STEP 1: Update semua notif pending → terkirim dulu ──
+        $notifList = collect();
+
         foreach ($penerima as $pengguna) {
             $notif = Notifikasi::where('id_pelanggaran', $this->idPelanggaran)
                 ->where('id_pengguna', $pengguna->id_pengguna)
@@ -104,6 +106,11 @@ class SendEarlyWarningNotification implements ShouldQueue
                 ]);
             }
 
+            $notifList->push($notif);
+        }
+
+        // ── STEP 2: Baru broadcast semua setelah semua sudah terkirim ──
+        foreach ($notifList as $notif) {
             broadcast(new NotifikasiBaru($notif));
         }
 

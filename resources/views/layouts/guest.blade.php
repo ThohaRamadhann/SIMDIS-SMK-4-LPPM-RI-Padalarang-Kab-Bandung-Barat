@@ -37,5 +37,16 @@
                 {{ $slot }}
             </div>
         </div>
+
+        {{-- Kalau sudah di halaman login tapi user pencet back,
+             replace history supaya tidak bisa balik ke halaman protected --}}
+        <script>
+            window.addEventListener('pageshow', function (event) {
+                if (event.persisted) {
+                    window.location.replace('/login');
+                }
+            });
+        </script>
+
     </body>
 </html>

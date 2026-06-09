@@ -50,4 +50,42 @@ class NotifikasiController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+public function statusPenerima(Notifikasi $notifikasi)
+{
+    if ($notifikasi->id_pengguna !== Auth::id()) {
+        abort(403);
+    }
+
+    if (! $notifikasi->id_pelanggaran) {
+        return response()->json([]);
+    }
+
+    $statusPenerima = Notifikasi::where('id_pelanggaran', $notifikasi->id_pelanggaran)
+        ->where('status', 'terkirim')
+        ->with(['pengguna.role'])
+        ->get()
+        ->unique('id_pengguna')
+        ->map(function ($n) {
+            $namaPengguna = optional($n->pengguna)->name ?? '-';
+            $roleName     = optional(optional($n->pengguna)->role)->nama_role ?? '-';
+            $labelRole    = match ($roleName) {
+                'wali_siswa' => 'Orang Tua',
+                'wali_kelas' => 'Wali Kelas',
+                'guru_bk'    => 'Guru BK',
+                default      => ucfirst(str_replace('_', ' ', $roleName)),
+            };
+            return [
+                'nama'    => $namaPengguna,
+                'display' => $namaPengguna,
+                'role'    => $labelRole,
+                'is_read' => (bool) $n->is_read,
+                'read_at' => optional($n->read_at)?->toDateTimeString(),
+            ];
+        })
+        ->values()
+        ->toArray();
+
+    return response()->json($statusPenerima);
+}
 }

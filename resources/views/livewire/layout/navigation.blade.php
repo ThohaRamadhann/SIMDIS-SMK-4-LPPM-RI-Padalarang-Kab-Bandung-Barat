@@ -24,15 +24,10 @@ new class extends Component {
 
     public function logout(Logout $logout): void
     {
-        // Catat log SEBELUM $logout() agar session masih ada
-        LogAktivitas::catat(
-            aksi: 'logout',
-            modul: 'auth',
-            keterangan: 'User logout dari sistem',
-        );
+        LogAktivitas::catat(aksi: 'logout', modul: 'auth', keterangan: 'User logout dari sistem');
 
         $logout();
-        $this->redirect('/', navigate: true);
+        $this->redirect('/login');
     }
 };
 ?>
@@ -62,19 +57,16 @@ new class extends Component {
                 {{-- Bell --}}
                 <div class="relative" wire:ignore x-data="{ count: {{ $unreadCount }} }"
                     x-on:notif-count-update.window="count = $event.detail.count">
-                    <button type="button"
-                        @click="window.dispatchEvent(new CustomEvent('open-notif-sidebar'))"
+                    <button type="button" @click="window.dispatchEvent(new CustomEvent('open-notif-sidebar'))"
                         class="relative p-2 rounded-lg text-[#0D2D6B] hover:bg-[#F0F4FB] transition-colors duration-200"
                         title="Notifikasi">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002
                                    6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388
                                    6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3
                                    0 11-6 0v-1m6 0H9" />
                         </svg>
-                        <span x-show="count > 0"
-                            x-text="count > 9 ? '9+' : count"
+                        <span x-show="count > 0" x-text="count > 9 ? '9+' : count"
                             class="absolute top-1 right-1 flex items-center justify-center
                                    w-4 h-4 text-[10px] font-bold text-white bg-red-500
                                    rounded-full leading-none pointer-events-none">
@@ -86,7 +78,8 @@ new class extends Component {
                 <a href="{{ route('profile') }}" wire:navigate
                     class="flex items-center gap-2 px-3 py-1.5 rounded-lg
                            hover:bg-[#F0F4FB] transition-colors duration-200 group">
-                    <div class="w-9 h-9 rounded-full bg-[#0D2D6B] text-white
+                    <div
+                        class="w-9 h-9 rounded-full bg-[#0D2D6B] text-white
                                 flex items-center justify-center font-bold text-sm shadow-sm
                                 group-hover:bg-[#163580] transition-colors duration-200">
                         {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}

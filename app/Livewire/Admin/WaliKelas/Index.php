@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\WaliKelas;
 
 use App\Models\Pengguna;
 use App\Models\WaliKelas;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -20,9 +21,9 @@ class Index extends Component
     public $isEdit      = false;
 
     // ── Search, sort, pagination, trash ──
-    public $search   = '';
-    public $sortBy   = 'terbaru';  // terbaru | az | za
-    public $perPage  = 10;
+    public $search    = '';
+    public $sortBy    = 'terbaru';
+    public $perPage   = 10;
     public $showTrash = false;
 
     protected $queryString = [
@@ -36,21 +37,50 @@ class Index extends Component
     public function updatingPerPage()   { $this->resetPage(); }
     public function updatingShowTrash() { $this->resetPage(); }
 
-    // ── Listener select pengguna ──
     protected $listeners = ['updatedIdPengguna'];
 
     public function updatedIdPengguna($value)
     {
         if ($value) {
-            $wk = WaliKelas::where('id_pengguna', $value)->first();
-            $this->nuptk   = $wk?->nuptk   ?? '';
-            $this->jabatan = $wk?->jabatan  ?? '';
+            $wk            = WaliKelas::where('id_pengguna', $value)->first();
+            $this->nuptk   = $wk?->nuptk  ?? '';
+            $this->jabatan = $wk?->jabatan ?? '';
         } else {
             $this->nuptk = $this->jabatan = '';
         }
     }
 
-    // ── Reset form ──
+    protected function rules(): array
+    {
+        $nuPtkRules = [
+            'nullable',
+            'digits:16',
+        ];
+
+        if ($this->isEdit) {
+            $nuPtkRules[] = Rule::unique('wali_kelas', 'nuptk')
+                ->ignore($this->id_walikelas, 'id_walikelas');
+        } else {
+            $nuPtkRules[] = Rule::unique('wali_kelas', 'nuptk');
+        }
+
+        return [
+            'id_pengguna' => 'required',
+            'nuptk'       => $nuPtkRules,
+            'jabatan'     => 'nullable|string|max:100',
+        ];
+    }
+
+    protected function messages(): array
+    {
+        return [
+            'id_pengguna.required' => 'Pengguna wajib dipilih.',
+            'nuptk.digits'         => 'NUPTK harus berupa angka 16 digit.',
+            'nuptk.unique'         => 'NUPTK sudah terdaftar pada pengguna lain.',
+            'jabatan.max'          => 'Jabatan maksimal 100 karakter.',
+        ];
+    }
+
     public function resetForm()
     {
         $this->id_walikelas = null;
@@ -61,19 +91,21 @@ class Index extends Component
         $this->resetErrorBag();
     }
 
-    // ── Simpan ──
     public function store()
     {
-        $this->validate(['id_pengguna' => 'required']);
+        $this->validate();
 
         $existing = WaliKelas::where('id_pengguna', $this->id_pengguna)->first();
 
         if ($existing) {
-            $existing->update(['nuptk' => $this->nuptk, 'jabatan' => $this->jabatan]);
+            $existing->update([
+                'nuptk'   => $this->nuptk ?: null,
+                'jabatan' => $this->jabatan,
+            ]);
         } else {
             WaliKelas::create([
                 'id_pengguna' => $this->id_pengguna,
-                'nuptk'       => $this->nuptk,
+                'nuptk'       => $this->nuptk ?: null,
                 'jabatan'     => $this->jabatan,
             ]);
         }
@@ -82,26 +114,25 @@ class Index extends Component
         session()->flash('success', 'Wali Kelas berhasil disimpan.');
     }
 
-    // ── Edit ──
     public function edit($id)
     {
         $data = WaliKelas::findOrFail($id);
 
         $this->id_walikelas = $data->id_walikelas;
         $this->id_pengguna  = $data->id_pengguna;
-        $this->nuptk        = $data->nuptk;
-        $this->jabatan      = $data->jabatan;
+        $this->nuptk        = $data->nuptk ?? '';
+        $this->jabatan      = $data->jabatan ?? '';
         $this->isEdit       = true;
+        $this->resetErrorBag();
     }
 
-    // ── Update ──
     public function update()
     {
-        $this->validate(['id_pengguna' => 'required']);
+        $this->validate();
 
         WaliKelas::findOrFail($this->id_walikelas)->update([
             'id_pengguna' => $this->id_pengguna,
-            'nuptk'       => $this->nuptk,
+            'nuptk'       => $this->nuptk ?: null,
             'jabatan'     => $this->jabatan,
         ]);
 
@@ -109,56 +140,48 @@ class Index extends Component
         session()->flash('success', 'Wali Kelas berhasil diperbarui.');
     }
 
-    // ── Soft Delete ──
     public function hapus($id)
     {
         WaliKelas::findOrFail($id)->delete();
         session()->flash('success', 'Wali Kelas dipindahkan ke tong sampah.');
     }
 
-    // ── Restore ──
     public function restore($id)
     {
         WaliKelas::onlyTrashed()->findOrFail($id)->restore();
         session()->flash('success', 'Wali Kelas berhasil dipulihkan.');
     }
 
-    // ── Force Delete ──
     public function forceDelete($id)
     {
         WaliKelas::onlyTrashed()->findOrFail($id)->forceDelete();
         session()->flash('success', 'Wali Kelas dihapus permanen.');
     }
 
-    // ── Kosongkan Trash ──
     public function emptyTrash()
     {
         WaliKelas::onlyTrashed()->forceDelete();
         session()->flash('success', 'Tong sampah dikosongkan.');
     }
 
-    // ── Render ──
     public function render()
     {
-        // Query utama
         $query = WaliKelas::with('pengguna');
 
         if ($this->showTrash) {
             $query->onlyTrashed();
         }
 
-        // Search berdasarkan nama wali kelas atau NUPTK
         if ($this->search) {
             $keyword = $this->search;
             $query->where(function ($q) use ($keyword) {
                 $q->where('nuptk', 'like', "%{$keyword}%")
                   ->orWhereHas('pengguna', fn($r) =>
-                        $r->where('name', 'like', "%{$keyword}%")
+                      $r->where('name', 'like', "%{$keyword}%")
                   );
             });
         }
 
-        // Sorting
         match ($this->sortBy) {
             'az'    => $query->join('pengguna', 'wali_kelas.id_pengguna', '=', 'pengguna.id_pengguna')
                              ->orderBy('pengguna.name', 'asc')
@@ -169,15 +192,13 @@ class Index extends Component
             default => $query->orderBy('wali_kelas.id_walikelas', 'desc'),
         };
 
-        // Data pengguna untuk dropdown (role wali_kelas)
         $waliKelasPengguna = Pengguna::whereHas('role', function ($q) {
             $q->where('nama_role', 'wali_kelas');
         })->orderBy('name')->get();
 
-        // Saat edit, pastikan pengguna yang diedit tersedia di dropdown
         if ($this->isEdit && $this->id_pengguna) {
-            $currentPengguna    = Pengguna::find($this->id_pengguna);
-            $waliKelasPengguna  = $waliKelasPengguna
+            $currentPengguna   = Pengguna::find($this->id_pengguna);
+            $waliKelasPengguna = $waliKelasPengguna
                 ->push($currentPengguna)
                 ->unique('id_pengguna')
                 ->sortBy('name');
@@ -191,5 +212,5 @@ class Index extends Component
     }
 
     #[On('refresh')]
-public function refreshData(): void {}
+    public function refreshData(): void {}
 }

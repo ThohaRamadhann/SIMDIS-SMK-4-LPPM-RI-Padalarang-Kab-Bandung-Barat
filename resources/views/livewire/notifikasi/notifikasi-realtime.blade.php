@@ -219,10 +219,10 @@ new class extends Component {
     },
 
     openDetail(notif) {
-        this.activeNotif = notif;
-        this.showDetail = true;
-        if (!notif.is_read) this.markRead(notif.id_notifikasi);
-    },
+    this.activeNotif = notif;
+    this.showDetail = true;
+    if (!notif.is_read) this.markRead(notif.id_notifikasi);
+},
 
     closeDetail() {
         this.showDetail = false;
@@ -230,22 +230,58 @@ new class extends Component {
     },
 
     markRead(id) {
-        const item = this.notifikasis.find(n => n.id_notifikasi == id);
-        if (item && !item.is_read) {
-            item.is_read = true;
-            if (this.activeNotif && this.activeNotif.id_notifikasi == id)
-                this.activeNotif.is_read = true;
-            this.unreadCount = Math.max(0, this.unreadCount - 1);
-            window.dispatchEvent(new CustomEvent('notif-count-update', { detail: { count: this.unreadCount } }));
-            fetch('/notifikasi/' + id + '/read', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
-                    'Content-Type': 'application/json',
-                }
-            });
+    const item = this.notifikasis.find(n => n.id_notifikasi == id);
+    if (!item || item.is_read) return;
+
+    // Update lokal dulu (optimistic)
+    item.is_read = true;
+    if (this.activeNotif && this.activeNotif.id_notifikasi == id) {
+        this.activeNotif = { ...this.activeNotif, is_read: true };
+    }
+    this.unreadCount = Math.max(0, this.unreadCount - 1);
+    window.dispatchEvent(new CustomEvent('notif-count-update', { detail: { count: this.unreadCount } }));
+
+    // POST mark as read
+    fetch('/notifikasi/' + id + '/read', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+            'Content-Type': 'application/json',
         }
-    },
+    })
+    .then(res => {
+        if (!res.ok) throw new Error('POST read gagal: ' + res.status);
+        // GET status penerima terbaru
+        return fetch('/notifikasi/' + id + '/status-penerima', {
+            headers: { 'Accept': 'application/json' }
+        });
+    })
+    .then(res => {
+        if (!res.ok) throw new Error('GET status-penerima gagal: ' + res.status);
+        return res.json();
+    })
+    .then(freshStatus => {
+        console.log('freshStatus:', freshStatus); // debug — hapus setelah fix
+
+        // Patch activeNotif kalau masih terbuka
+        if (this.activeNotif && this.activeNotif.id_notifikasi == id) {
+            this.activeNotif = { ...this.activeNotif, status_penerima: freshStatus };
+        }
+
+        // Patch semua notif di list dengan id_pelanggaran sama
+        const idPelanggaran = item.id_pelanggaran;
+        if (idPelanggaran) {
+            this.notifikasis = this.notifikasis.map(n =>
+                n.id_pelanggaran === idPelanggaran
+                    ? { ...n, status_penerima: freshStatus }
+                    : n
+            );
+        }
+    })
+    .catch(err => {
+        console.error('markRead error:', err); // debug — jangan closeDetail di sini
+    });
+},
 
     markAllRead() {
         this.notifikasis.forEach(n => n.is_read = true);
@@ -294,10 +330,10 @@ new class extends Component {
     },
 
     roleColor(role) {
-         if (role === 'Orang Tua') return { bg: '#f3e8ff', text: '#7e22ce' };
-    if (role === 'Wali Kelas') return { bg: '#dbeafe', text: '#1d4ed8' };
-    if (role === 'Guru BK') return { bg: '#ccfbf1', text: '#0f766e' };
-    return { bg: '#f3f4f6', text: '#374151' };
+        if (role === 'Orang Tua') return { bg: '#f3e8ff', text: '#7e22ce' };
+        if (role === 'Wali Kelas') return { bg: '#dbeafe', text: '#1d4ed8' };
+        if (role === 'Guru BK') return { bg: '#ccfbf1', text: '#0f766e' };
+        return { bg: '#f3f4f6', text: '#374151' };
     }
 }" @keydown.escape.window="showDetail ? closeDetail() : open = false">
 

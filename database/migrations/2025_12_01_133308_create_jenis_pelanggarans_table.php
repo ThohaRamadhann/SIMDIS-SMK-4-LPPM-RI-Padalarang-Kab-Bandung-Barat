@@ -11,6 +11,7 @@ return new class extends Migration {
             $table->id('id_jenispelanggaran');
             $table->string('nama_pelanggaran');
             $table->enum('tingkat_pelanggaran', ['Ringan', 'Sedang', 'Berat']);
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

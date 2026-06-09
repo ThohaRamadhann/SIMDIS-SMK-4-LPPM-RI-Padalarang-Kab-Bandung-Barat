@@ -275,10 +275,14 @@
                 <div>
                     <select wire:model.live="filterKelas"
                         class="w-full h-9 px-2 text-xs rounded-lg border border-gray-200
-                               bg-gray-50 focus:bg-white focus:border-[#F5B800] outline-none transition">
+           bg-gray-50 focus:bg-white focus:border-[#F5B800] outline-none transition">
                         <option value="">Semua Kelas</option>
-                        @foreach ($allKelas as $k)
-                            <option value="{{ $k->id_kelas }}">{{ $k->nama_kelas }}</option>
+                        @foreach ($allKelas->groupBy('tingkat') as $tingkat => $kelasList)
+                            <optgroup label="Tingkat {{ $tingkat }}">
+                                @foreach ($kelasList as $k)
+                                    <option value="{{ $k->id_kelas }}">{{ $k->nama_kelas }}</option>
+                                @endforeach
+                            </optgroup>
                         @endforeach
                     </select>
                 </div>

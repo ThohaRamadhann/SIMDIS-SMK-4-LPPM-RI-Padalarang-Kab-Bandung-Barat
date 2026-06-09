@@ -36,7 +36,7 @@ return [
     ],
 
     'ews' => [
-        'grace_period_minutes' => env('EWS_GRACE_PERIOD_MINUTES', 10),
+        'grace_period_seconds' => (int) env('EWS_GRACE_PERIOD_SECONDS', 300),
     ],
 
 ];

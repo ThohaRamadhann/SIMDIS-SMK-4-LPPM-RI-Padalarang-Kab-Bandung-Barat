@@ -36,13 +36,15 @@ class NotifikasiBaru implements ShouldBroadcastNow
             'pelanggaran.jenisPelanggaran',
         ]);
 
+        // ✅ Ambil semua penerima yang sudah terkirim
+        // (aman karena job sudah update semua ke 'terkirim' sebelum broadcast)
         $statusPenerima = [];
         if ($notif->id_pelanggaran) {
             $statusPenerima = Notifikasi::where('id_pelanggaran', $notif->id_pelanggaran)
                 ->where('status', 'terkirim')
                 ->with(['pengguna.role'])
                 ->get()
-                ->unique('id_pengguna') // ✅ fix duplikat dari sumber
+                ->unique('id_pengguna')
                 ->map(function ($n) {
                     $namaPengguna = optional($n->pengguna)->name ?? '-';
                     $roleName     = optional(optional($n->pengguna)->role)->nama_role ?? '-';
@@ -60,7 +62,7 @@ class NotifikasiBaru implements ShouldBroadcastNow
                         'read_at' => optional($n->read_at)?->toDateTimeString(),
                     ];
                 })
-                ->values() // ✅ reset index setelah unique
+                ->values()
                 ->toArray();
         }
 

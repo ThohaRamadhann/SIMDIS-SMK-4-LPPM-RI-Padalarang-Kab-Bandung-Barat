@@ -9,6 +9,7 @@ use App\Models\WaliKelas;
 use App\Models\JenisPelanggaran;
 use App\Services\EarlyWarningService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 
 class PelanggaranController extends Controller
@@ -32,6 +33,7 @@ class PelanggaranController extends Controller
         $q = trim($request->input('q', ''));
 
         $siswa = Siswa::with(['kelas.waliKelas.pengguna'])
+            ->where('status', 'aktif')
             ->where(function ($query) use ($q) {
                 $query->where('nama', 'like', "%{$q}%")
                     ->orWhere('nis',  'like', "%{$q}%");
@@ -54,14 +56,14 @@ class PelanggaranController extends Controller
     public function create()
     {
         $waliKelas        = WaliKelas::with('pengguna')->get();
-        $jenisPelanggaran = JenisPelanggaran::orderByRaw("
-            CASE tingkat_pelanggaran
-                WHEN 'Ringan' THEN 1
-                WHEN 'Sedang' THEN 2
-                WHEN 'Berat'  THEN 3
-                ELSE 4
-            END
-        ")->orderBy('nama_pelanggaran')->get();
+        $jenisPelanggaran = JenisPelanggaran::aktif()
+            ->orderByRaw("CASE tingkat_pelanggaran
+        WHEN 'Ringan' THEN 1
+        WHEN 'Sedang' THEN 2
+        WHEN 'Berat'  THEN 3
+        ELSE 4 END")
+            ->orderBy('nama_pelanggaran')
+            ->get();
 
         // Untuk old() support saat validasi gagal
         $selectedSiswa = null;
@@ -81,14 +83,19 @@ class PelanggaranController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'id_siswa'            => 'required|exists:siswa,id_siswa',
+            'id_siswa'            => [
+                'required',
+                Rule::exists('siswa', 'id_siswa')->where('status', 'aktif'),
+            ],
             'id_walikelas'        => 'required|exists:wali_kelas,id_walikelas',
             'id_jenispelanggaran' => 'required|exists:jenis_pelanggaran,id_jenispelanggaran',
             'waktu_kejadian'      => 'required|date',
             'deskripsi'           => 'required|string',
+        ], [
+            'id_siswa.exists' => 'Siswa dengan status nonaktif tidak dapat dicatat pelanggarannya.',
         ]);
 
-        // Anti-duplikat
+        // ── Anti-duplikat ──
         $waktu    = \Carbon\Carbon::parse($request->waktu_kejadian);
         $duplikat = Pelanggaran::where('id_siswa', $request->id_siswa)
             ->where('id_jenispelanggaran', $request->id_jenispelanggaran)
@@ -130,36 +137,30 @@ class PelanggaranController extends Controller
         $this->ews->check($pelanggaran);
 
         return redirect()->route('pelanggaran.index')
-            ->with('success', 'Pelanggaran berhasil ditambahkan. Notifikasi akan dikirim dalam 10 menit jika tidak ada koreksi.');
+            ->with('success', 'Pelanggaran berhasil ditambahkan. Notifikasi akan dikirim dalam beberapa saat jika tidak ada koreksi.');
     }
 
     // ── Edit ──────────────────────────────────────────────────────────────
     public function edit(Pelanggaran $pelanggaran)
     {
-        $waliKelas        = WaliKelas::with('pengguna')->get();
-        $jenisPelanggaran = JenisPelanggaran::orderByRaw("
-        CASE tingkat_pelanggaran
+        $pelanggaran->load([
+            'siswa.kelas.waliKelas.pengguna',
+            'waliKelas.pengguna',
+            'jenisPelanggaran',
+        ]);
+
+        $jenisPelanggaran = JenisPelanggaran::aktif()
+            ->orderByRaw("CASE tingkat_pelanggaran
             WHEN 'Ringan' THEN 1
             WHEN 'Sedang' THEN 2
             WHEN 'Berat'  THEN 3
-            ELSE 4
-        END
-    ")->orderBy('nama_pelanggaran')->get();
-
-      
-        $siswa = Siswa::with(['kelas.waliKelas.pengguna'])
-            ->orderBy('nama')
+            ELSE 4 END")
+            ->orderBy('nama_pelanggaran')
             ->get();
-
-        $selectedSiswa = Siswa::with(['kelas.waliKelas.pengguna'])
-            ->find($pelanggaran->id_siswa);
 
         return view('pelanggaran.edit', compact(
             'pelanggaran',
-            'waliKelas',
             'jenisPelanggaran',
-            'selectedSiswa',
-            'siswa'
         ));
     }
 
@@ -167,7 +168,10 @@ class PelanggaranController extends Controller
     public function update(Request $request, Pelanggaran $pelanggaran)
     {
         $request->validate([
-            'id_siswa'              => 'required|exists:siswa,id_siswa',
+            'id_siswa'              => [
+                'required',
+                Rule::exists('siswa', 'id_siswa')->where('status', 'aktif'),
+            ],
             'id_walikelas'          => 'required|exists:wali_kelas,id_walikelas',
             'id_jenispelanggaran'   => 'required|exists:jenis_pelanggaran,id_jenispelanggaran',
             'waktu_kejadian_date'   => 'required|date',
@@ -179,6 +183,8 @@ class PelanggaranController extends Controller
             'jam_pembinaan_hour'    => 'nullable|string',
             'jam_pembinaan_minute'  => 'nullable|string',
             'catatan_bk'            => 'nullable|string|max:2000',
+        ], [
+            'id_siswa.exists' => 'Siswa dengan status nonaktif tidak dapat dicatat pelanggarannya.',
         ]);
 
         $waktuKejadian = $request->waktu_kejadian_date

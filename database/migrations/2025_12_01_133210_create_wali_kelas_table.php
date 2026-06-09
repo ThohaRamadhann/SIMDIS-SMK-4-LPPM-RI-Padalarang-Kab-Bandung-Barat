@@ -11,8 +11,8 @@ return new class extends Migration {
             $table->id('id_walikelas');
 
             $table->unsignedBigInteger('id_pengguna');
-            $table->string('nuptk')->nullable();
-            $table->string('jabatan')->nullable(); // walikelas / guru bk
+            $table->char('nuptk', 16)->nullable();
+            $table->string('jabatan')->nullable(); // walikelas
 
             $table->timestamps();
 

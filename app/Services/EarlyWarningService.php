@@ -11,13 +11,11 @@ class EarlyWarningService
 {
     private function gracePeriod(): int
     {
-        return (int) config('services.ews.grace_period_minutes', 10);
+        return (int) config('services.ews.grace_period_seconds', 300);
     }
 
     public function check(Pelanggaran $pelanggaran): void
     {
-        // ✅ FIX: Pastikan semua relasi selalu ter-load,
-        // regardless dari mana check() dipanggil
         $pelanggaran->loadMissing([
             'siswa.waliSiswa.pengguna',
             'siswa.kelas',
@@ -54,7 +52,7 @@ class EarlyWarningService
                 'id_pelanggaran'   => $pelanggaran->id_pelanggaran,
                 'isi_pesan'        => $pesan,
                 'jenis_notifikasi' => 'sistem',
-                'waktu_dikirim'    => now()->addMinutes($grace),
+                'waktu_dikirim'    => now()->addSeconds($grace), // ✅ fix addSeconds
                 'status'           => 'pending',
                 'is_read'          => false,
             ]);
@@ -64,7 +62,7 @@ class EarlyWarningService
             $pelanggaran->id_pelanggaran,
             $pesan,
             $aksi,
-        )->delay(now()->addMinutes($grace));
+        )->delay(now()->addSeconds($grace));
     }
 
     public function recheck(Pelanggaran $pelanggaran): void
@@ -73,7 +71,6 @@ class EarlyWarningService
             ->where('status', 'pending')
             ->update(['status' => 'dibatalkan']);
 
-        // ✅ FIX: load semua relasi yang dibutuhkan sebelum check()
         $pelanggaran->load([
             'siswa.waliSiswa.pengguna',
             'siswa.kelas',
@@ -119,19 +116,15 @@ class EarlyWarningService
     {
         $ids = [];
 
-        // Guru BK
         $guruBK = Pengguna::whereHas('role', fn($q) => $q->where('nama_role', 'guru_bk'))
                     ->pluck('id_pengguna')->toArray();
         $ids = array_merge($ids, $guruBK);
 
-        // Wali Kelas
         $wkPengguna = optional($pelanggaran->waliKelas)->pengguna;
         if ($wkPengguna) {
             $ids[] = $wkPengguna->id_pengguna;
         }
 
-        // ✅ FIX: Akses waliSiswa dari $siswa yang sudah pasti ter-load
-        // karena loadMissing() dipanggil di awal check()
         $orangTua = optional($siswa->waliSiswa)->pengguna ?? null;
         if ($orangTua) {
             $ids[] = $orangTua->id_pengguna;

@@ -12,44 +12,33 @@ class Index extends Component
 {
     use WithPagination;
 
-    // ── Filter & Paginasi ──────────────────────────────────────────────
     public string $search        = '';
     public string $filterTingkat = '';
+    public string $filterStatus  = '';
     public int    $perPage       = 10;
     public bool   $showTrash     = false;
 
-    // ── Form fields ────────────────────────────────────────────────────
     public string $nama_pelanggaran    = '';
     public string $tingkat_pelanggaran = '';
 
-    // ── State modal ────────────────────────────────────────────────────
     public $editId             = null;
     public bool $showModal     = false;
     public bool $confirmDelete = false;
     public $deleteId           = null;
 
-    // ── State hapus permanen ───────────────────────────────────────────
     public bool $confirmForceDelete = false;
     public $forceDeleteId           = null;
 
-    public function updatingSearch(): void
-    {
-        $this->resetPage();
-    }
-    public function updatingFilterTingkat(): void
-    {
-        $this->resetPage();
-    }
-    public function updatingPerPage(): void
-    {
-        $this->resetPage();
-    }
-    public function updatingShowTrash(): void
-    {
-        $this->resetPage();
-    }
+    public bool $confirmToggleAktif = false;
+    public $toggleAktifId           = null;
+    public $toggleAktifTarget       = null;
 
-    // ── Validasi ───────────────────────────────────────────────────────
+    public function updatingSearch(): void        { $this->resetPage(); }
+    public function updatingFilterTingkat(): void { $this->resetPage(); }
+    public function updatingFilterStatus(): void  { $this->resetPage(); }
+    public function updatingPerPage(): void       { $this->resetPage(); }
+    public function updatingShowTrash(): void     { $this->resetPage(); }
+
     protected function rules(): array
     {
         return [
@@ -72,14 +61,12 @@ class Index extends Component
         'tingkat_pelanggaran.in'       => 'Tingkat tidak valid.',
     ];
 
-    // ── Toggle Trash ───────────────────────────────────────────────────
     public function toggleTrash(): void
     {
         $this->showTrash = !$this->showTrash;
         $this->resetPage();
     }
 
-    // ── Open modal form ────────────────────────────────────────────────
     public function openCreate(): void
     {
         $this->reset(['nama_pelanggaran', 'tingkat_pelanggaran', 'editId']);
@@ -97,7 +84,6 @@ class Index extends Component
         $this->showModal = true;
     }
 
-    // ── Simpan (create / update) ───────────────────────────────────────
     public function save(): void
     {
         $this->validate();
@@ -129,7 +115,40 @@ class Index extends Component
         );
     }
 
-    // ── Soft Delete ────────────────────────────────────────────────────
+    // ✅ Nama method diubah agar tidak konflik dengan property $confirmToggleAktif
+    public function bukaKonfirmasiToggle(int $id): void
+    {
+        $this->toggleAktifId      = $id;
+        $this->toggleAktifTarget  = JenisPelanggaran::findOrFail($id);
+        $this->confirmToggleAktif = true;
+    }
+
+    public function toggleAktif(): void
+    {
+        $item = JenisPelanggaran::findOrFail($this->toggleAktifId);
+        $statusBaru = ! $item->is_active;
+        $item->update(['is_active' => $statusBaru]);
+
+        LogAktivitas::catat(
+            aksi: 'edit_jenis_pelanggaran',
+            modul: 'jenis_pelanggaran',
+            keterangan: ($statusBaru ? 'Mengaktifkan' : 'Menonaktifkan')
+                . ' jenis pelanggaran "' . $item->nama_pelanggaran . '"',
+            idReferensi: $item->id_jenispelanggaran
+        );
+
+        $this->confirmToggleAktif = false;
+        $this->toggleAktifId      = null;
+        $this->toggleAktifTarget  = null;
+
+        session()->flash(
+            'success',
+            $statusBaru
+                ? 'Jenis pelanggaran berhasil diaktifkan.'
+                : 'Jenis pelanggaran berhasil dinonaktifkan.'
+        );
+    }
+
     public function confirmDeleteItem(int $id): void
     {
         $this->deleteId      = $id;
@@ -154,7 +173,6 @@ class Index extends Component
         session()->flash('success', 'Jenis pelanggaran dipindahkan ke tong sampah.');
     }
 
-    // ── Restore dari trash ─────────────────────────────────────────────
     public function restoreItem(int $id): void
     {
         $item = JenisPelanggaran::withTrashed()->findOrFail($id);
@@ -171,7 +189,6 @@ class Index extends Component
         session()->flash('success', 'Jenis pelanggaran berhasil dipulihkan.');
     }
 
-    // ── Hapus permanen ─────────────────────────────────────────────────
     public function confirmForceDeleteItem(int $id): void
     {
         $this->forceDeleteId      = $id;
@@ -196,16 +213,17 @@ class Index extends Component
         session()->flash('success', 'Jenis pelanggaran dihapus permanen.');
     }
 
-    // ── Tutup semua modal ──────────────────────────────────────────────
     public function closeModal(): void
     {
         $this->showModal          = false;
         $this->confirmDelete      = false;
         $this->confirmForceDelete = false;
+        $this->confirmToggleAktif = false;
+        $this->toggleAktifId      = null;
+        $this->toggleAktifTarget  = null;
         $this->resetErrorBag();
     }
 
-    // ── Render ─────────────────────────────────────────────────────────
     public function render()
     {
         $trashCount = JenisPelanggaran::onlyTrashed()->count();
@@ -215,22 +233,21 @@ class Index extends Component
                 $this->showTrash,
                 fn($q) => $q->onlyTrashed(),
                 fn($q) => $q
-                    ->when(
-                        $this->search,
-                        fn($q) =>
-                        $q->where('nama_pelanggaran', 'like', '%' . $this->search . '%')
+                    ->when($this->search,
+                        fn($q) => $q->where('nama_pelanggaran', 'like', '%' . $this->search . '%')
                     )
-                    ->when(
-                        $this->filterTingkat,
-                        fn($q) =>
-                        $q->where('tingkat_pelanggaran', $this->filterTingkat)
+                    ->when($this->filterTingkat,
+                        fn($q) => $q->where('tingkat_pelanggaran', $this->filterTingkat)
+                    )
+                    ->when($this->filterStatus !== '',
+                        fn($q) => $q->where('is_active', $this->filterStatus === '1')
                     )
             )
             ->orderByRaw("CASE tingkat_pelanggaran
-            WHEN 'Ringan' THEN 1
-            WHEN 'Sedang' THEN 2
-            WHEN 'Berat'  THEN 3
-            ELSE 4 END")
+                WHEN 'Ringan' THEN 1
+                WHEN 'Sedang' THEN 2
+                WHEN 'Berat'  THEN 3
+                ELSE 4 END")
             ->orderBy('nama_pelanggaran')
             ->paginate($this->perPage);
 

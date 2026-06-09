@@ -39,7 +39,7 @@
 
                 <div>
                     <label class="text-xs font-semibold text-[#0D2D6B]">Nama Kelas *</label>
-                    <input type="text" wire:model.defer="nama_kelas" placeholder="Contoh: X TJA 1"
+                    <input type="text" wire:model.defer="nama_kelas" placeholder="Contoh: X TKJT 1"
                         class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
                     @error('nama_kelas')

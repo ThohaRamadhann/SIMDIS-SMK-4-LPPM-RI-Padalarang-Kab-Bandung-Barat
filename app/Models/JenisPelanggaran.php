@@ -16,7 +16,17 @@ class JenisPelanggaran extends Model
     protected $fillable = [
         'nama_pelanggaran',
         'tingkat_pelanggaran',
+        'is_active',
     ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
+    public function scopeAktif($query)
+    {
+        return $query->where('is_active', true);
+    }
 
     public function pelanggaran()
     {

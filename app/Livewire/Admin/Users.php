@@ -42,13 +42,13 @@ class Users extends Component
         $this->resetPage();
         $this->dispatchFilterChanged();
     }
-    
+
     public function updatedFilterRole(): void
     {
         $this->resetPage();
         $this->dispatchFilterChanged();
     }
-    
+
     private function dispatchFilterChanged(): void
     {
         $this->dispatch('filter-pengguna-changed', [
@@ -56,7 +56,7 @@ class Users extends Component
             'search'     => $this->search,
         ]);
     }
-    
+
     public function updatingSortBy()    { $this->resetPage(); }
     public function updatingPerPage()   { $this->resetPage(); }
     public function updatingShowTrash() { $this->resetPage(); }
@@ -80,7 +80,14 @@ class Users extends Component
                 Rule::unique('pengguna', 'username')
                     ->ignore($this->editingId, 'id_pengguna'),
             ],
-            'email'     => 'nullable|email|max:255',
+            'email'     => [
+                'nullable',
+                'email',
+                'max:255',
+                Rule::unique('pengguna', 'email')
+                    ->ignore($this->editingId, 'id_pengguna')
+                    ->whereNotNull('email'),
+            ],
             'no_telpon' => 'required|string|max:20',
             'id_role'   => 'required|exists:role,id_role',
         ];
@@ -97,10 +104,9 @@ class Users extends Component
                 $pengguna    = Pengguna::with('waliKelas')->find($this->editingId);
                 $waliKelasId = optional($pengguna?->waliKelas)->id_walikelas;
             }
-            $rules['nuptk']   = [
+            $rules['nuptk'] = [
                 'required',
-                'string',
-                'max:50',
+                'digits:16',
                 Rule::unique('wali_kelas', 'nuptk')->ignore($waliKelasId, 'id_walikelas'),
             ];
             $rules['jabatan'] = 'required|string|max:100';
@@ -111,6 +117,33 @@ class Users extends Component
         }
 
         return $rules;
+    }
+
+    protected function messages()
+    {
+        return [
+            'name.required'      => 'Kolom nama wajib diisi.',
+            'name.max'           => 'Nama maksimal 255 karakter.',
+            'username.required'  => 'Kolom username wajib diisi.',
+            'username.max'       => 'Username maksimal 255 karakter.',
+            'username.unique'    => 'Username sudah digunakan, coba yang lain.',
+            'email.email'        => 'Format email tidak valid.',
+            'email.max'          => 'Email maksimal 255 karakter.',
+            'email.unique'       => 'Email sudah digunakan oleh akun lain.',
+            'no_telpon.required' => 'Kolom nomor telepon wajib diisi.',
+            'no_telpon.max'      => 'Nomor telepon maksimal 20 karakter.',
+            'id_role.required'   => 'Role wajib dipilih.',
+            'id_role.exists'     => 'Role yang dipilih tidak valid.',
+            'password.required'  => 'Kolom password wajib diisi.',
+            'password.min'       => 'Password minimal 6 karakter.',
+            'nuptk.required'     => 'Kolom NUPTK wajib diisi.',
+            'nuptk.digits'       => 'NUPTK harus berupa angka 16 digit.',
+            'nuptk.unique'       => 'NUPTK sudah terdaftar pada pengguna lain.',
+            'jabatan.required'   => 'Kolom jabatan wajib diisi.',
+            'jabatan.max'        => 'Jabatan maksimal 100 karakter.',
+            'hubungan.required'  => 'Kolom hubungan wajib diisi.',
+            'hubungan.max'       => 'Hubungan maksimal 50 karakter.',
+        ];
     }
 
     public function render()
