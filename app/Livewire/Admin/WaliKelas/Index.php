@@ -205,9 +205,14 @@ class Index extends Component
         }
 
         return view('livewire.admin.walikelas.index', [
-            'dataWK'     => $query->paginate($this->perPage),
-            'pengguna'   => $waliKelasPengguna,
-            'trashCount' => WaliKelas::onlyTrashed()->count(),
+            'dataWK'       => $query->paginate($this->perPage),
+            'pengguna'     => $waliKelasPengguna,
+            'trashCount'   => WaliKelas::onlyTrashed()->count(),
+            'isEdit'       => $this->isEdit,
+            'id_walikelas' => $this->id_walikelas,
+            'id_pengguna'  => $this->id_pengguna,
+            'nuptk'        => $this->nuptk,
+            'jabatan'      => $this->jabatan,
         ]);
     }
 
