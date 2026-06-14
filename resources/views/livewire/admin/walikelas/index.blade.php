@@ -27,7 +27,7 @@
             <div class="flex items-center justify-between mb-3">
                 <div>
                     <h2 class="text-[16px] font-bold text-[#0D2D6B]">
-                        {{ $isEdit ? 'Edit Data Wali Kelas' : 'Tambah Data Wali Kelas' }}
+                        {{ ($isEdit ?? false) ? 'Edit Data Wali Kelas' : 'Tambah Data Wali Kelas' }}
                     </h2>
                     <p class="text-xs text-gray-500">Kelola data wali kelas SIMDIS</p>
                 </div>
@@ -76,7 +76,7 @@
                 @if ($id_pengguna)
                     <div class="sm:col-span-2 lg:col-span-3">
                         <div class="text-xs px-3 py-2 rounded-lg border
-                                    {{ $isEdit ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-blue-50 text-blue-700 border-blue-100' }}">
+                                    {{ ($isEdit ?? false) ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-blue-50 text-blue-700 border-blue-100' }}">
                             <i class="fas fa-{{ $isEdit ? 'pen-to-square' : 'plus-circle' }} mr-1"></i>
                             {{ $isEdit ? 'Mode Edit: mengubah data yang sudah ada' : 'Mode Tambah: akan membuat data baru' }}
                         </div>
@@ -86,7 +86,7 @@
             </div>
 
             <div class="flex gap-2 pt-3 mt-3 border-t border-gray-100">
-                @if ($isEdit)
+                @if ($isEdit ?? false)
                     <button wire:click="update"
                         class="bg-[#0D2D6B] text-white px-4 py-2 text-sm font-semibold rounded-lg hover:bg-[#163580] transition">
                         <i class="fas fa-save mr-1"></i> Update
@@ -228,7 +228,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse ($dataWK as $w)
-                        @php $isEditingRow = $isEdit && $id_walikelas == $w->id_walikelas; @endphp
+                    @php $isEditingRow = ($isEdit ?? false) && ($id_walikelas ?? null) == $w->id_walikelas; @endphp
                         <tr wire:key="wk-{{ $w->id_walikelas }}"
                             class="hover:bg-gray-50 transition {{ $isEditingRow ? 'bg-[rgba(245,184,0,0.07)]' : '' }}"
                             style="{{ $isEditingRow ? 'outline:1.5px solid rgba(245,184,0,0.35);outline-offset:-1px;' : '' }}">
