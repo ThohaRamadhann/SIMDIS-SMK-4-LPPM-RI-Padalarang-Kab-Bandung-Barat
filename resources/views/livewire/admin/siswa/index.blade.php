@@ -2,9 +2,8 @@
 
     {{-- SUCCESS NOTIFICATION --}}
     @if (session()->has('success'))
-        <div
-            class="flex items-center gap-3 bg-green-50 border border-green-200
-                   text-green-700 px-3 py-2 rounded-xl shadow-sm">
+        <div class="flex items-center gap-3 bg-green-50 border border-green-200
+                    text-green-700 px-3 py-2 rounded-xl shadow-sm">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
@@ -29,108 +28,118 @@
                 <button @click="formOpen = false; $wire.resetForm()"
                     class="flex items-center justify-center w-7 h-7 rounded-lg
                            bg-gray-100 hover:bg-gray-200 text-gray-400 hover:text-gray-600
-                           transition-colors flex-shrink-0"
-                    title="Tutup form">
+                           transition-colors flex-shrink-0" title="Tutup form">
                     <i class="fas fa-xmark text-xs"></i>
                 </button>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
 
+                {{-- Nama --}}
                 <div>
                     <label class="text-xs font-semibold text-[#0D2D6B]">Nama Siswa *</label>
                     <input type="text" wire:model="nama" placeholder="Masukkan nama siswa"
                         class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
-                    @error('nama')
-                        <span class="text-xs text-red-500">{{ $message }}</span>
-                    @enderror
+                    @error('nama') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                 </div>
 
+                {{-- NIS --}}
                 <div>
                     <label class="text-xs font-semibold text-[#0D2D6B]">NIS *</label>
                     <input type="text" wire:model="nis" placeholder="Nomor Induk Siswa"
                         class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
-                    @error('nis')
-                        <span class="text-xs text-red-500">{{ $message }}</span>
-                    @enderror
+                    @error('nis') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                 </div>
 
+                {{-- 
+                    KELAS: Dikelompokkan per tingkat + tampilkan jurusan & tahun ajaran
+                    agar admin tidak pusing saat memilih
+                --}}
                 <div>
                     <label class="text-xs font-semibold text-[#0D2D6B]">Kelas *</label>
                     <select wire:model="id_kelas"
                         class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
                         <option value="">-- Pilih Kelas --</option>
-                        @foreach ($kelas as $k)
-                            <option value="{{ $k->id_kelas }}">{{ $k->nama_kelas }}</option>
+                        @foreach ($kelas->groupBy('tingkat') as $tingkat => $kelasList)
+                            <optgroup label="Tingkat {{ $tingkat }}">
+                                @foreach ($kelasList as $k)
+                                    <option value="{{ $k->id_kelas }}">
+                                        {{ $k->nama_kelas }} — {{ $k->jurusan }} ({{ $k->tahun_ajaran }})
+                                    </option>
+                                @endforeach
+                            </optgroup>
                         @endforeach
                     </select>
-                    @error('id_kelas')
-                        <span class="text-xs text-red-500">{{ $message }}</span>
-                    @enderror
+                    @error('id_kelas') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                 </div>
 
-                {{-- Searchable dropdown Wali Siswa --}}
-                <div x-data="{
-                    open: false,
-                    search: '',
-                    selected: @entangle('id_walisiswa'),
-                    get filteredWali() {
-                        return this.walis.filter(w =>
-                            w.name.toLowerCase().includes(this.search.toLowerCase())
-                        )
-                    },
-                    walis: [
-                        @foreach($wali as $w) {
-                            id: {{ $w->id_walisiswa }},
-                            name: '{{ optional($w->pengguna)->name ?? '-' }} {{ $w->hubungan ? '(' . $w->hubungan . ')' : '' }}'
-                        },
-                        @endforeach
-                    ],
-                    selectedName() {
-                        const found = this.walis.find(w => w.id == this.selected)
-                        return found ? found.name : '-- Pilih Wali Siswa --'
-                    }
-                }" class="relative">
+                {{-- 
+                    WALI SISWA: Livewire AJAX search — tidak load semua data.
+                    Data hanya dicari ke server saat admin mengetik min. 2 huruf.
+                --}}
+                <div class="relative" x-data="{ open: false }">
                     <label class="text-xs font-semibold text-[#0D2D6B]">Wali Siswa *</label>
-                    <button type="button" @click="open = !open"
-                        class="mt-0.5 w-full h-10 px-3 rounded-lg border border-gray-200 bg-gray-50
-                               text-left text-sm flex items-center justify-between hover:bg-white
-                               focus:border-[#F5B800] transition">
-                        <span class="truncate" :class="selected ? 'text-gray-700' : 'text-gray-400'"
-                            x-text="selectedName()"></span>
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-                    <div x-show="open" @click.outside="open = false" x-transition
-                        class="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
-                        style="display:none">
-                        <div class="p-2 border-b border-gray-100">
-                            <input type="text" x-model="search" placeholder="Cari nama wali siswa..."
-                                class="w-full h-9 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
-                                       focus:bg-white focus:border-[#F5B800] outline-none transition">
+
+                    {{-- Tampilan saat wali sudah dipilih --}}
+                    @if ($id_walisiswa && $waliSelectedName)
+                        <div class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-[#F5B800]
+                                    bg-yellow-50 flex items-center justify-between gap-2">
+                            <span class="truncate text-gray-700 text-xs">{{ $waliSelectedName }}</span>
+                            <button type="button" wire:click="clearWali"
+                                class="flex-shrink-0 text-gray-400 hover:text-red-500 transition">
+                                <i class="fas fa-xmark text-xs"></i>
+                            </button>
                         </div>
-                        <div class="max-h-56 overflow-y-auto">
-                            <template x-if="filteredWali.length === 0">
-                                <div class="px-3 py-4 text-sm text-gray-400 text-center">Wali siswa tidak ditemukan
+                    @else
+                        {{-- Kotak input pencarian --}}
+                        <div class="relative mt-0.5">
+                            <input type="text" wire:model.live.debounce.350ms="waliSearch"
+                                placeholder="Ketik min. 2 huruf nama wali..."
+                                @focus="open = true" @click.outside="open = false"
+                                class="w-full h-10 pl-8 pr-3 text-sm rounded-lg border border-gray-200 bg-gray-50
+                                       focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+
+                            {{-- Dropdown hasil pencarian --}}
+                            @if (strlen($waliSearch) >= 2)
+                                <div class="absolute z-50 mt-1 w-full bg-white border border-gray-200
+                                            rounded-xl shadow-xl overflow-hidden">
+                                    @if (count($waliSearchResults) > 0)
+                                        <div class="max-h-52 overflow-y-auto divide-y divide-gray-50">
+                                            @foreach ($waliSearchResults as $w)
+                                                <button type="button"
+                                                    wire:click="selectWali({{ $w['id'] }}, '{{ addslashes($w['name']) }}')"
+                                                    class="w-full px-3 py-2.5 text-left text-xs hover:bg-[#F0F4FB]
+                                                           transition text-gray-700">
+                                                    <i class="fas fa-user text-[#0D2D6B] mr-1.5 opacity-50"></i>
+                                                    {{ $w['name'] }}
+                                                </button>
+                                            @endforeach
+                                        </div>
+                                        <div class="px-3 py-1.5 bg-gray-50 text-[10px] text-gray-400 border-t border-gray-100">
+                                            {{ count($waliSearchResults) }} hasil ditemukan
+                                        </div>
+                                    @else
+                                        <div class="px-3 py-4 text-center text-xs text-gray-400">
+                                            <i class="fas fa-user-slash block text-lg mb-1 opacity-30"></i>
+                                            Wali tidak ditemukan
+                                        </div>
+                                    @endif
                                 </div>
-                            </template>
-                            <template x-for="wali in filteredWali" :key="wali.id">
-                                <button type="button" @click="selected = wali.id; open = false; search = '';"
-                                    class="w-full px-3 py-2.5 text-left text-sm hover:bg-[#F0F4FB] transition border-b border-gray-50">
-                                    <span x-text="wali.name"></span>
-                                </button>
-                            </template>
+                            @endif
                         </div>
-                    </div>
-                    @error('id_walisiswa')
-                        <span class="text-xs text-red-500">{{ $message }}</span>
-                    @enderror
+                    @endif
+
+                    @error('id_walisiswa') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                    <p class="text-[10px] text-gray-400 mt-0.5">
+                        <i class="fas fa-info-circle"></i> Ketik nama wali untuk mencari dari database
+                    </p>
                 </div>
 
+                {{-- Status --}}
                 <div>
                     <label class="text-xs font-semibold text-[#0D2D6B]">Status</label>
                     <select wire:model="status"
@@ -201,9 +210,8 @@
                     <button @click="formOpen = !formOpen; if(!formOpen) $wire.resetForm()"
                         class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors"
                         :class="formOpen
-                            ?
-                            'bg-[#F0F4FB] text-[#4A5E8A] border-[#E2EAF4] hover:bg-[#e2eaf7]' :
-                            'bg-[#0D2D6B] text-white border-[#0D2D6B] hover:bg-[#163580]'">
+                            ? 'bg-[#F0F4FB] text-[#4A5E8A] border-[#E2EAF4] hover:bg-[#e2eaf7]'
+                            : 'bg-[#0D2D6B] text-white border-[#0D2D6B] hover:bg-[#163580]'">
                         <i class="fas text-xs" :class="formOpen ? 'fa-xmark' : 'fa-plus'"></i>
                         <span x-text="formOpen ? 'Tutup Form' : 'Tambah Siswa'"></span>
                     </button>
@@ -216,8 +224,7 @@
                     <i class="fas {{ $showTrash ? 'fa-arrow-left' : 'fa-trash-can' }}"></i>
                     {{ $showTrash ? 'Kembali' : 'Tong Sampah' }}
                     @if (!$showTrash && $trashCount > 0)
-                        <span
-                            class="ml-1 bg-red-500 text-white text-[10px] font-bold
+                        <span class="ml-1 bg-red-500 text-white text-[10px] font-bold
                                      px-1.5 py-0.5 rounded-full leading-none">
                             {{ $trashCount }}
                         </span>
@@ -226,7 +233,7 @@
             </div>
         </div>
 
-        {{-- ── TOOLBAR ── --}}
+        {{-- TOOLBAR --}}
         @if (!$showTrash)
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 p-3 bg-gray-50 border border-gray-100 rounded-xl">
                 <div>
@@ -263,8 +270,7 @@
                         class="w-full h-9 pl-8 pr-8 text-xs rounded-lg border border-gray-200
                                bg-gray-50 focus:bg-white focus:border-[#F5B800]
                                focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
-                    <i
-                        class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
                     @if ($search)
                         <button wire:click="$set('search','')"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -275,7 +281,7 @@
                 <div>
                     <select wire:model.live="filterKelas"
                         class="w-full h-9 px-2 text-xs rounded-lg border border-gray-200
-           bg-gray-50 focus:bg-white focus:border-[#F5B800] outline-none transition">
+                               bg-gray-50 focus:bg-white focus:border-[#F5B800] outline-none transition">
                         <option value="">Semua Kelas</option>
                         @foreach ($allKelas->groupBy('tingkat') as $tingkat => $kelasList)
                             <optgroup label="Tingkat {{ $tingkat }}">
@@ -338,7 +344,7 @@
             @endif
         @endif
 
-        {{-- ── TABLE ── --}}
+        {{-- TABLE --}}
         <div class="overflow-x-auto rounded-xl border border-gray-100">
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 text-[#0D2D6B] text-xs">
@@ -365,8 +371,7 @@
 
                             <td class="px-3 py-2">
                                 <div class="flex items-center gap-2">
-                                    <div
-                                        style="width:24px;height:24px;border-radius:50%;flex-shrink:0;
+                                    <div style="width:24px;height:24px;border-radius:50%;flex-shrink:0;
                                                 background:linear-gradient(135deg,#0D2D6B,#163580);
                                                 color:#F5B800;font-size:10px;font-weight:700;
                                                 display:flex;align-items:center;justify-content:center;">
@@ -375,8 +380,7 @@
                                     <span class="font-semibold text-[#0D2D6B] text-xs">
                                         {{ $s->nama }}
                                         @if ($s->trashed())
-                                            <span
-                                                style="font-size:10px;color:#DC2626;background:rgba(229,62,62,0.08);
+                                            <span style="font-size:10px;color:#DC2626;background:rgba(229,62,62,0.08);
                                                          padding:1px 6px;border-radius:20px;margin-left:4px;font-weight:600;">
                                                 Dihapus
                                             </span>
@@ -401,14 +405,12 @@
                                 @endif
                             </td>
 
-                            {{-- ← ganti waliMurid → waliSiswa --}}
                             <td class="px-3 py-2 text-gray-500 text-xs">
                                 {{ optional(optional($s->waliSiswa)->pengguna)->name ?? '-' }}
                             </td>
 
                             <td class="px-3 py-2">
-                                <span
-                                    class="text-[10px] font-semibold px-2 py-1 rounded-full
+                                <span class="text-[10px] font-semibold px-2 py-1 rounded-full
                                     {{ $s->status === 'aktif' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500' }}">
                                     {{ ucfirst($s->status) }}
                                 </span>
@@ -444,8 +446,7 @@
                     @empty
                         <tr>
                             <td colspan="7" class="text-center py-8 text-gray-400 text-xs">
-                                <i
-                                    class="fas fa-{{ $showTrash ? 'trash' : 'user-graduate' }} block text-2xl mb-2 opacity-25"></i>
+                                <i class="fas fa-{{ $showTrash ? 'trash' : 'user-graduate' }} block text-2xl mb-2 opacity-25"></i>
                                 {{ $showTrash ? 'Tong sampah kosong.' : 'Tidak ada siswa ditemukan.' }}
                             </td>
                         </tr>
@@ -454,7 +455,7 @@
             </table>
         </div>
 
-        {{-- ── PAGINATION ── --}}
+        {{-- PAGINATION --}}
         @if ($dataSiswa->hasPages())
             <div class="mt-3 flex items-center justify-between flex-wrap gap-2">
                 <span class="text-xs text-[#4A5E8A]">
@@ -476,8 +477,7 @@
                         @if ($page == $dataSiswa->currentPage())
                             <span class="simdis-page-btn simdis-page-active">{{ $page }}</span>
                         @else
-                            <button wire:click="gotoPage({{ $page }})"
-                                class="simdis-page-btn">{{ $page }}</button>
+                            <button wire:click="gotoPage({{ $page }})" class="simdis-page-btn">{{ $page }}</button>
                         @endif
                     @endforeach
 

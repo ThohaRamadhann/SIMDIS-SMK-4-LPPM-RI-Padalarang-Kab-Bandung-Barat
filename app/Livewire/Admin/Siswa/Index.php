@@ -17,10 +17,15 @@ class Index extends Component
     public $id_siswa;
     public $nama;
     public $nis;
-    public $status     = 'aktif';
+    public $status       = 'aktif';
     public $id_kelas;
     public $id_walisiswa;
-    public $isEdit     = false;
+    public $isEdit       = false;
+
+    // ── AJAX search wali ──
+    public $waliSearch        = '';   // keyword yang diketik admin
+    public $waliSearchResults = [];   // hasil query (maks 15)
+    public $waliSelectedName  = '';   // label yang ditampilkan di tombol
 
     // ── Search, filter, sort, pagination ──
     public $search            = '';
@@ -42,29 +47,50 @@ class Index extends Component
         'perPage'           => ['except' => 10],
     ];
 
-    public function updatedFilterKelas(): void
+    // ── AJAX: dipanggil wire:model.live saat admin mengetik di kotak cari wali ──
+    public function updatedWaliSearch(): void
     {
-        $this->resetPage();
-        $this->dispatchFilterChanged();
+        $q = trim($this->waliSearch);
+
+        if (strlen($q) < 2) {
+            $this->waliSearchResults = [];
+            return;
+        }
+
+        $this->waliSearchResults = WaliSiswa::with('pengguna')
+            ->whereHas('pengguna', fn($query) => $query->where('name', 'like', '%' . $q . '%'))
+            ->orderBy('id_walisiswa')
+            ->limit(15)
+            ->get()
+            ->map(fn($w) => [
+                'id'   => $w->id_walisiswa,
+                'name' => optional($w->pengguna)->name . ($w->hubungan ? ' (' . $w->hubungan . ')' : ''),
+            ])
+            ->toArray();
     }
 
-    public function updatedFilterStatus(): void
+    // ── Dipanggil saat admin klik salah satu hasil search wali ──
+    public function selectWali(int $id, string $name): void
     {
-        $this->resetPage();
-        $this->dispatchFilterChanged();
+        $this->id_walisiswa      = $id;
+        $this->waliSelectedName  = $name;
+        $this->waliSearch        = '';
+        $this->waliSearchResults = [];
     }
 
-    public function updatedFilterTahunAjaran(): void
+    // ── Reset wali field ──
+    public function clearWali(): void
     {
-        $this->resetPage();
-        $this->dispatchFilterChanged();
+        $this->id_walisiswa      = '';
+        $this->waliSelectedName  = '';
+        $this->waliSearch        = '';
+        $this->waliSearchResults = [];
     }
 
-    public function updatedSearch(): void
-    {
-        $this->resetPage();
-        $this->dispatchFilterChanged();
-    }
+    public function updatedFilterKelas(): void { $this->resetPage(); $this->dispatchFilterChanged(); }
+    public function updatedFilterStatus(): void { $this->resetPage(); $this->dispatchFilterChanged(); }
+    public function updatedFilterTahunAjaran(): void { $this->resetPage(); $this->dispatchFilterChanged(); }
+    public function updatedSearch(): void { $this->resetPage(); $this->dispatchFilterChanged(); }
 
     private function dispatchFilterChanged(): void
     {
@@ -76,19 +102,22 @@ class Index extends Component
         ]);
     }
 
-    public function resetForm()
+    public function resetForm(): void
     {
-        $this->id_siswa     = null;
-        $this->nama         = '';
-        $this->nis          = '';
-        $this->status       = 'aktif';
-        $this->id_kelas     = '';
-        $this->id_walisiswa = '';
-        $this->isEdit       = false;
+        $this->id_siswa          = null;
+        $this->nama              = '';
+        $this->nis               = '';
+        $this->status            = 'aktif';
+        $this->id_kelas          = '';
+        $this->id_walisiswa      = '';
+        $this->waliSelectedName  = '';
+        $this->waliSearch        = '';
+        $this->waliSearchResults = [];
+        $this->isEdit            = false;
         $this->resetErrorBag();
     }
 
-    public function store()
+    public function store(): void
     {
         $this->validate([
             'nama'         => 'required',
@@ -109,20 +138,23 @@ class Index extends Component
         session()->flash('success', 'Siswa berhasil ditambahkan.');
     }
 
-    public function edit($id)
+    public function edit(int $id): void
     {
-        $s = Siswa::findOrFail($id);
+        $s = Siswa::with('waliSiswa.pengguna')->findOrFail($id);
 
-        $this->id_siswa     = $s->id_siswa;
-        $this->nama         = $s->nama;
-        $this->nis          = $s->nis;
-        $this->status       = $s->status;
-        $this->id_kelas     = $s->id_kelas;
-        $this->id_walisiswa = $s->id_walisiswa;
-        $this->isEdit       = true;
+        $this->id_siswa         = $s->id_siswa;
+        $this->nama             = $s->nama;
+        $this->nis              = $s->nis;
+        $this->status           = $s->status;
+        $this->id_kelas         = $s->id_kelas;
+        $this->id_walisiswa     = $s->id_walisiswa;
+        // Pre-populate label wali yang sudah terpilih
+        $this->waliSelectedName = optional(optional($s->waliSiswa)->pengguna)->name
+            . ($s->waliSiswa?->hubungan ? ' (' . $s->waliSiswa->hubungan . ')' : '');
+        $this->isEdit           = true;
     }
 
-    public function update()
+    public function update(): void
     {
         $this->validate([
             'nama'         => 'required',
@@ -143,26 +175,26 @@ class Index extends Component
         session()->flash('success', 'Siswa berhasil diperbarui.');
     }
 
-    public function delete($id)
+    public function delete(int $id): void
     {
         Siswa::findOrFail($id)->delete();
         $this->resetForm();
         session()->flash('success', 'Siswa dipindahkan ke tong sampah.');
     }
 
-    public function restore($id)
+    public function restore(int $id): void
     {
         Siswa::onlyTrashed()->findOrFail($id)->restore();
         session()->flash('success', 'Siswa berhasil dipulihkan.');
     }
 
-    public function forceDelete($id)
+    public function forceDelete(int $id): void
     {
         Siswa::onlyTrashed()->findOrFail($id)->forceDelete();
         session()->flash('success', 'Siswa dihapus permanen.');
     }
 
-    public function emptyTrash()
+    public function emptyTrash(): void
     {
         Siswa::onlyTrashed()->forceDelete();
         session()->flash('success', 'Tong sampah dikosongkan.');
@@ -205,14 +237,15 @@ class Index extends Component
 
         return view('livewire.admin.siswa.index', [
             'dataSiswa'       => $query->paginate($this->perPage),
+            // Kelas tetap dimuat semua (biasanya puluhan, aman)
             'kelas'           => Kelas::orderBy('tingkat')->orderBy('nama_kelas')->get(),
-            'wali'            => WaliSiswa::with('pengguna')->orderBy('id_walisiswa')->get(),
             'allKelas'        => Kelas::orderBy('tingkat')->orderBy('nama_kelas')->get(),
             'trashCount'      => Siswa::onlyTrashed()->count(),
             'tahunAjaranList' => Kelas::select('tahun_ajaran')
                 ->distinct()
                 ->orderByDesc('tahun_ajaran')
                 ->pluck('tahun_ajaran'),
+            // 'wali' DIHAPUS dari sini — tidak lagi load semua data wali
         ]);
     }
 
