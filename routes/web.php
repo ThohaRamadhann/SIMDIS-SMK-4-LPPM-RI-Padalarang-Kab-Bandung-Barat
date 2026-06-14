@@ -35,7 +35,9 @@ Route::middleware(['auth'])->group(function () {
         Route::view('/users',      'admin.users')->name('users');
         Route::view('/siswa',      'admin.siswa')->name('siswa');
         Route::view('/wali-siswa', 'admin.walisiswa')->name('wali-siswa'); // sebelumnya: wali-murid
-        Route::view('/wali-kelas', 'admin.walikelas')->name('wali-kelas');
+        Route::get('/wali-kelas', function() {
+            return view('admin.walikelas');
+        })->name('wali-kelas');
         Route::view('/kelas',      'admin.kelas')->name('kelas');
 
         // Download template import
