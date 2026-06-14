@@ -49,7 +49,7 @@
                         class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
                                focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
                         <option value="">-- Pilih Wali Kelas --</option>
-                        @foreach ($pengguna as $p)
+                        @foreach (($pengguna ?? []) as $p)
                             <option value="{{ $p->id_pengguna }}">{{ $p->name }} ({{ $p->username }})</option>
                         @endforeach
                     </select>
@@ -73,7 +73,7 @@
                     @error('jabatan') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                 </div>
 
-                @if ($id_pengguna)
+                @if ($id_pengguna ?? false)
                     <div class="sm:col-span-2 lg:col-span-3">
                         <div class="text-xs px-3 py-2 rounded-lg border
                                     {{ ($isEdit ?? false) ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-blue-50 text-blue-700 border-blue-100' }}">
