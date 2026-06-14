@@ -32,6 +32,18 @@ class Index extends Component
         'perPage' => ['except' => 10],
     ];
 
+    public function mount(): void
+    {
+        $this->showTrash   = false;
+        $this->search      = '';
+        $this->sortBy      = 'terbaru';
+        $this->perPage     = 10;
+        $this->isEdit      = false;
+        $this->id_pengguna = '';
+        $this->nuptk       = '';
+        $this->jabatan     = '';
+    }
+
     public function updatingSearch()    { $this->resetPage(); }
     public function updatingSortBy()    { $this->resetPage(); }
     public function updatingPerPage()   { $this->resetPage(); }
