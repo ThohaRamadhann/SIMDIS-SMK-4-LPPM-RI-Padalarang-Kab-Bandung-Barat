@@ -116,17 +116,17 @@
         <div class="flex justify-between items-center mb-3">
             <div>
                 <h3 class="text-[16px] font-bold text-[#0D2D6B]">
-                    {{ $showTrash ? 'Tong Sampah' : 'Daftar Wali Kelas' }}
+                    {{ ($showTrash ?? false) ? 'Tong Sampah' : 'Daftar Wali Kelas' }}
                 </h3>
                 <p class="text-xs text-gray-500">
-                    {{ $showTrash ? 'Data wali kelas yang telah dihapus.' : 'Data seluruh wali kelas SIMDIS' }}
+                    {{ ($showTrash ?? false) ? 'Data wali kelas yang telah dihapus.' : 'Data seluruh wali kelas SIMDIS' }}
                 </p>
             </div>
             <div class="flex flex-wrap justify-end items-center gap-2">
                 <span class="text-xs font-semibold text-[#0D2D6B] bg-blue-50 px-3 py-1 rounded-full">
-                    {{ $dataWK->total() }} data
+                    {{ ($dataWK ?? null)?->total() ?? 0 }} data
                 </span>
-                @if (!$showTrash)
+                @if (!($showTrash ?? false))
                     <button @click="formOpen = !formOpen; if(!formOpen) $wire.resetForm()"
                         class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors"
                         :class="formOpen
@@ -138,21 +138,21 @@
                 @endif
                 <button wire:click="$toggle('showTrash')"
                     class="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors
-                           {{ $showTrash
+                           {{ ($showTrash ?? false)
                                ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
                                : 'bg-[#F0F4FB] text-[#4A5E8A] border-[#E2EAF4] hover:bg-[#e2eaf7]' }}">
-                    <i class="fas {{ $showTrash ? 'fa-arrow-left' : 'fa-trash-can' }}"></i>
-                    {{ $showTrash ? 'Kembali' : 'Tong Sampah' }}
-                    @if (!$showTrash && $trashCount > 0)
+                    <i class="fas {{ ($showTrash ?? false) ? 'fa-arrow-left' : 'fa-trash-can' }}"></i>
+                    {{ ($showTrash ?? false) ? 'Kembali' : 'Tong Sampah' }}
+                    @if (!($showTrash ?? false) && ($trashCount ?? 0) > 0)
                         <span class="ml-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-                            {{ $trashCount }}
+                            {{ $trashCount ?? 0 }}
                         </span>
                     @endif
                 </button>
             </div>
         </div>
 
-        @if (!$showTrash)
+        @if (!($showTrash ?? false))
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 p-3 bg-gray-50 border border-gray-100 rounded-xl">
                 <div>
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">
@@ -181,7 +181,7 @@
                         class="w-full h-9 pl-8 pr-8 text-xs rounded-lg border border-gray-200
                                bg-gray-50 focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
                     <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
-                    @if ($search)
+                    @if ($search ?? false)
                         <button wire:click="$set('search', '')"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                             <i class="fas fa-xmark text-xs"></i>
@@ -203,7 +203,7 @@
                 </select>
             </div>
         @else
-            @if ($trashCount > 0)
+            @if (($trashCount ?? 0) > 0)
                 <div class="flex justify-end mb-3">
                     <button wire:click="emptyTrash"
                         wire:confirm="Hapus SEMUA data di tong sampah secara permanen?"
@@ -227,13 +227,13 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                    @forelse ($dataWK as $w)
+                    @forelse (($dataWK ?? collect()) as $w)
                         @php $isEditingRow = ($isEdit ?? false) && ($id_walikelas ?? null) == $w->id_walikelas; @endphp
                         <tr wire:key="wk-{{ $w->id_walikelas }}"
                             class="hover:bg-gray-50 transition {{ $isEditingRow ? 'bg-[rgba(245,184,0,0.07)]' : '' }}"
                             style="{{ $isEditingRow ? 'outline:1.5px solid rgba(245,184,0,0.35);outline-offset:-1px;' : '' }}">
 
-                            <td class="px-3 py-2 text-gray-400 text-xs">{{ $dataWK->firstItem() + $loop->index }}</td>
+                            <td class="px-3 py-2 text-gray-400 text-xs">{{ ($dataWK ?? null)?->firstItem() + $loop->index }}</td>
 
                             <td class="px-3 py-2">
                                 <div class="flex items-center gap-2">
@@ -267,7 +267,7 @@
                             </td>
 
                             <td class="px-3 py-2 text-center whitespace-nowrap">
-                                @if ($showTrash)
+                                @if ($showTrash ?? false)
                                     <button wire:click="restore({{ $w->id_walikelas }})"
                                         class="text-xs font-semibold mr-2 transition" style="color:#276749;">
                                         <i class="fas fa-rotate-left"></i> Pulihkan
@@ -296,8 +296,8 @@
                     @empty
                         <tr>
                             <td colspan="5" class="text-center py-8 text-gray-400 text-xs">
-                                <i class="fas fa-{{ $showTrash ? 'trash' : 'chalkboard-user' }} block text-2xl mb-2 opacity-25"></i>
-                                {{ $showTrash ? 'Tong sampah kosong.' : 'Tidak ada data wali kelas ditemukan.' }}
+                                <i class="fas fa-{{ ($showTrash ?? false) ? 'trash' : 'chalkboard-user' }} block text-2xl mb-2 opacity-25"></i>
+                                {{ ($showTrash ?? false) ? 'Tong sampah kosong.' : 'Tidak ada data wali kelas ditemukan.' }}
                             </td>
                         </tr>
                     @endforelse
@@ -305,25 +305,25 @@
             </table>
         </div>
 
-        @if ($dataWK->hasPages())
+        @if (($dataWK ?? null)?->hasPages())
             <div class="mt-3 flex items-center justify-between flex-wrap gap-2">
                 <span class="text-xs text-[#4A5E8A]">
-                    Menampilkan {{ $dataWK->firstItem() }}–{{ $dataWK->lastItem() }} dari {{ $dataWK->total() }} data
+                    Menampilkan {{ ($dataWK ?? null)?->firstItem() }}–{{ ($dataWK ?? null)?->lastItem() }} dari {{ ($dataWK ?? null)?->total() ?? 0 }} data
                 </span>
                 <div class="flex items-center gap-1">
-                    @if ($dataWK->onFirstPage())
+                    @if (($dataWK ?? null)?->onFirstPage())
                         <span class="simdis-page-btn opacity-40 cursor-not-allowed select-none"><i class="fas fa-chevron-left text-xs"></i></span>
                     @else
                         <button wire:click="previousPage" class="simdis-page-btn"><i class="fas fa-chevron-left text-xs"></i></button>
                     @endif
-                    @foreach ($dataWK->getUrlRange(max(1, $dataWK->currentPage() - 2), min($dataWK->lastPage(), $dataWK->currentPage() + 2)) as $page => $url)
-                        @if ($page == $dataWK->currentPage())
+                    @foreach (($dataWK ?? null)?->getUrlRange(max(1, ($dataWK ?? null)?->currentPage() - 2), min(($dataWK ?? null)?->lastPage(), ($dataWK ?? null)?->currentPage() + 2)) ?? [] as $page => $url)
+                        @if ($page == ($dataWK ?? null)?->currentPage())
                             <span class="simdis-page-btn simdis-page-active">{{ $page }}</span>
                         @else
                             <button wire:click="gotoPage({{ $page }})" class="simdis-page-btn">{{ $page }}</button>
                         @endif
                     @endforeach
-                    @if ($dataWK->hasMorePages())
+                    @if (($dataWK ?? null)?->hasMorePages())
                         <button wire:click="nextPage" class="simdis-page-btn"><i class="fas fa-chevron-right text-xs"></i></button>
                     @else
                         <span class="simdis-page-btn opacity-40 cursor-not-allowed select-none"><i class="fas fa-chevron-right text-xs"></i></span>
@@ -331,7 +331,7 @@
                 </div>
             </div>
         @else
-            <div class="mt-2 text-[11px] text-gray-400">Total {{ $dataWK->total() }} data</div>
+            <div class="mt-2 text-[11px] text-gray-400">Total {{ ($dataWK ?? null)?->total() ?? 0 }} data</div>
         @endif
 
     </div>
