@@ -36,14 +36,13 @@ Route::middleware(['auth'])->group(function () {
         Route::view('/siswa',      'admin.siswa')->name('siswa');
         Route::view('/wali-siswa', 'admin.walisiswa')->name('wali-siswa'); // sebelumnya: wali-murid
         Route::get('/wali-kelas', function() {
-            return view('admin.walikelas');
+        return view('admin.walikelas');
         })->name('wali-kelas');
         Route::view('/kelas',      'admin.kelas')->name('kelas');
-
         // Download template import
         Route::get('/admin/template/{type}', [TemplateImportController::class, 'download'])
-            ->name('admin.template.download')
-            ->where('type', 'pengguna|wali_kelas|wali_siswa|kelas|siswa'); // wali_murid → wali_siswa
+        ->name('admin.template.download')
+        ->where('type', 'pengguna|wali_kelas|wali_siswa|kelas|siswa');
     });
 
     // ── GURU BK ONLY ────────────────────────────────────────────────────────

@@ -1,4 +1,5 @@
 <div x-data="{ formOpen: false }"
+{{-- DEBUG: {{ $dataWK?->total() ?? 'NULL' }} --}}
      @open-form.window="formOpen = true"
      class="space-y-3">
 
@@ -124,7 +125,7 @@
             </div>
             <div class="flex flex-wrap justify-end items-center gap-2">
                 <span class="text-xs font-semibold text-[#0D2D6B] bg-blue-50 px-3 py-1 rounded-full">
-                    {{ $dataWK->total() }} data
+                    {{ ($dataWK ?? null)?->total() ?? 0 }} data
                 </span>
                 @if (!($showTrash ?? false))
                     <button @click="formOpen = !formOpen; if(!formOpen) $wire.resetForm()"
@@ -227,13 +228,13 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                    @forelse ($dataWK as $w)
+                    @forelse (($dataWK ?? collect()) as $w)
                         @php $isEditingRow = ($isEdit ?? false) && ($id_walikelas ?? null) == $w->id_walikelas; @endphp
                         <tr wire:key="wk-{{ $w->id_walikelas }}"
                             class="hover:bg-gray-50 transition {{ $isEditingRow ? 'bg-[rgba(245,184,0,0.07)]' : '' }}"
                             style="{{ $isEditingRow ? 'outline:1.5px solid rgba(245,184,0,0.35);outline-offset:-1px;' : '' }}">
 
-                            <td class="px-3 py-2 text-gray-400 text-xs">{{ $dataWK->firstItem() + $loop->index }}</td>
+                            <td class="px-3 py-2 text-gray-400 text-xs">{{ ($dataWK ?? null)?->firstItem() + $loop->index }}</td>
 
                             <td class="px-3 py-2">
                                 <div class="flex items-center gap-2">
@@ -305,10 +306,10 @@
             </table>
         </div>
 
-        @if ($dataWK->hasPages())
+        @if (($dataWK ?? null)?->hasPages())
             <div class="mt-3 flex items-center justify-between flex-wrap gap-2">
                 <span class="text-xs text-[#4A5E8A]">
-                    Menampilkan {{ $dataWK->firstItem() }}–{{ $dataWK->lastItem() }} dari {{ $dataWK->total() }} data
+                    Menampilkan {{ ($dataWK ?? null)?->firstItem() }}–{{ ($dataWK ?? null)?->lastItem() }} dari {{ ($dataWK ?? null)?->total() ?? 0 }} data
                 </span>
                 <div class="flex items-center gap-1">
                     @if ($dataWK->onFirstPage())
@@ -331,7 +332,7 @@
                 </div>
             </div>
         @else
-            <div class="mt-2 text-[11px] text-gray-400">Total {{ $dataWK->total() }} data</div>
+            <div class="mt-2 text-[11px] text-gray-400">Total {{ ($dataWK ?? null)?->total() ?? 0 }} data</div>
         @endif
 
     </div>
