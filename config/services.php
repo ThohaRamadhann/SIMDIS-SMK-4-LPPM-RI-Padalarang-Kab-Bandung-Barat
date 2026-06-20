@@ -39,4 +39,8 @@ return [
         'grace_period_seconds' => (int) env('EWS_GRACE_PERIOD_SECONDS', 300),
     ],
 
+    'pusher_beams' => [
+        'instance_id' => env('PUSHER_BEAMS_INSTANCE_ID'),
+        'secret_key'  => env('PUSHER_BEAMS_SECRET_KEY'),
+    ],
 ];

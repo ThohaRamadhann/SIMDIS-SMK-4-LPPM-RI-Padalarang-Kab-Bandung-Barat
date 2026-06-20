@@ -180,11 +180,15 @@ new class extends Component {
     unreadCount: {{ $unreadCount }},
     notifikasis: {{ Js::from($notifikasis) }},
     roleUser: '{{ $roleUser }}',
+    beamsClient: null,
+    notifPermission: (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported',
 
     init() {
         window.dispatchEvent(new CustomEvent('notif-count-update', { detail: { count: this.unreadCount } }));
 
         window.addEventListener('open-notif-sidebar', () => this.open = true);
+
+        this.initBeams();
 
         const userId = {{ auth()->user()->id_pengguna }};
         window.Echo.private('notifikasi.' + userId)
@@ -210,6 +214,55 @@ new class extends Component {
             });
     },
 
+    async initBeams() {
+        if (typeof PusherPushNotifications === 'undefined') {
+            console.warn('Beams SDK belum termuat');
+            return;
+        }
+        // Kalau permission sudah granted sebelumnya, langsung register ulang
+        // (supaya device tetap subscribed walau buka tab baru / refresh)
+        if (this.notifPermission === 'granted') {
+            await this.registerBeams();
+        }
+    },
+
+    async registerBeams() {
+        try {
+            const instanceId = document.querySelector('meta[name=beams-instance-id]').content;
+            const userId = {{ auth()->user()->id_pengguna }};
+
+            if (!this.beamsClient) {
+                this.beamsClient = new PusherPushNotifications.Client({
+                    instanceId: instanceId,
+                });
+            }
+
+            await this.beamsClient.start();
+
+            // Subscribe ke interest umum + interest khusus user (biar bisa target per-user nanti)
+            await this.beamsClient.addDeviceInterest('early-warning');
+            await this.beamsClient.addDeviceInterest('user-' + userId);
+
+            this.notifPermission = 'granted';
+            console.log('Beams berhasil register & subscribe');
+        } catch (e) {
+            console.error('Gagal registrasi Beams:', e);
+            this.notifPermission = Notification.permission;
+        }
+    },
+
+    async aktifkanNotifikasi() {
+        if (typeof Notification === 'undefined') {
+            alert('Browser kamu tidak mendukung notifikasi.');
+            return;
+        }
+        if (Notification.permission === 'denied') {
+            alert('Izin notifikasi diblokir. Aktifkan manual lewat setting browser (klik ikon gembok/info di address bar).');
+            return;
+        }
+        await this.registerBeams();
+    },
+
     playSound() {
         try {
             const audio = new Audio('/sound/notifikasi-realtime.wav');
@@ -219,10 +272,10 @@ new class extends Component {
     },
 
     openDetail(notif) {
-    this.activeNotif = notif;
-    this.showDetail = true;
-    if (!notif.is_read) this.markRead(notif.id_notifikasi);
-},
+        this.activeNotif = notif;
+        this.showDetail = true;
+        if (!notif.is_read) this.markRead(notif.id_notifikasi);
+    },
 
     closeDetail() {
         this.showDetail = false;
@@ -230,58 +283,58 @@ new class extends Component {
     },
 
     markRead(id) {
-    const item = this.notifikasis.find(n => n.id_notifikasi == id);
-    if (!item || item.is_read) return;
+        const item = this.notifikasis.find(n => n.id_notifikasi == id);
+        if (!item || item.is_read) return;
 
-    // Update lokal dulu (optimistic)
-    item.is_read = true;
-    if (this.activeNotif && this.activeNotif.id_notifikasi == id) {
-        this.activeNotif = { ...this.activeNotif, is_read: true };
-    }
-    this.unreadCount = Math.max(0, this.unreadCount - 1);
-    window.dispatchEvent(new CustomEvent('notif-count-update', { detail: { count: this.unreadCount } }));
-
-    // POST mark as read
-    fetch('/notifikasi/' + id + '/read', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(res => {
-        if (!res.ok) throw new Error('POST read gagal: ' + res.status);
-        // GET status penerima terbaru
-        return fetch('/notifikasi/' + id + '/status-penerima', {
-            headers: { 'Accept': 'application/json' }
-        });
-    })
-    .then(res => {
-        if (!res.ok) throw new Error('GET status-penerima gagal: ' + res.status);
-        return res.json();
-    })
-    .then(freshStatus => {
-        console.log('freshStatus:', freshStatus); // debug — hapus setelah fix
-
-        // Patch activeNotif kalau masih terbuka
+        // Update lokal dulu (optimistic)
+        item.is_read = true;
         if (this.activeNotif && this.activeNotif.id_notifikasi == id) {
-            this.activeNotif = { ...this.activeNotif, status_penerima: freshStatus };
+            this.activeNotif = { ...this.activeNotif, is_read: true };
         }
+        this.unreadCount = Math.max(0, this.unreadCount - 1);
+        window.dispatchEvent(new CustomEvent('notif-count-update', { detail: { count: this.unreadCount } }));
 
-        // Patch semua notif di list dengan id_pelanggaran sama
-        const idPelanggaran = item.id_pelanggaran;
-        if (idPelanggaran) {
-            this.notifikasis = this.notifikasis.map(n =>
-                n.id_pelanggaran === idPelanggaran
-                    ? { ...n, status_penerima: freshStatus }
-                    : n
-            );
-        }
-    })
-    .catch(err => {
-        console.error('markRead error:', err); // debug — jangan closeDetail di sini
-    });
-},
+        // POST mark as read
+        fetch('/notifikasi/' + id + '/read', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('POST read gagal: ' + res.status);
+                // GET status penerima terbaru
+                return fetch('/notifikasi/' + id + '/status-penerima', {
+                    headers: { 'Accept': 'application/json' }
+                });
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('GET status-penerima gagal: ' + res.status);
+                return res.json();
+            })
+            .then(freshStatus => {
+                console.log('freshStatus:', freshStatus); // debug — hapus setelah fix
+
+                // Patch activeNotif kalau masih terbuka
+                if (this.activeNotif && this.activeNotif.id_notifikasi == id) {
+                    this.activeNotif = { ...this.activeNotif, status_penerima: freshStatus };
+                }
+
+                // Patch semua notif di list dengan id_pelanggaran sama
+                const idPelanggaran = item.id_pelanggaran;
+                if (idPelanggaran) {
+                    this.notifikasis = this.notifikasis.map(n =>
+                        n.id_pelanggaran === idPelanggaran ?
+                        { ...n, status_penerima: freshStatus } :
+                        n
+                    );
+                }
+            })
+            .catch(err => {
+                console.error('markRead error:', err); // debug — jangan closeDetail di sini
+            });
+    },
 
     markAllRead() {
         this.notifikasis.forEach(n => n.is_read = true);
@@ -373,6 +426,11 @@ new class extends Component {
                 </span>
             </h6>
             <div class="flex items-center gap-3">
+                <button x-show="notifPermission !== 'granted' && notifPermission !== 'unsupported'" style="display:none"
+                    @click="aktifkanNotifikasi()"
+                    class="text-white text-xs font-semibold bg-white/15 hover:bg-white/25 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1">
+                    🔔 Aktifkan
+                </button>
                 <button x-show="unreadCount > 0" style="display:none" @click="markAllRead()"
                     class="text-[#F5B800] text-xs font-semibold underline hover:text-yellow-300 transition-colors">
                     Tandai semua dibaca

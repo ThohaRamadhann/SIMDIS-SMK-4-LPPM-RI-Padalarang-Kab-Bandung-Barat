@@ -111,7 +111,7 @@ class SendEarlyWarningNotification implements ShouldQueue
 
         // ── STEP 2: Baru broadcast semua setelah semua sudah terkirim ──
         foreach ($notifList as $notif) {
-            broadcast(new NotifikasiBaru($notif));
+            event(new NotifikasiBaru($notif));
         }
 
         if ($this->aksi === 'panggil_ortu') {
