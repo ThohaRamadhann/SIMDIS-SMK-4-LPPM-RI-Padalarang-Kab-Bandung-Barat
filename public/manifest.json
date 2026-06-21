@@ -1,0 +1,16 @@
+{
+    "name": "SIMDIS",
+    "short_name": "SIMDIS",
+    "icons": [
+      {
+        "src": "/images/logo_simdis.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      }
+    ],
+    "start_url": "/halaman-awal",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#0D2D6B",
+    "gcm_sender_id": "103953800507"
+}

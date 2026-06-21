@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="beams-instance-id" content="{{ config('services.pusher_beams.instance_id') }}">
+    @auth
+    <meta name="user-id" content="{{ auth()->user()->id_pengguna }}">
+    @endauth
 
     <title>{{ config('app.name', 'SIMDIS') }}</title>
 
@@ -13,6 +16,7 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script src="https://js.pusher.com/beams/2.1.0/push-notifications-cdn.js"></script>
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
 
     {{-- TOM SELECT --}}
     <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">

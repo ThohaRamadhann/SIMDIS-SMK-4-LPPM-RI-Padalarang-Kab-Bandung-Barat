@@ -115,11 +115,11 @@ class SendEarlyWarningNotification implements ShouldQueue
         }
 
         if ($this->aksi === 'panggil_ortu') {
-            $this->kirimWhatsApp($siswa, $total, $tingkat);
+            $this->kirimWhatsApp($pelanggaran, $siswa, $total, $tingkat);
         }
     }
 
-    private function kirimWhatsApp($siswa, int $total, string $tingkat): void
+    private function kirimWhatsApp($pelanggaran, $siswa, int $total, string $tingkat): void
     {
         $siswa->loadMissing(['waliSiswa.pengguna', 'kelas']);
 
@@ -142,20 +142,13 @@ class SendEarlyWarningNotification implements ShouldQueue
             return;
         }
 
-        $pelanggaranTerbaru = Pelanggaran::with('jenisPelanggaran')
-            ->where('id_siswa', $siswa->id_siswa)
-            ->whereHas('jenisPelanggaran', fn($q) =>
-                $q->where('tingkat_pelanggaran', $tingkat)
-            )
-            ->latest('waktu_kejadian')
-            ->first();
-
+        // Gunakan data pelanggaran yang di-trigger langsung
         $namaOrtu        = $orangTuaPengguna->name;
         $namaSiswa       = $siswa->nama;
         $kelasSiswa      = optional($siswa->kelas)->nama_kelas ?? '-';
-        $namaPelanggaran = optional($pelanggaranTerbaru?->jenisPelanggaran)->nama_pelanggaran ?? '-';
-        $waktuKejadian   = $pelanggaranTerbaru?->waktu_kejadian
-                            ? $pelanggaranTerbaru->waktu_kejadian->format('d M Y, H:i') . ' WIB'
+        $namaPelanggaran = optional($pelanggaran->jenisPelanggaran)->nama_pelanggaran ?? '-';
+        $waktuKejadian   = $pelanggaran->waktu_kejadian
+                            ? $pelanggaran->waktu_kejadian->format('d M Y, H:i') . ' WIB'
                             : '-';
 
         $pesan = "🚨 *PEMBERITAHUAN DARI SEKOLAH*\n\n"

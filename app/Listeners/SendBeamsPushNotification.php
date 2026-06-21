@@ -34,10 +34,38 @@ class SendBeamsPushNotification
                         "icon"  => url('/images/logo_simdis.png'),
                         "deep_link" => url('/pelanggaran'),
                     ],
+                    "data" => [
+                        "url" => url('/pelanggaran'),
+                    ],
+                ],
+                "fcm" => [
+                    "notification" => [
+                        "title" => $title,
+                        "body"  => $notif->isi_pesan,
+                    ],
+                    "android" => [
+                        "priority" => "high",
+                        "notification" => [
+                            "channel_id" => "simdis_notif",
+                            "priority" => "max",
+                            "default_vibrate_timings" => true,
+                            "default_sound" => true,
+                        ],
+                    ],
+                ],
+                "apns" => [
+                    "aps" => [
+                        "alert" => [
+                            "title" => $title,
+                            "body"  => $notif->isi_pesan,
+                        ],
+                        "sound" => "default",
+                        "content-available" => 1,
+                    ],
                 ],
             ]);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             // Jangan sampai gagal kirim push bikin proses utama error
             Log::error('Gagal kirim Beams push notification: ' . $e->getMessage());
     }
