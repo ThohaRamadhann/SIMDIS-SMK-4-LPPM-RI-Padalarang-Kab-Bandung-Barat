@@ -14,6 +14,8 @@ new #[Layout('layouts.app')] class extends Component {
     public string $filterTanggalDari = '';
     public string $filterTanggalSampai = '';
     public string $filterUser = '';
+    public string $searchPengguna = '';
+    public string $namaPenggunaTerpilih = '';
 
     public int $page = 1;
     public int $perPage = 15;
@@ -31,6 +33,25 @@ new #[Layout('layouts.app')] class extends Component {
         $this->filterTanggalDari = '';
         $this->filterTanggalSampai = '';
         $this->filterUser = '';
+        $this->searchPengguna = '';
+        $this->namaPenggunaTerpilih = '';
+        $this->page = 1;
+    }
+
+    public function pilihPengguna(int $id): void
+    {
+        $pengguna = Pengguna::find($id);
+        $this->filterUser = (string) $id;
+        $this->namaPenggunaTerpilih = $pengguna?->name ?? '';
+        $this->searchPengguna = '';
+        $this->page = 1;
+    }
+
+    public function hapusFilterPengguna(): void
+    {
+        $this->filterUser = '';
+        $this->namaPenggunaTerpilih = '';
+        $this->searchPengguna = '';
         $this->page = 1;
     }
 
@@ -78,7 +99,15 @@ new #[Layout('layouts.app')] class extends Component {
             $query->whereDate('waktu', '<=', $this->filterTanggalSampai);
         }
 
-        $daftarPengguna = $this->roleUser === 'admin' ? Pengguna::with('role')->orderBy('name')->get() : collect();
+        // Hanya query pengguna saat admin mengetik minimal 2 huruf, dibatasi 20 hasil
+        $daftarPengguna = collect();
+        if ($this->roleUser === 'admin' && strlen($this->searchPengguna) >= 2) {
+            $daftarPengguna = Pengguna::with('role')
+                ->where('name', 'like', '%' . $this->searchPengguna . '%')
+                ->orderBy('name')
+                ->limit(20)
+                ->get();
+        }
 
         $logs = $query->paginate($this->perPage);
 
@@ -157,19 +186,47 @@ new #[Layout('layouts.app')] class extends Component {
                     class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0D2D6B]/20">
             </div>
 
-            {{-- Filter User (admin only) --}}
+            {{-- Filter User (admin only) — search-as-you-type, tidak load semua data --}}
             @if ($roleUser === 'admin')
-                <div class="sm:col-span-2">
+                <div class="sm:col-span-2 relative" x-data="{ open: false }" @click.outside="open = false">
                     <label class="text-xs font-semibold text-gray-500 mb-1 block">Filter Pengguna</label>
-                    <select wire:model.live="filterUser"
-                        class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0D2D6B]/20">
-                        <option value="">Semua Pengguna</option>
-                        @foreach ($daftarPengguna as $p)
-                            <option value="{{ $p->id_pengguna }}">
-                                {{ $p->name }} ({{ str_replace('_', ' ', optional($p->role)->nama_role) }})
-                            </option>
-                        @endforeach
-                    </select>
+
+                    @if ($namaPenggunaTerpilih)
+                        <div
+                            class="flex items-center justify-between w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-[#f0f4fb]">
+                            <span class="font-medium text-[#0D2D6B] truncate">{{ $namaPenggunaTerpilih }}</span>
+                            <button type="button" wire:click="hapusFilterPengguna"
+                                class="text-gray-400 hover:text-red-500 ml-2 flex-shrink-0">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    @else
+                        <input type="text" wire:model.live.debounce.300ms="searchPengguna"
+                            x-on:focus="open = true"
+                            placeholder="Ketik nama pengguna (min. 2 huruf)..."
+                            class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0D2D6B]/20">
+
+                        <div x-show="open" x-cloak
+                            class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-56 overflow-y-auto">
+                            @if (strlen($searchPengguna) < 2)
+                                <div class="px-3 py-2 text-xs text-gray-400">Ketik minimal 2 huruf untuk mencari
+                                    pengguna</div>
+                            @elseif ($daftarPengguna->isEmpty())
+                                <div class="px-3 py-2 text-xs text-gray-400">Pengguna tidak ditemukan</div>
+                            @else
+                                @foreach ($daftarPengguna as $p)
+                                    <button type="button" wire:click="pilihPengguna({{ $p->id_pengguna }})"
+                                        x-on:click="open = false"
+                                        class="w-full text-left px-3 py-2 text-sm hover:bg-[#f0f4fb] transition-colors">
+                                        <div class="font-semibold text-[#0D2D6B]">{{ $p->name }}</div>
+                                        <div class="text-xs text-gray-400">
+                                            {{ str_replace('_', ' ', optional($p->role)->nama_role) }}
+                                        </div>
+                                    </button>
+                                @endforeach
+                            @endif
+                        </div>
+                    @endif
                 </div>
             @endif
 

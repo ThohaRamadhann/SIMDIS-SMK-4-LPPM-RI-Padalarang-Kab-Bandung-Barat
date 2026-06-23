@@ -41,16 +41,46 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
 
-                <div>
+                {{-- Nama Wali Siswa — search-as-you-type, tidak load semua data --}}
+                <div class="relative" x-data="{ open: false }" @click.outside="open = false">
                     <label class="text-xs font-semibold text-[#0D2D6B]">Nama Wali Siswa *</label>
-                    <select wire:model.live="id_pengguna"
-                        class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
-                               focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
-                        <option value="">-- Pilih Nama Wali Siswa --</option>
-                        @foreach ($pengguna as $p)
-                            <option value="{{ $p->id_pengguna }}">{{ $p->name }} ({{ $p->username }})</option>
-                        @endforeach
-                    </select>
+
+                    @if ($namaPenggunaTerpilih)
+                        <div class="mt-0.5 flex items-center justify-between w-full h-10 px-3 text-sm rounded-lg
+                                    border border-gray-200 bg-gray-50">
+                            <span class="font-medium text-[#0D2D6B] truncate">{{ $namaPenggunaTerpilih }}</span>
+                            <button type="button" wire:click="hapusPenggunaTerpilih"
+                                class="text-gray-400 hover:text-red-500 ml-2 flex-shrink-0">
+                                <i class="fas fa-xmark text-xs"></i>
+                            </button>
+                        </div>
+                    @else
+                        <input type="text" wire:model.live.debounce.300ms="searchPengguna"
+                            x-on:focus="open = true"
+                            placeholder="Ketik nama/username (min. 2 huruf)..."
+                            class="mt-0.5 w-full h-10 px-3 text-sm rounded-lg border border-gray-200 bg-gray-50
+                                   focus:bg-white focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 outline-none transition">
+
+                        <div x-show="open" x-cloak
+                            class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-56 overflow-y-auto">
+                            @if (strlen($searchPengguna) < 2)
+                                <div class="px-3 py-2 text-xs text-gray-400">Ketik minimal 2 huruf untuk mencari
+                                    wali siswa</div>
+                            @elseif ($pengguna->isEmpty())
+                                <div class="px-3 py-2 text-xs text-gray-400">Wali siswa tidak ditemukan</div>
+                            @else
+                                @foreach ($pengguna as $p)
+                                    <button type="button" wire:click="pilihPengguna({{ $p->id_pengguna }})"
+                                        x-on:click="open = false"
+                                        class="w-full text-left px-3 py-2 text-sm hover:bg-[#f0f4fb] transition-colors">
+                                        <div class="font-semibold text-[#0D2D6B]">{{ $p->name }}</div>
+                                        <div class="text-xs text-gray-400">{{ $p->username }}</div>
+                                    </button>
+                                @endforeach
+                            @endif
+                        </div>
+                    @endif
+
                     @error('id_pengguna') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                 </div>
 

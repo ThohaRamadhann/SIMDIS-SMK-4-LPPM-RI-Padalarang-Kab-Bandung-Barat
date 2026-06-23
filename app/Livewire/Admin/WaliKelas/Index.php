@@ -20,6 +20,10 @@ class Index extends Component
     public $jabatan     = '';
     public $isEdit      = false;
 
+    // ── Pencarian pengguna (search-as-you-type) ──
+    public string $searchPengguna = '';
+    public string $namaPenggunaTerpilih = '';
+
     // ── Search, sort, pagination, trash ──
     public $search    = '';
     public $sortBy    = 'terbaru';
@@ -37,17 +41,40 @@ class Index extends Component
     public function updatingPerPage()   { $this->resetPage(); }
     public function updatingShowTrash() { $this->resetPage(); }
 
-    protected $listeners = ['updatedIdPengguna'];
-
-    public function updatedIdPengguna($value)
+    public function muatDataWaliKelas(): void
     {
-        if ($value) {
-            $wk            = WaliKelas::where('id_pengguna', $value)->first();
-            $this->nuptk   = $wk?->nuptk  ?? '';
+        if ($this->id_pengguna) {
+            $wk            = WaliKelas::where('id_pengguna', $this->id_pengguna)->first();
+            $this->nuptk   = $wk?->nuptk   ?? '';
             $this->jabatan = $wk?->jabatan ?? '';
         } else {
             $this->nuptk = $this->jabatan = '';
         }
+    }
+
+    public function pilihPengguna(int $id): void
+    {
+        $pengguna = Pengguna::find($id);
+
+        if (!$pengguna) {
+            return;
+        }
+
+        $this->id_pengguna          = $id;
+        $this->namaPenggunaTerpilih = $pengguna->name . ' (' . $pengguna->username . ')';
+        $this->searchPengguna       = '';
+
+        $this->muatDataWaliKelas();
+    }
+
+    public function hapusPenggunaTerpilih(): void
+    {
+        $this->id_pengguna          = '';
+        $this->namaPenggunaTerpilih = '';
+        $this->searchPengguna       = '';
+        $this->nuptk                = '';
+        $this->jabatan              = '';
+        $this->resetErrorBag();
     }
 
     protected function rules(): array
@@ -83,11 +110,13 @@ class Index extends Component
 
     public function resetForm()
     {
-        $this->id_walikelas = null;
-        $this->id_pengguna  = '';
-        $this->nuptk        = '';
-        $this->jabatan      = '';
-        $this->isEdit       = false;
+        $this->id_walikelas         = null;
+        $this->id_pengguna          = '';
+        $this->namaPenggunaTerpilih = '';
+        $this->searchPengguna       = '';
+        $this->nuptk                = '';
+        $this->jabatan              = '';
+        $this->isEdit               = false;
         $this->resetErrorBag();
     }
 
@@ -116,13 +145,17 @@ class Index extends Component
 
     public function edit($id)
     {
-        $data = WaliKelas::findOrFail($id);
+        $data = WaliKelas::with('pengguna')->findOrFail($id);
 
-        $this->id_walikelas = $data->id_walikelas;
-        $this->id_pengguna  = $data->id_pengguna;
-        $this->nuptk        = $data->nuptk ?? '';
-        $this->jabatan      = $data->jabatan ?? '';
-        $this->isEdit       = true;
+        $this->id_walikelas         = $data->id_walikelas;
+        $this->id_pengguna          = $data->id_pengguna;
+        $this->nuptk                = $data->nuptk ?? '';
+        $this->jabatan              = $data->jabatan ?? '';
+        $this->isEdit               = true;
+        $this->searchPengguna       = '';
+        $this->namaPenggunaTerpilih = $data->pengguna
+            ? $data->pengguna->name . ' (' . $data->pengguna->username . ')'
+            : '';
         $this->resetErrorBag();
     }
 
@@ -192,16 +225,19 @@ class Index extends Component
             default => $query->orderBy('wali_kelas.id_walikelas', 'desc'),
         };
 
-        $waliKelasPengguna = Pengguna::whereHas('role', function ($q) {
-            $q->where('nama_role', 'wali_kelas');
-        })->orderBy('name')->get();
-
-        if ($this->isEdit && $this->id_pengguna) {
-            $currentPengguna   = Pengguna::find($this->id_pengguna);
-            $waliKelasPengguna = $waliKelasPengguna
-                ->push($currentPengguna)
-                ->unique('id_pengguna')
-                ->sortBy('name');
+        // Hanya query pengguna saat admin mengetik minimal 2 huruf, dibatasi 20 hasil
+        $waliKelasPengguna = collect();
+        if (strlen($this->searchPengguna) >= 2) {
+            $waliKelasPengguna = Pengguna::whereHas('role', function ($q) {
+                $q->where('nama_role', 'wali_kelas');
+            })
+                ->where(function ($q) {
+                    $q->where('name', 'like', '%' . $this->searchPengguna . '%')
+                      ->orWhere('username', 'like', '%' . $this->searchPengguna . '%');
+                })
+                ->orderBy('name')
+                ->limit(20)
+                ->get();
         }
 
         return view('livewire.admin.walikelas.index', [

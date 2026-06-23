@@ -18,6 +18,10 @@ class Index extends Component
     public $hubungan = '';
     public $isEdit   = false;
 
+    // ── Pencarian pengguna (search-as-you-type) ──
+    public string $searchPengguna = '';
+    public string $namaPenggunaTerpilih = '';
+
     // ── Search, sort, pagination ──
     public $search  = '';
     public $sortBy  = 'terbaru';
@@ -37,13 +41,6 @@ class Index extends Component
     public function updatingPerPage()   { $this->resetPage(); }
     public function updatingShowTrash() { $this->resetPage(); }
 
-    public function updated($property)
-    {
-        if ($property === 'id_pengguna') {
-            $this->loadWaliSiswaData();
-        }
-    }
-
     public function loadWaliSiswaData()
     {
         if ($this->id_pengguna) {
@@ -61,12 +58,40 @@ class Index extends Component
         }
     }
 
+    public function pilihPengguna(int $id): void
+    {
+        $pengguna = Pengguna::find($id);
+
+        if (!$pengguna) {
+            return;
+        }
+
+        $this->id_pengguna         = $id;
+        $this->namaPenggunaTerpilih = $pengguna->name . ' (' . $pengguna->username . ')';
+        $this->searchPengguna       = '';
+
+        $this->loadWaliSiswaData();
+    }
+
+    public function hapusPenggunaTerpilih(): void
+    {
+        $this->id_pengguna          = '';
+        $this->namaPenggunaTerpilih = '';
+        $this->searchPengguna       = '';
+        $this->id_walisiswa         = null;
+        $this->hubungan             = '';
+        $this->isEdit               = false;
+        $this->resetErrorBag();
+    }
+
     public function resetForm()
     {
-        $this->id_walisiswa = null;
-        $this->id_pengguna  = '';
-        $this->hubungan     = '';
-        $this->isEdit       = false;
+        $this->id_walisiswa         = null;
+        $this->id_pengguna          = '';
+        $this->namaPenggunaTerpilih = '';
+        $this->searchPengguna       = '';
+        $this->hubungan             = '';
+        $this->isEdit               = false;
         $this->resetErrorBag();
     }
 
@@ -96,12 +121,16 @@ class Index extends Component
 
     public function edit($id)
     {
-        $data = WaliSiswa::findOrFail($id);
+        $data = WaliSiswa::with('pengguna')->findOrFail($id);
 
-        $this->id_walisiswa = $data->id_walisiswa;
-        $this->id_pengguna  = $data->id_pengguna;
-        $this->hubungan     = $data->hubungan;
-        $this->isEdit       = true;
+        $this->id_walisiswa         = $data->id_walisiswa;
+        $this->id_pengguna          = $data->id_pengguna;
+        $this->hubungan             = $data->hubungan;
+        $this->isEdit                = true;
+        $this->searchPengguna        = '';
+        $this->namaPenggunaTerpilih  = $data->pengguna
+            ? $data->pengguna->name . ' (' . $data->pengguna->username . ')'
+            : '';
     }
 
     public function hapus($id)
@@ -156,13 +185,19 @@ class Index extends Component
             default => $query->orderBy('wali_siswa.id_walisiswa', 'desc'),
         };
 
-        $penggunaList = Pengguna::whereHas('role', function ($q) {
-            $q->where('nama_role', 'wali_siswa');
-        })->orderBy('name')->get();
-
-        if ($this->isEdit && $this->id_pengguna) {
-            $current      = Pengguna::find($this->id_pengguna);
-            $penggunaList = $penggunaList->push($current)->unique('id_pengguna')->sortBy('name');
+        // Hanya query pengguna saat admin mengetik minimal 2 huruf, dibatasi 20 hasil
+        $penggunaList = collect();
+        if (strlen($this->searchPengguna) >= 2) {
+            $penggunaList = Pengguna::whereHas('role', function ($q) {
+                $q->where('nama_role', 'wali_siswa');
+            })
+                ->where(function ($q) {
+                    $q->where('name', 'like', '%' . $this->searchPengguna . '%')
+                      ->orWhere('username', 'like', '%' . $this->searchPengguna . '%');
+                })
+                ->orderBy('name')
+                ->limit(20)
+                ->get();
         }
 
         return view('livewire.admin.walisiswa.index', [
