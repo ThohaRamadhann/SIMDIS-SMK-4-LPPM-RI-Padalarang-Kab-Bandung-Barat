@@ -7,6 +7,7 @@ use Livewire\WithPagination;
 use App\Models\Pelanggaran;
 use App\Models\WaliKelas;
 use App\Models\JenisPelanggaran;
+use App\Models\SuratPanggilan;
 use App\Models\LogAktivitas;
 use App\Services\EarlyWarningService;
 use Illuminate\Support\Facades\Auth;
@@ -34,6 +35,7 @@ class Index extends Component
     public $filterStatus      = '';
     public $filterWaliKelas   = '';
     public $filterTahunAjaran = '';
+    public $filterSp          = false; // NEW: filter siswa yang sudah kena SP (guru_bk & wali_kelas saja)
 
     // ── SORT & PAGINATION ────────────────────────────────────────────────
     public $sortBy  = 'terbaru';
@@ -48,15 +50,46 @@ class Index extends Component
         'filterTahunAjaran' => ['except' => ''],
     ];
 
-    public function updatingSearch()            { $this->resetPage(); }
-    public function updatingFilterJenis()       { $this->resetPage(); }
-    public function updatingFilterTingkat()     { $this->resetPage(); }
-    public function updatingFilterStatus()      { $this->resetPage(); }
-    public function updatingFilterWaliKelas()   { $this->resetPage(); }
-    public function updatingFilterTahunAjaran() { $this->resetPage(); }
-    public function updatingSortBy()            { $this->resetPage(); }
-    public function updatingPerPage()           { $this->resetPage(); }
-    public function updatingShowTrash()         { $this->resetPage(); }
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+    public function updatingFilterJenis()
+    {
+        $this->resetPage();
+    }
+    public function updatingFilterTingkat()
+    {
+        $this->resetPage();
+    }
+    public function updatingFilterStatus()
+    {
+        $this->resetPage();
+    }
+    public function updatingFilterWaliKelas()
+    {
+        $this->resetPage();
+    }
+    public function updatingFilterTahunAjaran()
+    {
+        $this->resetPage();
+    }
+    public function updatingFilterSp()
+    {
+        $this->resetPage();
+    } // NEW
+    public function updatingSortBy()
+    {
+        $this->resetPage();
+    }
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
+    public function updatingShowTrash()
+    {
+        $this->resetPage();
+    }
 
     public function hapus($id): void
     {
@@ -222,12 +255,32 @@ class Index extends Component
         };
     }
 
-    private function labelSurat(string $tingkat, int $total): string
+    /**
+     * Menentukan SP ini sebenarnya yang ke berapa untuk siswa & tingkat ini,
+     * SESUAI ATURAN tentukanAksi() — bukan sekadar jumlah baris akumulasi mentah.
+     *
+     * - Berat  : setiap pelanggaran berat = SP baru -> nomor SP = total kejadian berat itu sendiri
+     * - Sedang : SP terbit tiap kelipatan 2 (total=2 -> SP1, total=4 -> SP2, ...)
+     * - Ringan : SP terbit tiap kelipatan 3 setelah total>5 (total=6 -> SP1, total=9 -> SP2, ...)
+     */
+    private function nomorUrutSurat(string $tingkat, int $total): int
     {
         return match ($tingkat) {
-            'Berat'  => 'Pelanggaran berat — buat surat panggilan ortu',
-            'Sedang' => "Akumulasi {$total}x pelanggaran sedang — buat surat panggilan ortu",
-            'Ringan' => "Akumulasi {$total}x pelanggaran ringan — buat surat panggilan ortu",
+            'Berat'  => $total,
+            'Sedang' => intdiv($total, 2),
+            'Ringan' => $total > 5 ? intdiv($total - 3, 3) : 0,
+            default  => 0,
+        };
+    }
+
+    private function labelSurat(string $tingkat, int $total): string
+    {
+        $nomorSp = $this->nomorUrutSurat($tingkat, $total);
+
+        return match ($tingkat) {
+            'Berat'  => "Pelanggaran berat — buat surat panggilan ortu (SP ke-{$nomorSp})",
+            'Sedang' => "Akumulasi {$total}x pelanggaran sedang — buat surat panggilan ortu (SP ke-{$nomorSp})",
+            'Ringan' => "Akumulasi {$total}x pelanggaran ringan — buat surat panggilan ortu (SP ke-{$nomorSp})",
             default  => 'Buat surat panggilan ortu',
         };
     }
@@ -294,6 +347,17 @@ class Index extends Component
             $query->where('id_walikelas', $this->filterWaliKelas);
         }
 
+        // NEW: filter siswa yang sudah pernah kena Surat Panggilan
+        // hanya untuk guru_bk & wali_kelas, TIDAK untuk wali_siswa
+        if ($this->filterSp && in_array($role, ['guru_bk', 'wali_kelas'])) {
+            $idSiswaSp = Pelanggaran::whereIn(
+                'id_pelanggaran',
+                SuratPanggilan::pluck('id_pelanggaran')->unique()
+            )->pluck('id_siswa')->unique();
+
+            $query->whereIn('pelanggaran.id_siswa', $idSiswaSp);
+        }
+
         match ($this->sortBy) {
             'terlama' => $query->orderBy('created_at', 'asc'),
             'az'      => $query->join('siswa', 'pelanggaran.id_siswa', '=', 'siswa.id_siswa')
@@ -324,9 +388,10 @@ class Index extends Component
             $tingkat = $p->jenisPelanggaran->tingkat_pelanggaran ?? '';
             $total   = $akumulasi[$p->id_siswa][$tingkat] ?? 0;
             $flagSurat[$p->id_pelanggaran] = [
-                'perlu' => $this->perluPanggilOrtu($tingkat, $total),
-                'label' => $this->labelSurat($tingkat, $total),
-                'total' => $total,
+                'perlu'    => $this->perluPanggilOrtu($tingkat, $total),
+                'label'    => $this->labelSurat($tingkat, $total),
+                'total'    => $total,
+                'nomor_sp' => $this->nomorUrutSurat($tingkat, $total),
             ];
         }
 
@@ -339,7 +404,7 @@ class Index extends Component
             'akumulasi'       => $akumulasi,
             'flagSurat'       => $flagSurat,
             'tahunAjaranList' => \App\Models\Kelas::select('tahun_ajaran')
-                                ->distinct()->orderByDesc('tahun_ajaran')->pluck('tahun_ajaran'),
+                ->distinct()->orderByDesc('tahun_ajaran')->pluck('tahun_ajaran'),
         ]);
     }
 }

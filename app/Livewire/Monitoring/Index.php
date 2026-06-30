@@ -5,8 +5,8 @@ namespace App\Livewire\Monitoring;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Siswa;
-use App\Models\Pelanggaran;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class Index extends Component
@@ -24,70 +24,130 @@ class Index extends Component
     public $modalSiswa   = null;
     public $modalRiwayat = [];
 
-    public function updatingSearch()      { $this->resetPage(); }
-    public function updatingFilterKelas() { $this->resetPage(); }
-    public function updatingFilterStatus(){ $this->resetPage(); }
-    public function updatingPerPage()     { $this->resetPage(); }
+    public function updatingSearch()       { $this->resetPage(); }
+    public function updatingFilterKelas()  { $this->resetPage(); }
+    public function updatingFilterStatus() { $this->resetPage(); }
+    public function updatingPerPage()      { $this->resetPage(); }
 
+    /**
+     * Bangun query dasar siswa dengan kolom agregat (total_pelanggaran, jumlah_sp, sp_terakhir_raw)
+     * dihitung via subquery SQL — TIDAK ada query tambahan per-siswa (no N+1).
+     */
+    private function baseQuery()
+    {
+        $user = Auth::user();
+        $role = optional($user->role)->nama_role;
+
+        $query = Siswa::query()
+            ->select('siswa.*')
+            // total pelanggaran (tidak terhapus)
+            ->selectSub(function ($q) {
+                $q->from('pelanggaran')
+                    ->whereColumn('pelanggaran.id_siswa', 'siswa.id_siswa')
+                    ->whereNull('pelanggaran.deleted_at')
+                    ->selectRaw('COUNT(*)');
+            }, 'total_pelanggaran')
+            // jumlah surat panggilan (SP) milik siswa ini
+            ->selectSub(function ($q) {
+                $q->from('surat_panggilan')
+                    ->join('pelanggaran', 'pelanggaran.id_pelanggaran', '=', 'surat_panggilan.id_pelanggaran')
+                    ->whereColumn('pelanggaran.id_siswa', 'siswa.id_siswa')
+                    ->selectRaw('COUNT(*)');
+            }, 'jumlah_sp')
+            // tanggal SP paling baru
+            ->selectSub(function ($q) {
+                $q->from('surat_panggilan')
+                    ->join('pelanggaran', 'pelanggaran.id_pelanggaran', '=', 'surat_panggilan.id_pelanggaran')
+                    ->whereColumn('pelanggaran.id_siswa', 'siswa.id_siswa')
+                    ->selectRaw('MAX(surat_panggilan.created_at)');
+            }, 'sp_terakhir_raw')
+            ->with('kelas')
+            ->whereNull('siswa.deleted_at');
+
+        if ($role === 'wali_kelas') {
+            $idKelasAmpu = optional($user->waliKelas)->kelas?->id_kelas;
+            $query->where('siswa.id_kelas', $idKelasAmpu);
+        } elseif ($role === 'wali_siswa') {
+            $idWaliSiswa = optional($user->waliSiswa)->id_walisiswa;
+            $query->where('siswa.id_walisiswa', $idWaliSiswa);
+        }
+
+        if ($this->search && $role !== 'wali_siswa') {
+            $query->where(function ($q) {
+                $q->where('siswa.nama', 'like', '%' . $this->search . '%')
+                    ->orWhere('siswa.nis', 'like', '%' . $this->search . '%');
+            });
+        }
+
+        if ($this->filterKelas && $role === 'guru_bk') {
+            $query->where('siswa.id_kelas', $this->filterKelas);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Terjemahkan total_pelanggaran & jumlah_sp (hasil query) menjadi info status,
+     * TANPA query tambahan — murni kalkulasi PHP dari angka yang sudah ada.
+     */
+    public static function statusFromCounts(int $totalPelanggaran, int $jumlahSp, ?string $spTerakhirRaw = null): array
+    {
+        $spTerakhir = $spTerakhirRaw ? Carbon::parse($spTerakhirRaw) : null;
+
+        if ($totalPelanggaran === 0) {
+            return [
+                'status' => 'aman', 'label' => 'Baik', 'color' => 'green',
+                'total_pelanggaran' => 0, 'jumlah_sp' => 0, 'sp_terakhir' => null,
+            ];
+        }
+
+        if ($jumlahSp === 0) {
+            return [
+                'status' => 'baik', 'label' => 'Baik', 'color' => 'green',
+                'total_pelanggaran' => $totalPelanggaran, 'jumlah_sp' => 0, 'sp_terakhir' => null,
+            ];
+        } elseif ($jumlahSp === 1) {
+            return [
+                'status' => 'perhatian', 'label' => 'Perlu Perhatian (SP 1)', 'color' => 'yellow',
+                'total_pelanggaran' => $totalPelanggaran, 'jumlah_sp' => 1, 'sp_terakhir' => $spTerakhir,
+            ];
+        } elseif ($jumlahSp === 2) {
+            return [
+                'status' => 'berisiko', 'label' => 'Berisiko (SP 2)', 'color' => 'red',
+                'total_pelanggaran' => $totalPelanggaran, 'jumlah_sp' => 2, 'sp_terakhir' => $spTerakhir,
+            ];
+        }
+
+        return [
+            'status' => 'kritis', 'label' => 'Kritis — Ambang DO (SP ' . $jumlahSp . ')', 'color' => 'red',
+            'total_pelanggaran' => $totalPelanggaran, 'jumlah_sp' => $jumlahSp, 'sp_terakhir' => $spTerakhir,
+        ];
+    }
+
+    /**
+     * Tetap disediakan untuk kompatibilitas dengan kode lain (mis. modal detail)
+     * yang masih memanggil hitungStatus($siswaModel). Ini boleh tetap query langsung
+     * karena hanya dipanggil SEKALI per buka modal, bukan per-baris listing.
+     */
     public static function hitungStatus(Siswa $siswa): array
     {
-        $semua = $siswa->pelanggaran()
-            ->with('jenisPelanggaran')
-            ->whereNull('deleted_at')
-            ->get();
+        $totalPelanggaran = $siswa->pelanggaran()->whereNull('deleted_at')->count();
 
-        $pernahDibina = $semua->where('status_pembinaan', 'Selesai')
-            ->whereNotNull('tanggal_pembinaan')
-            ->isNotEmpty();
+        $jumlahSp = \App\Models\SuratPanggilan::whereHas(
+            'pelanggaran',
+            fn($q) => $q->where('id_siswa', $siswa->id_siswa)
+        )->count();
 
-        if (! $pernahDibina) {
-            return ['status' => null, 'label' => '-', 'color' => 'gray'];
-        }
+        $spTerakhir = \App\Models\SuratPanggilan::whereHas(
+            'pelanggaran',
+            fn($q) => $q->where('id_siswa', $siswa->id_siswa)
+        )->latest('created_at')->first();
 
-        $belumSelesai = $semua->whereIn('status_pembinaan', ['Belum Ditindak', 'Dalam Proses']);
-        $jumlah       = $belumSelesai->count();
-        $adaBerat     = $belumSelesai->contains(
-            fn($p) => strtolower($p->jenisPelanggaran?->tingkat_pelanggaran ?? '') === 'berat'
+        return self::statusFromCounts(
+            $totalPelanggaran,
+            $jumlahSp,
+            $spTerakhir?->created_at
         );
-
-        $pembinaan = $semua->where('status_pembinaan', 'Selesai')
-            ->whereNotNull('tanggal_pembinaan')
-            ->sortByDesc('tanggal_pembinaan')
-            ->first();
-
-        $tglPembinaan = null;
-
-        if ($pembinaan) {
-            $tanggal      = $pembinaan->tanggal_pembinaan->format('Y-m-d');
-            $jam          = $pembinaan->getRawOriginal('jam_pembinaan') ?? '00:00:00';
-            $tglPembinaan = Carbon::parse($tanggal . ' ' . $jam);
-        }
-
-        if ($jumlah === 0) {
-            return [
-                'status'        => 'baik',
-                'label'         => 'Baik',
-                'color'         => 'green',
-                'jumlah_baru'   => 0,
-                'tgl_pembinaan' => $tglPembinaan,
-            ];
-        } elseif ($adaBerat || $jumlah >= 3) {
-            return [
-                'status'        => 'berisiko',
-                'label'         => 'Berisiko',
-                'color'         => 'red',
-                'jumlah_baru'   => $jumlah,
-                'tgl_pembinaan' => $tglPembinaan,
-            ];
-        } else {
-            return [
-                'status'        => 'perhatian',
-                'label'         => 'Perlu Perhatian',
-                'color'         => 'yellow',
-                'jumlah_baru'   => $jumlah,
-                'tgl_pembinaan' => $tglPembinaan,
-            ];
-        }
     }
 
     public function lihatDetail($id): void
@@ -97,7 +157,7 @@ class Index extends Component
 
         $siswa = Siswa::with([
             'kelas',
-            'pelanggaran' => fn($q) => $q->with('jenisPelanggaran')
+            'pelanggaran' => fn($q) => $q->with(['jenisPelanggaran'])
                 ->whereNull('deleted_at')
                 ->latest('waktu_kejadian'),
         ])->findOrFail($id);
@@ -127,70 +187,68 @@ class Index extends Component
         $user = Auth::user();
         $role = optional($user->role)->nama_role;
 
-        $query = Siswa::with([
-            'kelas',
-            'pelanggaran.jenisPelanggaran',
-        ])
-            ->whereHas(
-                'pelanggaran',
-                fn($q) => $q->where('status_pembinaan', 'Selesai')
-                    ->whereNotNull('tanggal_pembinaan')
-            )
-            ->whereNull('deleted_at');
-
-        if ($role === 'wali_kelas') {
-            $idKelasAmpu = optional($user->waliKelas)->kelas?->id_kelas;
-            $query->where('id_kelas', $idKelasAmpu);
-        } elseif ($role === 'wali_siswa') {
-            $idWaliSiswa = optional($user->waliSiswa)->id_walisiswa;
-            $query->where('id_walisiswa', $idWaliSiswa);
-        }
-
-        if ($this->search && $role !== 'wali_siswa') {
-            $query->where(
-                fn($q) => $q->where('nama', 'like', '%' . $this->search . '%')
-                    ->orWhere('nis', 'like', '%' . $this->search . '%')
-            );
-        }
-
-        if ($this->filterKelas && $role === 'guru_bk') {
-            $query->where('id_kelas', $this->filterKelas);
-        }
-
-        $siswaList = $query->get();
-
-        $siswaData = $siswaList->map(function ($siswa) {
-            $statusInfo = self::hitungStatus($siswa);
-            return array_merge(['siswa' => $siswa], $statusInfo);
-        });
-
-        if ($this->filterStatus) {
-            $siswaData = $siswaData->filter(
-                fn($d) => ($d['status'] ?? '') === $this->filterStatus
-            );
-        }
+        // ── Ringkasan (cards atas) ──
+        // Pakai query agregat yang sama, tapi hanya tarik kolom angka yang dibutuhkan,
+        // tanpa relasi/with(), supaya ringan walau menyentuh banyak baris.
+        $ringkasanRows = $this->baseQuery()
+            ->reorder()
+            ->get(['siswa.id_siswa', 'total_pelanggaran', 'jumlah_sp']);
 
         $ringkasan = [
-            'total'     => $siswaData->count(),
-            'baik'      => $siswaData->where('status', 'baik')->count(),
-            'perhatian' => $siswaData->where('status', 'perhatian')->count(),
-            'berisiko'  => $siswaData->where('status', 'berisiko')->count(),
+            'total'     => $ringkasanRows->count(),
+            'aman'      => $ringkasanRows->where('total_pelanggaran', 0)->count(),
+            'baik'      => $ringkasanRows->where('total_pelanggaran', '>', 0)->where('jumlah_sp', 0)->count(),
+            'perhatian' => $ringkasanRows->where('jumlah_sp', 1)->count(),
+            'berisiko'  => $ringkasanRows->where('jumlah_sp', 2)->count(),
+            'kritis'    => $ringkasanRows->where('jumlah_sp', '>=', 3)->count(),
         ];
 
-        $page   = $this->getPage();
-        $offset = ($page - 1) * $this->perPage;
-        $paged  = $siswaData->values()->slice($offset, $this->perPage);
+        // ── Query utama untuk tabel (dengan filter status di level SQL) ──
+        $query = $this->baseQuery();
+
+        // FIX: havingRaw harus dipanggil langsung pada $query,
+        // BUKAN di dalam closure where(), karena closure where()
+        // hanya menangkap klausa WHERE, bukan HAVING. Sebelumnya
+        // havingRaw di dalam where() diam-diam tidak pernah
+        // tergabung ke query final, sehingga filter status tidak
+        // berpengaruh sama sekali ke hasil tabel.
+        if ($this->filterStatus) {
+            match ($this->filterStatus) {
+                'aman'      => $query->havingRaw('total_pelanggaran = 0'),
+                'baik'      => $query->havingRaw('total_pelanggaran > 0 AND jumlah_sp = 0'),
+                'perhatian' => $query->havingRaw('jumlah_sp = 1'),
+                'berisiko'  => $query->havingRaw('jumlah_sp = 2'),
+                'kritis'    => $query->havingRaw('jumlah_sp >= 3'),
+                default     => null,
+            };
+        }
+
+        $query->orderBy('siswa.nama');
+
+        $pelangganPaginator = $query->paginate($this->perPage);
+
+        // Map hasil paginasi jadi struktur ['siswa' => ..., 'status' => ..., dst]
+        // TANPA query tambahan — semua angka sudah ada dari kolom hasil select sub.
+        $siswaData = collect($pelangganPaginator->items())->map(function ($siswa) {
+            $statusInfo = self::statusFromCounts(
+                (int) $siswa->total_pelanggaran,
+                (int) $siswa->jumlah_sp,
+                $siswa->sp_terakhir_raw
+            );
+            return array_merge(['siswa' => $siswa], $statusInfo);
+        });
 
         $kelasList = $role === 'guru_bk'
             ? \App\Models\Kelas::orderBy('nama_kelas')->get()
             : collect();
 
         return view('livewire.monitoring.index', [
-            'siswaData' => $paged,
-            'total'     => $siswaData->count(),
-            'ringkasan' => $ringkasan,
-            'kelasList' => $kelasList,
-            'role'      => $role,
+            'siswaData'  => $siswaData,
+            'total'      => $pelangganPaginator->total(),
+            'paginator'  => $pelangganPaginator,
+            'ringkasan'  => $ringkasan,
+            'kelasList'  => $kelasList,
+            'role'       => $role,
         ]);
     }
 }

@@ -5,10 +5,10 @@
         <div>
             <h1 class="text-[22px] font-bold text-[#0D2D6B]">
                 <i class="fas fa-chart-line mr-2" style="color:#F5B800"></i>
-                Monitoring Pasca Pembinaan
+                Monitoring Disiplin Siswa
             </h1>
             <p class="text-sm text-gray-500 mt-0.5">
-                Pantau perkembangan disiplin siswa setelah mendapat pembinaan
+                Pantau status kedisiplinan siswa berdasarkan jumlah Surat Panggilan (SP) yang diterbitkan
             </p>
         </div>
     </div>
@@ -21,7 +21,7 @@
     @endif
 
     {{-- ── RINGKASAN CARDS ── --}}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="grid grid-cols-2 lg:grid-cols-6 gap-3">
 
         {{-- Total --}}
         <button wire:click="$set('filterStatus', '')"
@@ -31,13 +31,27 @@
                 <div class="w-9 h-9 rounded-xl bg-[#0D2D6B]/10 flex items-center justify-center">
                     <i class="fas fa-users text-[#0D2D6B] text-sm"></i>
                 </div>
-                <span class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Total Dipantau</span>
+                <span class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Total Siswa</span>
             </div>
             <div class="text-3xl font-bold text-[#0D2D6B]">{{ $ringkasan['total'] }}</div>
-            <div class="text-[10px] text-gray-400 mt-0.5">siswa pasca pembinaan</div>
+            <div class="text-[10px] text-gray-400 mt-0.5">seluruh siswa terpantau</div>
         </button>
 
-        {{-- Baik --}}
+        {{-- Tidak Pernah Melanggar --}}
+        <button wire:click="$set('filterStatus', 'aman')"
+            class="bg-white border-2 rounded-2xl p-4 text-left hover:shadow-md transition-all
+                   {{ $filterStatus === 'aman' ? 'border-green-400 ring-2 ring-green-100' : 'border-gray-100' }}">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-9 h-9 rounded-xl bg-green-100 flex items-center justify-center">
+                    <i class="fas fa-shield-alt text-green-600 text-sm"></i>
+                </div>
+                <span class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Tidak Pernah Melanggar</span>
+            </div>
+            <div class="text-3xl font-bold text-green-600">{{ $ringkasan['aman'] }}</div>
+            <div class="text-[10px] text-gray-400 mt-0.5">tidak ada catatan pelanggaran</div>
+        </button>
+
+        {{-- Baik (melanggar tapi 0 SP) --}}
         <button wire:click="$set('filterStatus', 'baik')"
             class="bg-white border-2 rounded-2xl p-4 text-left hover:shadow-md transition-all
                    {{ $filterStatus === 'baik' ? 'border-green-400 ring-2 ring-green-100' : 'border-gray-100' }}">
@@ -48,10 +62,10 @@
                 <span class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Baik</span>
             </div>
             <div class="text-3xl font-bold text-green-600">{{ $ringkasan['baik'] }}</div>
-            <div class="text-[10px] text-gray-400 mt-0.5">tidak ada pelanggaran baru</div>
+            <div class="text-[10px] text-gray-400 mt-0.5">melanggar, belum sampai SP</div>
         </button>
 
-        {{-- Perlu Perhatian --}}
+        {{-- Perlu Perhatian — SP 1 --}}
         <button wire:click="$set('filterStatus', 'perhatian')"
             class="bg-white border-2 rounded-2xl p-4 text-left hover:shadow-md transition-all
                    {{ $filterStatus === 'perhatian' ? 'border-yellow-400 ring-2 ring-yellow-100' : 'border-gray-100' }}">
@@ -62,21 +76,35 @@
                 <span class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Perlu Perhatian</span>
             </div>
             <div class="text-3xl font-bold text-yellow-600">{{ $ringkasan['perhatian'] }}</div>
-            <div class="text-[10px] text-gray-400 mt-0.5">1-2 pelanggaran ringan/sedang</div>
+            <div class="text-[10px] text-gray-400 mt-0.5">sudah terbit SP 1</div>
         </button>
 
-        {{-- Berisiko --}}
+        {{-- Berisiko — SP 2 --}}
         <button wire:click="$set('filterStatus', 'berisiko')"
             class="bg-white border-2 rounded-2xl p-4 text-left hover:shadow-md transition-all
-                   {{ $filterStatus === 'berisiko' ? 'border-red-400 ring-2 ring-red-100' : 'border-gray-100' }}">
+                   {{ $filterStatus === 'berisiko' ? 'border-orange-400 ring-2 ring-orange-100' : 'border-gray-100' }}">
             <div class="flex items-center gap-3 mb-2">
-                <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center">
-                    <i class="fas fa-exclamation-triangle text-red-600 text-sm"></i>
+                <div class="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-orange-600 text-sm"></i>
                 </div>
                 <span class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Berisiko</span>
             </div>
-            <div class="text-3xl font-bold text-red-600">{{ $ringkasan['berisiko'] }}</div>
-            <div class="text-[10px] text-gray-400 mt-0.5">pelanggaran berat / berulang</div>
+            <div class="text-3xl font-bold text-orange-600">{{ $ringkasan['berisiko'] }}</div>
+            <div class="text-[10px] text-gray-400 mt-0.5">sudah terbit SP 2</div>
+        </button>
+
+        {{-- Kritis — SP 3+ (ambang DO) --}}
+        <button wire:click="$set('filterStatus', 'kritis')"
+            class="bg-white border-2 rounded-2xl p-4 text-left hover:shadow-md transition-all
+                   {{ $filterStatus === 'kritis' ? 'border-red-500 ring-2 ring-red-100' : 'border-gray-100' }}">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center">
+                    <i class="fas fa-skull-crossbones text-red-600 text-sm"></i>
+                </div>
+                <span class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Kritis (Ambang DO)</span>
+            </div>
+            <div class="text-3xl font-bold text-red-600">{{ $ringkasan['kritis'] }}</div>
+            <div class="text-[10px] text-gray-400 mt-0.5">sudah terbit SP 3 atau lebih</div>
         </button>
 
     </div>
@@ -111,6 +139,8 @@
                 <option value="10">10 Data</option>
                 <option value="25">25 Data</option>
                 <option value="50">50 Data</option>
+                <option value="100">100 Data</option>
+                <option value="500">500 Data</option>
             </select>
 
         </div>
@@ -121,10 +151,20 @@
 
         <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
             <h3 class="text-sm font-bold text-[#0D2D6B]">
-                Daftar Siswa Pasca Pembinaan
+                Daftar Siswa
                 @if($filterStatus)
+                    @php
+                        $filterLabel = match($filterStatus) {
+                            'aman'      => 'Tidak Pernah Melanggar',
+                            'baik'      => 'Baik',
+                            'perhatian' => 'Perlu Perhatian (SP 1)',
+                            'berisiko'  => 'Berisiko (SP 2)',
+                            'kritis'    => 'Kritis — Ambang DO',
+                            default     => ucfirst($filterStatus),
+                        };
+                    @endphp
                     <span class="ml-2 text-xs font-normal text-gray-400">
-                        — filter: {{ ucfirst($filterStatus) }}
+                        — filter: {{ $filterLabel }}
                     </span>
                 @endif
             </h3>
@@ -138,8 +178,8 @@
                         <th class="px-4 py-3 text-left font-bold">Siswa</th>
                         <th class="px-4 py-3 text-left font-bold">Kelas</th>
                         <th class="px-4 py-3 text-center font-bold">Total Pelanggaran</th>
-                        <th class="px-4 py-3 text-center font-bold">Belum Ditindak</th>
-                        <th class="px-4 py-3 text-left font-bold">Pembinaan Terakhir</th>
+                        <th class="px-4 py-3 text-center font-bold">Jumlah SP</th>
+                        <th class="px-4 py-3 text-left font-bold">SP Terakhir</th>
                         <th class="px-4 py-3 text-center font-bold">Status Disiplin</th>
                         <th class="px-4 py-3 text-center font-bold">Aksi</th>
                     </tr>
@@ -148,23 +188,33 @@
 
                     @forelse($siswaData as $d)
                         @php
-                            $siswa      = $d['siswa'];
-                            $status     = $d['status'] ?? null;
-                            $label      = $d['label'] ?? '-';
-                            $jumlahBaru = $d['jumlah_baru'] ?? 0;
-                            $tglBinaan  = $d['tgl_pembinaan'] ?? null;
-                            $totalP     = $siswa->pelanggaran->count();
+                            $siswa       = $d['siswa'];
+                            $status      = $d['status'] ?? null;
+                            $label       = $d['label'] ?? '-';
+                            $totalP      = $d['total_pelanggaran'] ?? 0;
+                            $jumlahSp    = $d['jumlah_sp'] ?? 0;
+                            $spTerakhir  = $d['sp_terakhir'] ?? null;
 
                             $badgeClass = match($status) {
+                                'aman'      => 'bg-green-100 text-green-700',
                                 'baik'      => 'bg-green-100 text-green-700',
                                 'perhatian' => 'bg-yellow-100 text-yellow-700',
-                                'berisiko'  => 'bg-red-100 text-red-700',
+                                'berisiko'  => 'bg-orange-100 text-orange-700',
+                                'kritis'    => 'bg-red-100 text-red-700',
                                 default     => 'bg-gray-100 text-gray-500',
                             };
                             $rowClass = match($status) {
-                                'berisiko'  => 'bg-red-50/30',
+                                'kritis'    => 'bg-red-50/40',
+                                'berisiko'  => 'bg-orange-50/30',
                                 'perhatian' => 'bg-yellow-50/30',
                                 default     => '',
+                            };
+                            $emoji = match($status) {
+                                'aman', 'baik' => '✅',
+                                'perhatian'    => '⚠️',
+                                'berisiko'     => '🟠',
+                                'kritis'       => '🔴',
+                                default        => '❓',
                             };
                         @endphp
                         <tr class="hover:bg-gray-50 transition {{ $rowClass }}">
@@ -194,30 +244,32 @@
 
                             {{-- Total Pelanggaran --}}
                             <td class="px-4 py-3 text-center">
-                                <span class="text-sm font-bold text-[#0D2D6B]">{{ $totalP }}</span>
-                            </td>
-
-                            {{-- Pelanggaran Belum Ditindak --}}
-                            <td class="px-4 py-3 text-center">
-                                @if($jumlahBaru > 0)
-                                    <span class="text-sm font-bold text-red-600">+{{ $jumlahBaru }}</span>
+                                @if($totalP > 0)
+                                    <span class="text-sm font-bold text-[#0D2D6B]">{{ $totalP }}</span>
                                 @else
-                                    <span class="text-sm font-bold text-green-600">0</span>
+                                    <span class="text-xs text-gray-400">Tidak ada</span>
                                 @endif
                             </td>
 
-                            {{-- Tanggal & Jam Pembinaan Terakhir --}}
+                            {{-- Jumlah SP --}}
+                            <td class="px-4 py-3 text-center">
+                                @if($jumlahSp > 0)
+                                    <span class="text-sm font-bold {{ $jumlahSp >= 3 ? 'text-red-600' : ($jumlahSp === 2 ? 'text-orange-600' : 'text-yellow-600') }}">
+                                        SP {{ $jumlahSp }}
+                                    </span>
+                                @else
+                                    <span class="text-xs text-gray-400">-</span>
+                                @endif
+                            </td>
+
+                            {{-- SP Terakhir --}}
                             <td class="px-4 py-3">
-                                @if($tglBinaan)
-                                    @php $tgl = \Carbon\Carbon::parse($tglBinaan); @endphp
+                                @if($spTerakhir)
                                     <div class="text-xs text-gray-600">
-                                        {{ $tgl->translatedFormat('d M Y') }}
-                                        @if($tgl->format('H:i') !== '00:00')
-                                            <span class="text-gray-400">pukul {{ $tgl->format('H:i') }}</span>
-                                        @endif
+                                        {{ $spTerakhir->translatedFormat('d M Y') }}
                                     </div>
                                     <div class="text-[10px] text-gray-400 mt-0.5">
-                                        {{ $tgl->diffForHumans() }}
+                                        {{ $spTerakhir->diffForHumans() }}
                                     </div>
                                 @else
                                     <span class="text-gray-400 text-xs">-</span>
@@ -227,11 +279,7 @@
                             {{-- Status Disiplin --}}
                             <td class="px-4 py-3 text-center">
                                 <span class="px-2.5 py-1 rounded-full text-[11px] font-bold {{ $badgeClass }}">
-                                    @if($status === 'baik') ✅
-                                    @elseif($status === 'perhatian') ⚠️
-                                    @elseif($status === 'berisiko') 🔴
-                                    @endif
-                                    {{ $label }}
+                                    {{ $emoji }} {{ $label }}
                                 </span>
                             </td>
 
@@ -249,10 +297,7 @@
                         <tr>
                             <td colspan="7" class="text-center py-12 text-gray-400">
                                 <i class="fas fa-chart-line block text-3xl mb-2 opacity-20"></i>
-                                <p class="text-sm">Belum ada siswa yang telah selesai dibina.</p>
-                                <p class="text-xs mt-1 opacity-60">
-                                    Siswa akan muncul di sini setelah status pembinaan diubah menjadi "Selesai"
-                                </p>
+                                <p class="text-sm">Tidak ada siswa yang cocok dengan filter ini.</p>
                             </td>
                         </tr>
                     @endforelse
@@ -265,6 +310,13 @@
         @if($total > $perPage)
             <div class="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
                 <span class="text-xs text-gray-400">Menampilkan {{ $total }} siswa</span>
+            </div>
+        @endif
+
+        {{-- Pagination --}}
+        @if($paginator->hasPages())
+            <div class="px-4 py-3 border-t border-gray-100">
+                {{ $paginator->links() }}
             </div>
         @endif
 
@@ -307,31 +359,44 @@
                         $statusInfo = App\Livewire\Monitoring\Index::hitungStatus($modalSiswa);
                         $s = $statusInfo['status'] ?? null;
                         $badgeBig = match($s) {
+                            'aman'      => 'bg-green-100 text-green-700 border-green-200',
                             'baik'      => 'bg-green-100 text-green-700 border-green-200',
                             'perhatian' => 'bg-yellow-100 text-yellow-700 border-yellow-200',
-                            'berisiko'  => 'bg-red-100 text-red-700 border-red-200',
+                            'berisiko'  => 'bg-orange-100 text-orange-700 border-orange-200',
+                            'kritis'    => 'bg-red-100 text-red-700 border-red-200',
                             default     => 'bg-gray-100 text-gray-500 border-gray-200',
+                        };
+                        $emojiBig = match($s) {
+                            'aman', 'baik' => '✅',
+                            'perhatian'    => '⚠️',
+                            'berisiko'     => '🟠',
+                            'kritis'       => '🔴',
+                            default        => '❓',
                         };
                     @endphp
                     <div class="flex items-center gap-3 p-3 rounded-xl border {{ $badgeBig }}">
-                        <div class="text-2xl">
-                            @if($s === 'baik') ✅
-                            @elseif($s === 'perhatian') ⚠️
-                            @elseif($s === 'berisiko') 🔴
-                            @else ❓
-                            @endif
-                        </div>
+                        <div class="text-2xl">{{ $emojiBig }}</div>
                         <div>
                             <div class="font-bold text-sm">Status Disiplin: {{ $statusInfo['label'] ?? '-' }}</div>
-                            @if(isset($statusInfo['tgl_pembinaan']) && $statusInfo['tgl_pembinaan'])
-                                @php $tglModal = \Carbon\Carbon::parse($statusInfo['tgl_pembinaan']); @endphp
-                                <div class="text-xs opacity-75">
-                                    Pembinaan terakhir:
-                                    {{ $tglModal->translatedFormat('d M Y') }}
-                                    @if($tglModal->format('H:i') !== '00:00')
-                                        pukul {{ $tglModal->format('H:i') }}
-                                    @endif
-                                    ({{ $tglModal->diffForHumans() }})
+
+                            @if(($statusInfo['total_pelanggaran'] ?? 0) === 0)
+                                <div class="text-xs opacity-75">Belum pernah ada catatan pelanggaran.</div>
+                            @elseif(($statusInfo['jumlah_sp'] ?? 0) === 0)
+                                <div class="text-xs opacity-75">Belum pernah diterbitkan Surat Panggilan.</div>
+                            @endif
+
+                            @if(($statusInfo['jumlah_sp'] ?? 0) >= 3)
+                                <div class="text-xs font-semibold text-red-700 mt-1">
+                                    ⚠ Siswa sudah mencapai SP {{ $statusInfo['jumlah_sp'] }} — berpotensi dikenakan sanksi Drop Out (DO).
+                                    Segera koordinasikan dengan wali kelas / kepala sekolah.
+                                </div>
+                            @endif
+
+                            @if(isset($statusInfo['sp_terakhir']) && $statusInfo['sp_terakhir'])
+                                <div class="text-xs opacity-75 mt-1">
+                                    SP terakhir diterbitkan:
+                                    {{ $statusInfo['sp_terakhir']->translatedFormat('d M Y') }}
+                                    ({{ $statusInfo['sp_terakhir']->diffForHumans() }})
                                 </div>
                             @endif
                         </div>
@@ -352,12 +417,6 @@
                                     @php
                                         $tingkat = strtolower($p->jenisPelanggaran?->tingkat_pelanggaran ?? '');
 
-                                        // Bandingkan waktu kejadian vs waktu pembinaan (sudah include jam)
-                                        $setelahBinaan = isset($statusInfo['tgl_pembinaan'])
-                                            && $statusInfo['tgl_pembinaan']
-                                            && \Carbon\Carbon::parse($p->waktu_kejadian)
-                                                ->gt(\Carbon\Carbon::parse($statusInfo['tgl_pembinaan']));
-
                                         $tingkatBadge = match($tingkat) {
                                             'ringan' => 'bg-yellow-100 text-yellow-700',
                                             'sedang' => 'bg-orange-100 text-orange-700',
@@ -370,15 +429,10 @@
                                             default        => 'bg-red-100 text-red-600',
                                         };
                                     @endphp
-                                    <div class="flex gap-3 p-3 rounded-xl border
-                                                {{ $setelahBinaan ? 'border-red-200 bg-red-50/50' : 'border-gray-100 bg-gray-50' }}">
+                                    <div class="flex gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
 
                                         <div class="flex-shrink-0 mt-0.5">
-                                            @if($setelahBinaan)
-                                                <div class="w-2 h-2 rounded-full bg-red-500 mt-1.5"></div>
-                                            @else
-                                                <div class="w-2 h-2 rounded-full bg-gray-300 mt-1.5"></div>
-                                            @endif
+                                            <div class="w-2 h-2 rounded-full bg-gray-300 mt-1.5"></div>
                                         </div>
 
                                         <div class="flex-1 min-w-0">
@@ -389,11 +443,6 @@
                                                 <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full {{ $tingkatBadge }}">
                                                     {{ ucfirst($tingkat) }}
                                                 </span>
-                                                @if($setelahBinaan)
-                                                    <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-red-200 text-red-700">
-                                                        ⚠ Setelah Pembinaan
-                                                    </span>
-                                                @endif
                                             </div>
                                             <div class="text-[10px] text-gray-400 mt-0.5 flex items-center gap-2 flex-wrap">
                                                 <span>
@@ -405,7 +454,6 @@
                                                 </span>
                                             </div>
 
-                                            {{-- Tanggal & jam pembinaan per item --}}
                                             @if($p->status_pembinaan === 'Selesai' && $p->tanggal_pembinaan)
                                                 <div class="text-[10px] text-green-600 mt-0.5">
                                                     <i class="fas fa-check mr-0.5"></i>
@@ -426,18 +474,6 @@
                                         </div>
                                     </div>
                                 @endforeach
-                            </div>
-
-                            {{-- Legenda --}}
-                            <div class="flex items-center gap-4 mt-3 text-[10px] text-gray-400">
-                                <div class="flex items-center gap-1.5">
-                                    <div class="w-2 h-2 rounded-full bg-gray-300"></div>
-                                    Sebelum pembinaan
-                                </div>
-                                <div class="flex items-center gap-1.5">
-                                    <div class="w-2 h-2 rounded-full bg-red-500"></div>
-                                    Setelah pembinaan
-                                </div>
                             </div>
                         @endif
                     </div>

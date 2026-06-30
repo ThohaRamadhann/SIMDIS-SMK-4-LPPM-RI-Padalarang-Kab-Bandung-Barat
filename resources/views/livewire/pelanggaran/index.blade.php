@@ -183,6 +183,19 @@
                 </select>
             </div>
 
+            {{-- NEW: FILTER SUDAH KENA SP (hanya guru_bk & wali_kelas) --}}
+            @if (in_array($role, ['guru_bk', 'wali_kelas']))
+                <div>
+                    <button type="button" wire:click="$toggle('filterSp')"
+                        class="w-full h-11 px-3 rounded-xl text-sm font-semibold border transition-all
+                               flex items-center justify-center gap-1.5
+                               {{ $filterSp ? 'bg-purple-50 border-purple-300 text-purple-700' : 'bg-white border-gray-200 text-gray-600 hover:border-purple-200' }}">
+                        <i class="ti ti-bell-ringing" style="font-size:14px"></i>
+                        Sudah Kena SP
+                    </button>
+                </div>
+            @endif
+
             <div>
                 <select wire:model.live="perPage" class="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm">
                     <option value="10">10 Data</option>
@@ -216,7 +229,6 @@
             @endif
 
         </div>
-    </div>
 
     {{-- TABLE --}}
     <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-4">
@@ -269,19 +281,21 @@
 
                                     @if ($perlu && !$showTrash)
                                         @php
+                                            $nomorSp = $statusFlag['nomor_sp'] ?? 0;
+
                                             $tooltipText =
                                                 $tingkat === 'Berat'
-                                                    ? 'Pelanggaran berat perlu panggil orang tua'
+                                                    ? 'Pelanggaran berat perlu panggil orang tua (SP ke-' .
+                                                        $nomorSp .
+                                                        ')'
                                                     : 'Akumulasi ' .
                                                         $totalAkum .
                                                         '× pelanggaran ' .
                                                         strtolower($tingkat) .
-                                                        ' perlu panggil orang tua';
+                                                        ' — SP ke-' .
+                                                        $nomorSp;
 
-                                            $badgeLabel =
-                                                $tingkat === 'Berat'
-                                                    ? 'Berat'
-                                                    : ucfirst(strtolower($tingkat)) . ' ×' . $totalAkum;
+                                            $badgeLabel = 'SP ' . $nomorSp;
                                         @endphp
 
                                         {{-- Badge: data-tip langsung di span utama --}}
@@ -363,7 +377,6 @@
                             @if (in_array($role, ['admin', 'guru_bk']))
                                 <td class="px-3 py-3 text-center whitespace-nowrap">
                                     @if (!$showTrash)
-
                                         <a href="{{ route('pelanggaran.edit', $p->id_pelanggaran) }}"
                                             onclick="showPageLoading()"
                                             class="text-[#0D2D6B] text-xs font-semibold hover:underline mr-2">
@@ -380,15 +393,12 @@
                                                 <a href="{{ route('surat-panggilan.create', $p->id_pelanggaran) }}"
                                                     wire:navigate
                                                     class="inline-flex items-center gap-1 text-xs font-semibold
-                                                           text-yellow-700 hover:text-yellow-900
-                                                           bg-purple-50 hover:bg-purple-100
-                                                           px-2 py-0.5 rounded-lg transition-colors mr-2">
+                                                       text-yellow-700 hover:text-yellow-900
+                                                       bg-purple-50 hover:bg-purple-100
+                                                       px-2 py-0.5 rounded-lg transition-colors mr-2">
                                                     📄
-                                                    @if ($tingkat === 'Berat')
-                                                        Surat
-                                                    @else
-                                                        Surat <span class="opacity-70">({{ $totalAkum }}x)</span>
-                                                    @endif
+                                                    Surat <span class="opacity-70">(SP
+                                                        {{ $statusFlag['nomor_sp'] ?? 0 }})</span>
                                                 </a>
                                             @endif
                                         @endif
@@ -421,7 +431,6 @@
                                             class="text-red-600 text-xs font-semibold hover:underline">
                                             Hapus Permanen
                                         </button>
-
                                     @endif
                                 </td>
                             @endif
